@@ -1,0 +1,13 @@
+.dart_tool/
+.idea/
+.vscode/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal

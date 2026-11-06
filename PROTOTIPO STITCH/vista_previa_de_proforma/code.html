@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-background": "#111c2d", "surface-container-lowest": "#ffffff", "secondary": "#0051d5", "primary-container": "#1e3a8a", "primary-fixed": "#dce1ff", "surface-container-high": "#dee8ff", "background": "#f9f9ff", "surface-container": "#e7eeff", "error": "#ba1a1a", "on-secondary": "#ffffff", "on-secondary-fixed-variant": "#003ea8", "surface-container-highest": "#d8e3fb", "on-secondary-container": "#fefcff", "tertiary-fixed": "#6ffbbe", "on-surface": "#111c2d", "on-primary": "#ffffff", "primary-fixed-dim": "#b6c4ff", "surface-dim": "#cfdaf2", "tertiary": "#00311f", "on-error-container": "#93000a", "on-tertiary-fixed": "#002113", "surface-tint": "#4059aa", "secondary-fixed": "#dbe1ff", "on-primary-container": "#90a8ff", "on-tertiary": "#ffffff", "surface-bright": "#f9f9ff", "on-tertiary-fixed-variant": "#005236", "primary": "#00236f", "inverse-on-surface": "#ecf1ff", "surface-container-low": "#f0f3ff", "on-surface-variant": "#444651", "secondary-container": "#316bf3", "error-container": "#ffdad6", "on-secondary-fixed": "#00174b", "surface-variant": "#d8e3fb", "tertiary-fixed-dim": "#4edea3", "on-primary-fixed-variant": "#264191", "inverse-surface": "#263143", "on-tertiary-container": "#27c38a", "on-error": "#ffffff", "tertiary-container": "#004a31", "outline": "#757682", "outline-variant": "#c5c5d3", "surface": "#f9f9ff", "on-primary-fixed": "#00164e", "secondary-fixed-dim": "#b4c5ff", "inverse-primary": "#b6c4ff" }, "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }, "spacing": { "space-xl": "2rem", "space-lg": "1.5rem", "space-md": "1rem", "gutter": "1rem", "margin": "1rem", "margin-tablet": "1.5rem", "space-xs": "0.25rem", "margin-desktop": "2rem", "gutter-mobile": "0.75rem", "space-sm": "0.5rem" }, "fontFamily": { "headline-xl": [ "Inter" ], "headline-lg": [ "Inter" ], "currency-md": [ "JetBrains Mono" ], "currency-sm": [ "JetBrains Mono" ], "label-md": [ "Inter" ], "currency-display": [ "JetBrains Mono" ], "label-sm": [ "JetBrains Mono" ], "headline-lg-mobile": [ "Inter" ], "body-md": [ "Inter" ], "body-lg": [ "Inter" ], "headline-sm": [ "Inter" ], "headline-md": [ "Inter" ], "headline-xl-mobile": [ "Inter" ], "body-sm": [ "Inter" ] }, "fontSize": { "headline-xl": [ "36px", { "lineHeight": "44px", "fontWeight": "700" } ], "headline-lg": [ "30px", { "lineHeight": "38px", "fontWeight": "600" } ], "currency-md": [ "18px", { "lineHeight": "24px", "fontWeight": "500" } ], "currency-sm": [ "14px", { "lineHeight": "20px", "fontWeight": "500" } ], "label-md": [ "12px", { "lineHeight": "16px", "fontWeight": "600" } ], "currency-display": [ "32px", { "lineHeight": "38px", "fontWeight": "600" } ], "label-sm": [ "11px", { "lineHeight": "14px", "fontWeight": "500" } ], "headline-lg-mobile": [ "24px", { "lineHeight": "30px", "fontWeight": "600" } ], "body-md": [ "14px", { "lineHeight": "20px", "fontWeight": "400" } ], "body-lg": [ "16px", { "lineHeight": "24px", "fontWeight": "400" } ], "headline-sm": [ "18px", { "lineHeight": "24px", "fontWeight": "600" } ], "headline-md": [ "20px", { "lineHeight": "26px", "fontWeight": "600" } ], "headline-xl-mobile": [ "28px", { "lineHeight": "34px", "fontWeight": "700" } ], "body-sm": [ "13px", { "lineHeight": "18px", "fontWeight": "400" } ] } } } }</script><style>@layer base{html,body{width:100%;margin:0;padding:0;min-height:100%;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 1rem);}.pt-safe{padding-top:env(safe-area-inset-top, 0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><button class="w-11 h-11 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container-high transition-colors mr-space-xs" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[24px]">arrow_back</span></button><img alt="FieldPro Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1U6AzdAvqGD4PGv5YLkIW79urI16UzZzaD_7xbaTr8lNkcNYnnsoedG1mTd5L4bs8NuypmlpRuBbar2mzdHFtpVrA9pS-Dz-3G0SvB7kLaQRF5c3tlIFNGMeS67NRafkX_os6fMwZPVqqqgPzUqEcO-is1rV8AxOxSPW609sopLjoW3qyqCHVf_DpQcOek1W7b0280G8tZJ08DzzCIH4yjY_3NpX3D3eRUao2N78hxn"><h1 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight truncate">Detalle Cotizacion</h1></div><div class="flex items-center flex-shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD50yta4Us1bDQsmEHNC4Nx92Vhjn-bzMbA7ebew2n3_d59JWMpYEf4zTIaeu7LfZSrdOwTPfwOmYPvIfk2DtJhOImTs8WKWO2HQwJOD0T8Yy73keKjJGZW0RyIn2zbRMgUNdUzvHX0WELbFyPu66mEJrLlHFQGNK8S4nYxjxeBBkNXKkrHAhYFwg2Kqe3-pO5J7XhFBiAviJrHMLSysDFOL5dLwfciOLDeqI6BbOU"></div></div></header><main class="flex-1 w-full bg-surface pt-16 pb-safe"><div class="flex flex-col w-full relative">
+<!-- Status Strip & Quick Bar -->
+<div class="px-margin pt-space-sm pb-space-sm flex items-center justify-between bg-surface-container-low shadow-sm">
+<div class="flex items-center gap-space-sm">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md">
+<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary-container opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-tertiary-container animate-pulse"></span></span>
+        Borrador Listo
+      </span>
+<span class="font-currency-sm text-currency-sm text-on-surface-variant font-medium">#COT-2024-089</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="h-9 px-3 rounded-full bg-surface-container text-primary font-label-md text-label-md flex items-center gap-1.5 active:bg-surface-container-highest transition-all duration-150 active:scale-95 hover:scale-105" id="copyLinkBtn" type="button"><span class="material-symbols-outlined text-[18px]">share</span><span class="">Compartir</span></button>
+<button class="w-9 h-9 flex items-center justify-center rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all duration-150 active:scale-95 hover:scale-105" type="button">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</button>
+</div>
+</div>
+<!-- A4 / Digital Sheet Simulator Canvas -->
+<div class="px-margin py-space-md flex flex-col items-center">
+<!-- Paper Sheet Container -->
+<div class="w-full bg-surface-container-lowest rounded-xl shadow-xl p-space-md relative overflow-hidden">
+<!-- Watermark Accent Stripe for Pro Stamp -->
+<div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-secondary to-tertiary-container"></div>
+<!-- Sheet Header / Brand Profile -->
+<div class="pt-space-xs pb-space-md flex flex-col gap-space-md">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-sm text-headline-sm font-bold shadow-sm flex-shrink-0">
+              M&amp;C
+            </div>
+<div class="min-w-0">
+<h2 class="font-headline-sm text-headline-sm text-primary font-bold tracking-tight truncate leading-tight">
+                CONSTRUCTORA &amp; SERVICIOS M&amp;C
+              </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+                RUC: 20608934211 • Obras y Acabados
+              </p>
+</div>
+</div>
+</div>
+<!-- Meta Grid: Contractor & Document Attributes -->
+<div class="grid grid-cols-2 gap-space-sm p-space-sm bg-surface-container-low rounded-xl text-on-surface">
+<div class="flex flex-col gap-0.5 min-w-0">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Emisor</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">contacto@mycconstructora.pe</span>
+<span class="font-body-sm text-body-sm text-on-surface">+51 984 552 109 • Lima, Perú</span>
+</div>
+<div class="flex flex-col items-end gap-0.5 text-right">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold uppercase tracking-wider">COTIZACIÓN</span>
+<span class="font-currency-md text-currency-md text-on-surface font-semibold">N° 001-089</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="">Emisión:</span>
+<span class="font-currency-sm text-currency-sm text-on-surface font-medium">14/10/2024</span>
+</div>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-error">
+<span class="">Vence:</span>
+<span class="font-currency-sm text-currency-sm font-semibold">29/10/2024</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Client Info Card -->
+<div class="p-space-sm rounded-xl bg-surface-container-lowest shadow-sm mb-space-md border border-surface-variant/40">
+<div class="flex items-center gap-1.5 mb-space-xs text-primary">
+<span class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center"><span class="material-symbols-outlined text-[16px] text-primary">person</span></span>
+<span class="font-label-md text-label-md uppercase tracking-wider text-primary font-bold">Datos del Cliente y Obra</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline justify-between gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cliente:</span>
+<span class="font-body-md text-body-md text-on-surface font-semibold text-right">Ing. Rodrigo Méndez</span>
+</div>
+<div class="flex items-baseline justify-between gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Proyecto:</span>
+<span class="font-body-sm text-body-sm text-on-surface text-right font-medium">Remodelación Integral Baño Principal y Tuberías</span>
+</div>
+<div class="flex items-baseline justify-between gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Ubicación:</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-right">Av. Las Gardenias 450, Dpto 502</span>
+</div>
+</div>
+</div>
+<!-- Line Items Section / Friendly Soft Sub-Cards -->
+<div class="w-full flex flex-col gap-1.5 mb-space-md">
+<!-- Table Column Headers -->
+<div class="grid grid-cols-12 pb-1 px-2 text-on-surface-variant font-label-md text-label-md uppercase tracking-wide">
+<span class="col-span-6">Descripción</span>
+<span class="col-span-2 text-center">Cant.</span>
+<span class="col-span-2 text-right">P. Unit</span>
+<span class="col-span-2 text-right">Total</span>
+</div>
+<!-- Table Row 1 -->
+<div class="grid grid-cols-12 py-2 px-2 items-center bg-surface-container-low rounded-xl">
+<div class="col-span-6 flex flex-col pr-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Porcelanato 60×60 Gris Rectificado</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Piso y pared zona ducha</span>
+</div>
+<span class="col-span-2 text-center font-currency-sm text-currency-sm text-on-surface">18 m²</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm text-on-surface-variant">$22.50</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm font-semibold text-on-surface">$405.00</span>
+</div>
+<!-- Table Row 2 -->
+<div class="grid grid-cols-12 py-2 px-2 items-center bg-surface-container-lowest rounded-xl">
+<div class="col-span-6 flex flex-col pr-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Pegamento Extra Fuerte e Impermeabilizante</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Fraguador antibacteriano</span>
+</div>
+<span class="col-span-2 text-center font-currency-sm text-currency-sm text-on-surface">4 Bol.</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm text-on-surface-variant">$12.00</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm font-semibold text-on-surface">$48.00</span>
+</div>
+<!-- Table Row 3 -->
+<div class="grid grid-cols-12 py-2 px-2 items-center bg-surface-container-low rounded-xl">
+<div class="col-span-6 flex flex-col pr-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Accesorios PVC y Grifería Empotrar</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tubería de presión Clase 10</span>
+</div>
+<span class="col-span-2 text-center font-currency-sm text-currency-sm text-on-surface">1 Kit</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm text-on-surface-variant">$69.50</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm font-semibold text-on-surface">$69.50</span>
+</div>
+<!-- Table Row 4 -->
+<div class="grid grid-cols-12 py-2 px-2 items-center bg-surface-container-lowest rounded-xl">
+<div class="col-span-6 flex flex-col pr-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Mano de Obra Calificada</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Demolición, enchape e hidrosanitario</span>
+</div>
+<span class="col-span-2 text-center font-currency-sm text-currency-sm text-on-surface">1 Serv.</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm text-on-surface-variant">$350.00</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm font-semibold text-on-surface">$350.00</span>
+</div>
+<!-- Table Row 5 -->
+<div class="grid grid-cols-12 py-2 px-2 items-center bg-surface-container-low rounded-xl">
+<div class="col-span-6 flex flex-col pr-1">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Gestión de Residuos y Limpieza</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Retiro de desmonte en sacos</span>
+</div>
+<span class="col-span-2 text-center font-currency-sm text-currency-sm text-on-surface">1 Serv.</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm text-on-surface-variant">$50.00</span>
+<span class="col-span-2 text-right font-currency-sm text-currency-sm font-semibold text-on-surface">$50.00</span>
+</div>
+</div>
+<!-- Financial Totals Block -->
+<div class="flex flex-col items-end w-full mb-space-md">
+<div class="w-full max-w-[280px] flex flex-col gap-1.5 p-space-sm bg-surface-container-low rounded-xl">
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Subtotal:</span>
+<span class="font-currency-sm text-currency-sm text-on-surface">$ 922.50</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="flex items-center gap-1">
+              IGV (18%):
+              <span class="font-label-sm text-label-sm text-tertiary-container font-semibold">Exonerado</span>
+</span>
+<span class="font-currency-sm text-currency-sm text-on-surface">$ 0.00</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant font-body-sm text-body-sm">
+<span class="">Descuento acordado:</span>
+<span class="font-currency-sm text-currency-sm text-on-surface">- $ 0.00</span>
+</div>
+</div>
+<!-- Grand Total Gauge -->
+<div class="w-full max-w-[280px] mt-2 p-space-sm rounded-xl bg-primary-container text-on-primary shadow-md flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-on-primary-container font-bold">Total a Pagar</span>
+<span class="font-body-sm text-body-sm text-on-primary opacity-90">Moneda: Dólares (USD)</span>
+</div>
+<span class="font-currency-display text-currency-display font-bold tracking-tight text-on-primary">
+            $ 922.50
+          </span>
+</div>
+</div>
+<!-- Terms & Digital Seal -->
+<div class="p-space-sm bg-surface-container-low rounded-xl flex flex-col gap-space-sm">
+<div class="flex items-start gap-2">
+<span class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[18px] text-primary">verified_user</span></span>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-primary font-bold">Términos y Condiciones</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Forma de pago: 50% adelanto al firmar contrato, 50% contra entrega final de obra. Incluye garantía técnica de 1 año sobre mano de obra y materiales provistos.
+            </p>
+</div>
+</div>
+<!-- Signature / Contractor Seal -->
+<div class="flex items-center justify-between pt-2">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Elaborado por:</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Arq. Marco Castillo</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Director de Obra M&amp;C</span>
+</div>
+<!-- Digital Stamp Stamp Box -->
+<div class="px-3 py-1.5 rounded-full bg-surface-container-high text-primary flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[20px] text-tertiary-container" style="font-variation-settings: 'FILL' 1;">approval</span>
+<div class="flex flex-col text-left">
+<span class="font-label-sm text-label-sm font-bold uppercase tracking-wider text-tertiary-container">Firma Digital</span>
+<span class="font-label-sm text-label-sm font-mono text-on-surface">HASH: 8F2A-09B</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro Prompt Helper -->
+<p class="font-body-sm text-body-sm text-on-surface-variant text-center mt-space-md mb-24 px-space-md flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">visibility</span>
+<span class="">Esta proforma se procesará como archivo PDF de alta resolución listo para su validación inmediata.</span>
+</p>
+</div>
+<!-- Sticky Bottom Action Tray (Thumb Ergonomics) -->
+<div class="fixed bottom-0 left-0 right-0 z-40 bg-surface-container-lowest shadow-xl px-margin pt-space-sm pb-space-lg flex flex-col gap-space-xs"><!-- Primary WhatsApp Action -->
+<a class="w-full h-[52px] bg-tertiary-container text-tertiary-fixed rounded-full flex items-center justify-center gap-2 shadow-lg active:opacity-95 transition-all duration-200 active:scale-95 hover:scale-[1.02] hover:shadow-xl active:brightness-95" href="https://api.whatsapp.com/send?text=Estimado%20Ing.%20Rodrigo,%20adjunto%20la%20proforma%20detallada%20de%20la%20remodelaci%C3%B3n%20(COT-2024-089)%20por%20un%20total%20de%20$922.50." target="_blank">
+<!-- WhatsApp Custom Icon -->
+<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+<path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.974.532 1.954.814 3.149.814 3.18 0 5.767-2.587 5.768-5.766.001-3.181-2.586-5.768-5.768-5.768zm0 10.364c-1.009 0-1.996-.271-2.85-.783l-.204-.121-1.396.367.373-1.361-.133-.212c-.563-.896-.86-1.936-.859-3.003.001-2.628 2.14-4.767 4.768-4.767 2.627 0 4.766 2.139 4.767 4.767 0 2.628-2.14 4.767-4.767 4.767zm2.614-3.559c-.143-.072-.849-.419-.98-.467-.132-.048-.228-.072-.324.072-.096.143-.372.467-.456.563-.084.096-.168.108-.312.036-.143-.072-.607-.224-1.156-.713-.427-.38-.716-.85-.8-.994-.084-.144-.009-.222.063-.293.065-.064.144-.168.216-.252.072-.084.096-.144.144-.24.048-.096.024-.18-.012-.252-.036-.072-.324-.781-.444-1.07-.117-.282-.236-.244-.324-.248l-.276-.004c-.096 0-.252.036-.384.18-.132.144-.504.492-.504 1.2 0 .708.516 1.392.588 1.488.072.096 1.015 1.55 2.459 2.172.343.148.611.237.82.303.345.11.659.094.908.057.277-.041.849-.347.969-.682.12-.335.12-.622.084-.682-.036-.06-.132-.096-.276-.168z"></path>
+</svg>
+<span class="font-headline-sm text-headline-sm font-semibold tracking-tight">Enviar por WhatsApp</span>
+</a>
+<!-- Secondary Utilities Dual Bar -->
+<div class="grid grid-cols-2 gap-space-xs">
+<button class="h-11 rounded-full bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-all duration-150 active:scale-95 hover:scale-105" id="downloadPdfBtn" type="button">
+<span class="material-symbols-outlined text-[20px] text-secondary">download</span>
+<span class="">Descargar PDF</span>
+</button>
+<button class="h-11 rounded-full bg-surface-container text-on-surface font-body-md text-body-md font-semibold flex items-center justify-center gap-1.5 active:bg-surface-container-high transition-all duration-150 active:scale-95 hover:scale-105" type="button">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">edit_note</span>
+<span class="">Editar Proforma</span>
+</button>
+</div></div>
+<!-- Delight Feedback Toast -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 pointer-events-none opacity-0 translate-y-2" id="toastNotification">
+<div class="bg-inverse-surface text-inverse-on-surface px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[18px] text-tertiary-fixed">check_circle</span>
+<span id="toastMessage" class="">Enlace de proforma copiado al portapapeles</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const copyBtn = document.getElementById('copyLinkBtn');
+    const downloadBtn = document.getElementById('downloadPdfBtn');
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMessage');
+
+    function triggerToast(message) {
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-2');
+      }, 2500);
+    }
+
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        triggerToast('¡Enlace listo para compartir con el cliente!');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        triggerToast('Generando PDF firmado en alta resolución...');
+      });
+    }
+  })();
+</script></main>
+
+
+
+</body></html>

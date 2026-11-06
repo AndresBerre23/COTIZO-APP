@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tema de arranque en modo oscuro. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <!-- Se retira al dibujar el primer fotograma. -->
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <!-- Fondo nativo durante la ejecución de Flutter. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
