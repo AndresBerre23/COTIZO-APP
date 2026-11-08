@@ -18,13 +18,16 @@ lib/
     datos_locales.dart
     repositorio_local.dart
     calcular_rentabilidad.dart
+    unidades_medida.dart
   datos/
+    almacen_imagenes_materiales.dart
     esquema_sqlite.dart
     mapeadores_sqlite.dart
     validaciones_datos.dart
     repositorio_sqlite.dart
   aplicacion/
     cotizo_cubit.dart
+    edicion_material.dart
   funcionalidades/
     cotizaciones/
       componentes/
@@ -33,6 +36,8 @@ lib/
       detalle_proyecto_pagina.dart
       formulario_partida.dart
     materiales/
+      componentes/
+      servicios/
     gastos/
     inicio/
     proformas/
@@ -61,26 +66,36 @@ Cada clase tiene su propio archivo, propiedades finales y constructor con parám
 
 | Entidad | Campos Dart | Relación |
 | --- | --- | --- |
-| Proyecto | id, nombreCliente, descripcion, fechaInicio, fechaFin?, estado, totalCotizadoCentavos | Tiene partidas y gastos |
-| MaterialObra | id, nombre, unidadMedida, costoBaseCentavos | Referenciado por partidas |
+| Proyecto | id, nombreCliente, descripcion, fechaInicio, fechaFin?, fechaInicioReal?, fechaFinReal?, margenDeseadoPuntos?, estado, totalCotizadoCentavos | Tiene partidas, gastos previstos y registrados; conserva planificación y ejecución |
+| MaterialObra | id, nombre, unidadMedida, costoBaseCentavos, imagenRuta?, atribucionImagen? | Referenciado por partidas; imagen y licencia quedan en almacenamiento local y SQLite |
 | ItemProyecto | id, proyectoId, materialId, cantidad, costoUnitarioAplicadoCentavos, subtotalCentavos | Une proyecto y material |
 | Gasto | id, proyectoId?, montoCentavos, categoria, fecha, nota | Proyecto opcional; null representa gasto general |
+| GastoPrevisto | id, proyectoId, categoria, montoCentavos, descripcion | Pertenece a una cotización; no representa un desembolso |
 
 `ItemProyecto` añade `nombreMaterial` y `unidadMedida` como instantáneas históricas. Editar el catálogo no modifica las propuestas guardadas. `subtotalCentavos` se calcula a partir de cantidad y costo aplicado; el mapeador persiste el resultado, sin aceptar un subtotal independiente del cálculo.
 
-Los montos se almacenan como enteros en centavos. Por ejemplo, USD 12,35 se representa como `1235`. La interfaz acepta coma o punto decimal, hasta dos decimales monetarios y tres para cantidades, sin separadores de miles. Las fechas se persisten como milisegundos y se presentan en español. `fechaFin` puede quedar vacía.
+El selector reutilizable de `MaterialFormulario` ofrece unidades agrupadas y búsqueda por nombre, símbolo y equivalencias como `m2`/`m²` y `galon`/`galón`. Admite unidades personalizadas, conserva las unidades históricas y no realiza conversiones.
+
+Los montos se almacenan como enteros en centavos. Por ejemplo, USD 12,35 se representa como `1235`. La interfaz acepta coma o punto decimal, hasta dos decimales monetarios y tres para cantidades, sin separadores de miles. Las fechas se persisten como milisegundos y se presentan en español. Las cotizaciones nuevas exigen inicio y fin previstos; los registros antiguos sin `fechaFin` se conservan y pueden seguir editándose, pero deben completar la fecha final antes de iniciar la obra.
+
+Una cotización se convierte en obra al registrar `fechaInicioReal`; esta operación también la marca como aprobada. `fechaFinReal` cierra la ejecución sin sustituir las fechas previstas. “En curso” y “Retrasada” son fases derivadas, por lo que no añaden estados redundantes al esquema. Los proyectos finalizados antes de esta migración permanecen como obras históricas con fechas reales desconocidas.
 
 El SQL ejecutable está en `lib/datos/esquema_sqlite.dart`:
 
 - `proyectos`: estado restringido a los cuatro valores, fechas coherentes e importe no negativo.
-- `materiales`: nombre, unidad y costo base.
+- `materiales`: nombre, unidad, costo base, referencia de imagen y atribución/licencia opcionales.
 - `items_proyecto`: claves foráneas, cantidad positiva, costo aplicado, subtotal e instantáneas.
 - `gastos`: monto positivo y relación opcional con proyecto.
+- `gastos_previstos`: presupuesto separado de los gastos registrados.
 - Índices en las relaciones y fecha de gastos.
 
-`PRAGMA foreign_keys = ON` se activa en cada apertura. Guardar proyecto y partidas es una transacción. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
+`PRAGMA foreign_keys = ON` se activa en cada apertura. Guardar proyecto, partidas y gastos previstos es una transacción. Omitir la lista de gastos previstos al actualizar conserva el presupuesto existente; pasar una lista la sustituye. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
 
-`lib/dominio/repositorio_local.dart` expone lectura de datos, guardado y eliminación de cada entidad, además de cierre. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 1.
+`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 5 y migraciones desde las versiones 1, 2, 3 y 4.
+
+Las fotos del catálogo se seleccionan desde galería, cámara o Wikimedia Commons; se decodifican y optimizan en un isolate con orientación normalizada, sin metadatos, hasta 1280 píxeles por lado y 300 KB. Se guardan como JPEG en `Application Support/imagenes_materiales`; SQLite conserva el nombre relativo y, cuando corresponde, la atribución. Al reemplazar una imagen, la anterior se mantiene hasta confirmar el guardado del material. Cancelar el formulario no crea archivos persistentes.
+
+La búsqueda web consulta la API de Wikimedia Commons, pide resultados del espacio de archivos y lee URL, licencia y atribución mediante `imageinfo`. Solo muestra dominio público, CC0, CC BY y CC BY-SA; descarta licencias no comerciales o sin obras derivadas. Las URL de miniaturas/descargas deben ser HTTPS de `upload.wikimedia.org`; las solicitudes limitan tamaño y tiempo, y las imágenes seleccionadas pasan por el mismo optimizador y almacenamiento offline. El título, autor, fuente y licencia permanecen en SQLite y aparecen al ampliar la imagen.
 
 ## 3. Rentabilidad
 
@@ -94,7 +109,7 @@ final rentabilidadCentavos = calcularRentabilidad(
 );
 ```
 
-La función aplica exactamente:
+La función aplica exactamente a los costos registrados:
 
 ```text
 rentabilidad = total cotizado
@@ -102,9 +117,9 @@ rentabilidad = total cotizado
              - suma de gastos asociados al proyecto
 ```
 
-Filtra por `proyectoId`, excluye gastos generales y registros de otros proyectos, y permite resultados negativos. Los materiales representan el costo estimado aplicado; para interpretar el resultado como rentabilidad real deben registrarse los costos efectivamente incurridos, incluyendo mano de obra. No hay impuestos, cobros ni gastos inferidos.
+Filtra por `proyectoId`, excluye gastos generales y registros de otros proyectos, y permite resultados negativos. Los gastos previstos permanecen fuera de este cálculo y de los desembolsos registrados. El editor calcula aparte `costo previsto = materiales + gastos previstos` y `ganancia prevista = precio elegido - costo previsto`. El margen opcional se expresa en centésimas de porcentaje y propone `costo previsto / (1 - margen / 100)`; la sugerencia no reemplaza el precio elegido. Para interpretar la rentabilidad registrada como resultado real deben registrarse los costos efectivamente incurridos, incluyendo mano de obra. No hay impuestos, cobros ni gastos inferidos.
 
-El resumen general usa solo proyectos aprobados o finalizados. Después de sumar su rentabilidad descuenta gastos generales una sola vez. Los borradores y enviados continúan visibles como proyectos activos, pero no inflan ese balance.
+El resumen general usa solo obras iniciadas o finalizadas. Después de sumar su rentabilidad descuenta gastos generales una sola vez. Las cotizaciones aprobadas que todavía no iniciaron no inflan ese balance.
 
 ## 4. Generación de PDF
 
@@ -118,7 +133,7 @@ final archivo = await servicio.guardarEn(directorio, proyecto, items);
 
 `generar` devuelve `Future<Uint8List>` con el documento listo para compartir. `guardarEn` devuelve `Future<File>` en un directorio elegido por el llamador. La pantalla utiliza `Printing.sharePdf` y `Printing.layoutPdf`.
 
-Incluye identificador, cliente, descripción, fechas, estado, cantidades, unidades, valores aplicados y total cotizado. La diferencia entre las partidas y el total manual se identifica como ajuste al total cotizado, sin inventar impuestos o servicios. Los gastos y márgenes internos no se agregan al documento.
+Incluye identificador, cliente, descripción, fechas, estado, cantidades, unidades, valores aplicados, cada gasto previsto y el total cotizado. El ajuste comercial se calcula como total elegido menos materiales y gastos previstos, y puede ser positivo o negativo. Los gastos efectivamente registrados y el margen usado para sugerir el precio no se agregan al documento.
 
 El documento admite varias páginas y usa fuentes Roboto incluidas en `assets/fuentes/`, con su licencia original. No utiliza fuentes de Google descargadas durante la ejecución. La propuesta indica que no es una factura.
 
@@ -128,4 +143,4 @@ La aplicación carga SQLite al abrir y conserva una instantánea de datos en Cub
 
 La carga local y la apertura del archivo requieren tiempo de ejecución; no se promete latencia literalmente cero. Para volúmenes muy grandes, el siguiente paso es paginar consultas por funcionalidad e introducir suscripciones selectivas. El MVP evita esa complejidad manteniendo límites claros entre repositorio, dominio y UI.
 
-Las fuentes de referencia de los paquetes son sus documentaciones oficiales: [SQLite](https://pub.dev/packages/sqflite), [BLoC](https://pub.dev/packages/flutter_bloc), [pdf](https://pub.dev/packages/pdf) y [printing](https://pub.dev/packages/printing).
+Las fuentes de referencia de los paquetes y la API son sus documentaciones oficiales: [SQLite](https://pub.dev/packages/sqflite), [BLoC](https://pub.dev/packages/flutter_bloc), [image](https://pub.dev/packages/image), [image_picker](https://pub.dev/packages/image_picker), [path_provider](https://pub.dev/packages/path_provider), [búsqueda MediaWiki](https://www.mediawiki.org/wiki/API:Search), [información de imágenes](https://www.mediawiki.org/wiki/API:Imageinfo), [pdf](https://pub.dev/packages/pdf) y [printing](https://pub.dev/packages/printing).

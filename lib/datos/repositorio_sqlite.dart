@@ -29,13 +29,64 @@ class RepositorioSqlite implements RepositorioLocal {
     final base = await fabricaLocal.openDatabase(
       rutaLocal,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 5,
         onConfigure: (base) => base.execute('PRAGMA foreign_keys = ON'),
         onCreate: crearEsquema,
+        onUpgrade: migrarEsquema,
       ),
     );
     return RepositorioSqlite(base);
   }
+
+  @override
+  Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal) =>
+      base.transaction((transaccion) async {
+        final proyecto = await _obtenerProyecto(transaccion, proyectoId);
+        if (proyecto.estado == EstadoProyecto.finalizado || proyecto.esObra) {
+          throw const FormatException(
+            'Esta obra ya fue iniciada o finalizada.',
+          );
+        }
+        if (proyecto.fechaFin == null) {
+          throw const FormatException(
+            'Define la fecha final prevista antes de iniciar la obra.',
+          );
+        }
+        _validarFechaReal(fechaInicioReal);
+        await transaccion.update(
+          'proyectos',
+          {
+            'estado': EstadoProyecto.aprobado.name,
+            'fecha_inicio_real': fechaInicioReal.millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [proyectoId],
+        );
+      });
+
+  @override
+  Future<void> finalizarObra(int proyectoId, DateTime fechaFinReal) =>
+      base.transaction((transaccion) async {
+        final proyecto = await _obtenerProyecto(transaccion, proyectoId);
+        if (!proyecto.estaEnCurso) {
+          throw const FormatException('Esta obra no está en curso.');
+        }
+        _validarFechaReal(fechaFinReal);
+        if (fechaFinReal.isBefore(proyecto.fechaInicioReal!)) {
+          throw const FormatException(
+            'La finalización no puede ser anterior al inicio real.',
+          );
+        }
+        await transaccion.update(
+          'proyectos',
+          {
+            'estado': EstadoProyecto.finalizado.name,
+            'fecha_fin_real': fechaFinReal.millisecondsSinceEpoch,
+          },
+          where: 'id = ?',
+          whereArgs: [proyectoId],
+        );
+      });
 
   @override
   Future<DatosLocales> obtenerDatos() => base.transaction((transaccion) async {
@@ -49,20 +100,28 @@ class RepositorioSqlite implements RepositorioLocal {
       'gastos',
       orderBy: 'fecha DESC, id DESC',
     );
+    final gastosPrevistos = await transaccion.query(
+      'gastos_previstos',
+      orderBy: 'id',
+    );
     return DatosLocales(
       proyectos: List.unmodifiable(proyectos.map(leerProyecto)),
       materiales: List.unmodifiable(materiales.map(leerMaterial)),
       items: List.unmodifiable(items.map(leerItem)),
       gastos: List.unmodifiable(gastos.map(leerGasto)),
+      gastosPrevistos: List.unmodifiable(
+        gastosPrevistos.map(leerGastoPrevisto),
+      ),
     );
   });
 
   @override
   Future<int> guardarProyecto(
     Proyecto proyecto,
-    List<ItemProyecto> items,
-  ) async {
-    validarProyecto(proyecto, items);
+    List<ItemProyecto> items, {
+    List<GastoPrevisto>? gastosPrevistos,
+  }) async {
+    validarProyecto(proyecto, items, gastosPrevistos ?? const []);
     return base.transaction((transaccion) async {
       final id = await _guardar(
         transaccion,
@@ -78,6 +137,19 @@ class RepositorioSqlite implements RepositorioLocal {
       for (final item in items) {
         await _exigirRegistro(transaccion, 'materiales', item.materialId);
         await transaccion.insert('items_proyecto', escribirItem(item, id));
+      }
+      if (gastosPrevistos != null) {
+        await transaccion.delete(
+          'gastos_previstos',
+          where: 'proyecto_id = ?',
+          whereArgs: [id],
+        );
+        for (final gasto in gastosPrevistos) {
+          await transaccion.insert(
+            'gastos_previstos',
+            escribirGastoPrevisto(gasto, id),
+          );
+        }
       }
       return id;
     });
@@ -174,6 +246,31 @@ class RepositorioSqlite implements RepositorioLocal {
     );
     if (registros.isEmpty) {
       throw const FormatException('El registro relacionado ya no existe.');
+    }
+  }
+
+  Future<Proyecto> _obtenerProyecto(
+    DatabaseExecutor transaccion,
+    int id,
+  ) async {
+    final filas = await transaccion.query(
+      'proyectos',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (filas.isEmpty) {
+      throw const FormatException('La cotización ya no existe.');
+    }
+    return leerProyecto(filas.single);
+  }
+
+  void _validarFechaReal(DateTime fecha) {
+    final ahora = DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final valor = DateTime(fecha.year, fecha.month, fecha.day);
+    if (valor.isAfter(hoy)) {
+      throw const FormatException('La fecha real no puede estar en el futuro.');
     }
   }
 }

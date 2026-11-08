@@ -2,7 +2,13 @@ import 'modelos.dart';
 
 abstract interface class RepositorioLocal {
   Future<DatosLocales> obtenerDatos();
-  Future<int> guardarProyecto(Proyecto proyecto, List<ItemProyecto> items);
+  Future<int> guardarProyecto(
+    Proyecto proyecto,
+    List<ItemProyecto> items, {
+    List<GastoPrevisto>? gastosPrevistos,
+  });
+  Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal);
+  Future<void> finalizarObra(int proyectoId, DateTime fechaFinReal);
   Future<int> guardarMaterial(MaterialObra material);
   Future<int> guardarGasto(Gasto gasto);
   Future<void> eliminarProyecto(int id);

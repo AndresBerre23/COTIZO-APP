@@ -3,9 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
 import '../../core/formato.dart';
-
+import '../../dominio/calcular_presupuesto_proyecto.dart';
+import '../../dominio/leer_margen_deseado.dart';
 import '../../dominio/modelos.dart';
 import 'componentes/datos_cliente_editor.dart';
+import 'componentes/gastos_previstos_editor.dart';
 import 'componentes/partidas_editor.dart';
 import 'componentes/precio_proyecto_editor.dart';
 import 'formulario_partida.dart';
@@ -23,7 +25,9 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
   late final TextEditingController _cliente;
   late final TextEditingController _descripcion;
   late final TextEditingController _total;
+  late final TextEditingController _margen;
   late final List<ItemProyecto> _partidas;
+  late List<GastoPrevisto> _gastosPrevistos;
   late DateTime _inicio;
   DateTime? _fin;
   String? _errorFecha;
@@ -42,13 +46,27 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
           ? ''
           : (proyecto.totalCotizadoCentavos / 100).toStringAsFixed(2),
     );
+    _margen = TextEditingController(
+      text: proyecto?.margenDeseadoPuntos == null
+          ? ''
+          : (proyecto!.margenDeseadoPuntos! / 100).toStringAsFixed(2),
+    );
     final hoy = DateTime.now();
     _inicio = proyecto?.fechaInicio ?? DateTime(hoy.year, hoy.month, hoy.day);
-    _fin = proyecto?.fechaFin;
+    _fin =
+        proyecto?.fechaFin ??
+        (proyecto == null ? DateTime(hoy.year, hoy.month, hoy.day) : null);
     _partidas = proyecto == null
         ? []
         : List.of(
             context.read<CotizoCubit>().state.datos.itemsDeProyecto(
+              proyecto.id,
+            ),
+          );
+    _gastosPrevistos = proyecto == null
+        ? []
+        : List.of(
+            context.read<CotizoCubit>().state.datos.gastosPrevistosDeProyecto(
               proyecto.id,
             ),
           );
@@ -59,6 +77,7 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     _cliente.dispose();
     _descripcion.dispose();
     _total.dispose();
+    _margen.dispose();
     super.dispose();
   }
 
@@ -110,7 +129,11 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     if (_guardando) return;
     final valido = _formulario.currentState!.validate();
     setState(
-      () => _errorFecha = _fin != null && _fin!.isBefore(_inicio)
+      () => _errorFecha = _fin == null
+          ? widget.proyecto == null
+                ? 'Selecciona la fecha final prevista.'
+                : null
+          : _fin!.isBefore(_inicio)
           ? 'La entrega no puede ser anterior al inicio.'
           : null,
     );
@@ -123,10 +146,14 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
         descripcion: _descripcion.text.trim(),
         fechaInicio: _inicio,
         fechaFin: _fin,
+        fechaInicioReal: widget.proyecto?.fechaInicioReal,
+        fechaFinReal: widget.proyecto?.fechaFinReal,
         estado: widget.proyecto?.estado ?? EstadoProyecto.borrador,
         totalCotizadoCentavos: leerCentavos(_total.text)!,
+        margenDeseadoPuntos: leerMargenDeseadoPuntos(_margen.text),
       ),
       _partidas,
+      gastosPrevistos: _gastosPrevistos,
     );
     if (!mounted) return;
     setState(() {
@@ -147,10 +174,6 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
 
   @override
   Widget build(BuildContext context) {
-    final costoMateriales = _partidas.fold(
-      0,
-      (total, item) => total + item.subtotalCentavos,
-    );
     final datosCliente = DatosClienteEditor(
       cliente: _cliente,
       descripcion: _descripcion,
@@ -175,9 +198,22 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
         _modificado = true;
       }),
     );
+    final presupuesto = calcularPresupuestoProyecto(
+      _partidas,
+      _gastosPrevistos,
+      leerMargenDeseadoPuntos(_margen.text),
+    );
+    final sugerido = presupuesto.precioSugeridoCentavos;
     final resumen = PrecioProyectoEditor(
       total: _total,
-      costoMateriales: costoMateriales,
+      costoPrevisto: presupuesto.costoPrevistoCentavos,
+      margen: _margen,
+      precioSugerido: sugerido,
+      aplicarSugerido: sugerido != null && sugerido <= 99999999999
+          ? () => setState(
+              () => _total.text = (sugerido / 100).toStringAsFixed(2),
+            )
+          : null,
       guardando: _guardando,
       alCambiar: () => setState(() {}),
       alGuardar: _guardar,
@@ -217,6 +253,14 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
                                     datosCliente,
                                     const SizedBox(height: 16),
                                     materiales,
+                                    const SizedBox(height: 16),
+                                    GastosPrevistosEditor(
+                                      gastos: _gastosPrevistos,
+                                      alCambiar: (gastos) => setState(() {
+                                        _gastosPrevistos = gastos;
+                                        _modificado = true;
+                                      }),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -229,6 +273,14 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
                               datosCliente,
                               const SizedBox(height: 16),
                               materiales,
+                              const SizedBox(height: 16),
+                              GastosPrevistosEditor(
+                                gastos: _gastosPrevistos,
+                                alCambiar: (gastos) => setState(() {
+                                  _gastosPrevistos = gastos;
+                                  _modificado = true;
+                                }),
+                              ),
                               const SizedBox(height: 16),
                               resumen,
                             ],

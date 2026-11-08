@@ -1,4 +1,5 @@
 import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
+import 'package:cotizo_app/app.dart';
 import 'package:cotizo_app/core/theme/app_theme.dart';
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:cotizo_app/funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
@@ -17,12 +18,55 @@ class _RepositorioCotizaciones extends RepositorioLectura {
   @override
   Future<int> guardarProyecto(
     Proyecto proyecto,
-    List<ItemProyecto> items,
-  ) async {
+    List<ItemProyecto> items, {
+    List<GastoPrevisto>? gastosPrevistos,
+  }) async {
     proyectoGuardado = proyecto;
     partidasGuardadas = List.of(items);
     escrituras++;
     return proyecto.id == 0 ? 2 : proyecto.id;
+  }
+
+  @override
+  Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal) async {
+    _actualizarProyecto(
+      (proyecto) => Proyecto(
+        id: proyecto.id,
+        nombreCliente: proyecto.nombreCliente,
+        descripcion: proyecto.descripcion,
+        fechaInicio: proyecto.fechaInicio,
+        fechaFin: proyecto.fechaFin,
+        fechaInicioReal: fechaInicioReal,
+        estado: EstadoProyecto.aprobado,
+        totalCotizadoCentavos: proyecto.totalCotizadoCentavos,
+      ),
+    );
+  }
+
+  @override
+  Future<void> finalizarObra(int proyectoId, DateTime fechaFinReal) async {
+    _actualizarProyecto(
+      (proyecto) => Proyecto(
+        id: proyecto.id,
+        nombreCliente: proyecto.nombreCliente,
+        descripcion: proyecto.descripcion,
+        fechaInicio: proyecto.fechaInicio,
+        fechaFin: proyecto.fechaFin,
+        fechaInicioReal: proyecto.fechaInicioReal,
+        fechaFinReal: fechaFinReal,
+        estado: EstadoProyecto.finalizado,
+        totalCotizadoCentavos: proyecto.totalCotizadoCentavos,
+      ),
+    );
+  }
+
+  void _actualizarProyecto(Proyecto Function(Proyecto) actualizar) {
+    datos = DatosLocales(
+      proyectos: datos.proyectos.map(actualizar).toList(),
+      materiales: datos.materiales,
+      items: datos.items,
+      gastos: datos.gastos,
+    );
   }
 }
 
@@ -168,6 +212,132 @@ void main() {
     await tester.pumpAndSettle();
     await _pulsar(tester, 'Descartar');
     expect(find.byType(EditorProyectoPagina), findsNothing);
+  });
+
+  testWidgets('inicia y finaliza una obra desde su detalle', (tester) async {
+    final repositorio = _RepositorioCotizaciones();
+    final cubit = CotizoCubit(repositorio);
+    await cubit.cargar();
+    addTearDown(cubit.close);
+    await tester.pumpWidget(
+      BlocProvider.value(
+        value: cubit,
+        child: MaterialApp(
+          theme: appTheme,
+          home: const DetalleProyectoPagina(proyectoId: 1),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _pulsar(tester, 'Iniciar obra');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Iniciar obra'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(repositorio.datos.proyectos.single.fechaInicioReal, isNotNull);
+    expect(cubit.state.datos.proyectos.single.fechaInicioReal, isNotNull);
+    expect(cubit.state.datos.proyectos.single.estaEnCurso, isTrue);
+    await tester.fling(find.byType(ListView), const Offset(0, 1000), 1000);
+    await tester.pumpAndSettle();
+    expect(find.text('Finalizar obra'), findsOneWidget);
+
+    await _pulsar(tester, 'Finalizar obra');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(FilledButton, 'Finalizar obra'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(cubit.state.datos.proyectos.single.estaFinalizada, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('aviso de retraso abre el detalle y permite continuar la obra', (
+    tester,
+  ) async {
+    final hoy = DateTime.now();
+    final base = datosMuestra();
+    final obra = Proyecto(
+      id: 1,
+      nombreCliente: 'María Gómez',
+      descripcion: 'Remodelación de cocina',
+      fechaInicio: hoy.subtract(const Duration(days: 10)),
+      fechaFin: hoy.subtract(const Duration(days: 2)),
+      fechaInicioReal: hoy.subtract(const Duration(days: 9)),
+      estado: EstadoProyecto.aprobado,
+      totalCotizadoCentavos: 180000,
+    );
+    final repositorio = RepositorioLectura(
+      DatosLocales(
+        proyectos: [obra],
+        materiales: base.materiales,
+        items: base.items,
+        gastos: base.gastos,
+      ),
+    );
+    await tester.pumpWidget(CotizoApp(repositorio: repositorio));
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.textContaining('Obra en retraso'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.textContaining('Obra en retraso'));
+    await tester.pumpAndSettle();
+    expect(find.text('La fecha prevista terminó'), findsOneWidget);
+    await tester.tap(find.text('Aún no termino'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DetalleProyectoPagina), findsOneWidget);
+    expect(repositorio.datos.proyectos.single.estaEnCurso, isTrue);
+  });
+
+  testWidgets('separa cotizaciones pendientes de obras iniciadas', (
+    tester,
+  ) async {
+    final base = datosMuestra();
+    final pendiente = base.proyectos.single;
+    final obra = Proyecto(
+      id: 2,
+      nombreCliente: 'Cliente obra',
+      descripcion: 'Obra visible',
+      fechaInicio: DateTime(2026, 11, 1),
+      fechaFin: DateTime(2026, 11, 20),
+      fechaInicioReal: DateTime(2026, 11, 2),
+      estado: EstadoProyecto.aprobado,
+      totalCotizadoCentavos: 10000,
+    );
+    await tester.pumpWidget(
+      CotizoApp(
+        repositorio: RepositorioLectura(
+          DatosLocales(
+            proyectos: [pendiente, obra],
+            materiales: base.materiales,
+            items: base.items,
+            gastos: base.gastos,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Cotizaciones'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Remodelación de cocina'), findsOneWidget);
+    expect(find.text('Obra visible'), findsNothing);
+    await tester.tap(find.text('Obras'));
+    await tester.pumpAndSettle();
+    expect(find.text('Remodelación de cocina'), findsNothing);
+    expect(find.text('Obra visible'), findsOneWidget);
   });
 
   for (final ancho in [360.0, 800.0, 1280.0, 1440.0]) {

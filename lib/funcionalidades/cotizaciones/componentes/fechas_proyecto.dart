@@ -22,7 +22,7 @@ class FechasProyecto extends StatelessWidget {
       initialDate: esInicio ? inicio : (fin ?? inicio),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100, 12, 31),
-      helpText: esInicio ? 'Fecha de inicio' : 'Fecha de entrega',
+      helpText: esInicio ? 'Inicio previsto' : 'Fin previsto',
       cancelText: 'Cancelar',
       confirmText: 'Seleccionar',
     );
@@ -38,21 +38,17 @@ class FechasProyecto extends StatelessWidget {
       OutlinedButton.icon(
         onPressed: () => _elegir(context, true),
         icon: const Icon(Icons.calendar_today_outlined, size: 18),
-        label: Text('Inicio: ${fechaCorta(inicio)}'),
+        label: Text('Inicio previsto: ${fechaCorta(inicio)}'),
       ),
       OutlinedButton.icon(
         onPressed: () => _elegir(context, false),
         icon: const Icon(Icons.event_outlined, size: 18),
         label: Text(
-          fin == null ? 'Definir entrega' : 'Entrega: ${fechaCorta(fin!)}',
+          fin == null
+              ? 'Definir fin previsto'
+              : 'Fin previsto: ${fechaCorta(fin!)}',
         ),
       ),
-      if (fin != null)
-        IconButton(
-          onPressed: () => alCambiarFin(null),
-          tooltip: 'Quitar fecha de entrega',
-          icon: const Icon(Icons.close),
-        ),
     ],
   );
 }

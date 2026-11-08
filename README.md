@@ -1,15 +1,17 @@
 # ObraPro / Cotizo
 
-Aplicación Flutter para cotizar trabajos, mantener un catálogo propio de materiales y registrar gastos sin conexión. Los datos se guardan en SQLite en el dispositivo. No requiere cuenta, API, claves ni consultas de precios por internet.
+Aplicación Flutter para cotizar trabajos, mantener un catálogo propio de materiales y registrar gastos sin conexión. Los datos se guardan en SQLite en el dispositivo. No requiere cuenta ni claves; la búsqueda opcional de imágenes consulta Wikimedia Commons cuando hay internet.
 
 ## Uso
 
-1. En **Materiales**, registra un nombre, unidad y costo de referencia.
-2. En **Cotizaciones**, crea un proyecto con cliente, descripción y fechas. Añade materiales, cantidades y costos aplicados. También puedes crear materiales desde el editor.
-3. Define el **total cotizado**: el importe completo que cobrará el cliente, incluyendo trabajo y margen.
-4. Abre el detalle para editar la cotización o cambiar su estado: Borrador, Enviado, Aprobado o Finalizado. El estado Enviado es manual; no envía mensajes.
-5. En **Gastos**, registra transporte, mano de obra u otros desembolsos. Asígnalos a un proyecto o déjalos como gastos generales.
-6. Consulta la rentabilidad en el detalle y exporta la propuesta desde **Proforma**.
+1. En **Materiales**, registra nombre, unidad, costo de referencia e imagen opcional desde la galería, la cámara o Wikimedia Commons. La foto se optimiza y se conserva en el dispositivo; las imágenes de Commons muestran su autoría y licencia. El selector permite buscar unidades habituales o escribir otra; no convierte cantidades.
+2. En **Cotizaciones**, crea un proyecto con cliente, descripción, inicio previsto y fin previsto. Añade materiales, cantidades y costos aplicados. También puedes crear materiales desde el editor.
+3. Agrega gastos previstos como alimentación, mano de obra o transporte y define el total que cobrarás. Si indicas tu margen, recibirás un precio sugerido que puedes editar.
+4. Revisa la ganancia prevista y el ajuste comercial en la proforma. Los gastos previstos no se registran como desembolsos ni se mezclan con la rentabilidad calculada a partir de gastos reales.
+5. Abre el detalle para editar la cotización o marcarla como Borrador, Enviada o Aprobada. Usa **Iniciar obra** cuando el cliente acepte el trabajo; las fechas reales se guardan sin modificar las previstas.
+6. Consulta las obras en curso y finalizadas desde la vista **Obras**. Inicio muestra únicamente obras activas y avisa cuando superan el fin previsto.
+7. En **Gastos**, registra desembolsos y asígnalos a un proyecto o déjalos como gastos generales.
+8. Consulta la rentabilidad registrada en el detalle y exporta la propuesta desde **Proforma**.
 
 No registres otra vez como gasto los materiales ya incluidos en las partidas: se descontarían dos veces. El catálogo conserva precios de referencia; esta versión no descuenta existencias físicas de un almacén.
 

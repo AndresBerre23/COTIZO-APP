@@ -4,6 +4,8 @@ import '../../core/formato.dart';
 import '../../core/theme/app_theme.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
+import 'componentes/imagen_material.dart';
+import 'componentes/vista_previa_imagen_material.dart';
 
 class MaterialTarjeta extends StatelessWidget {
   const MaterialTarjeta({
@@ -22,9 +24,17 @@ class MaterialTarjeta extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CircleAvatar(
-          backgroundColor: AppColors.softBlue,
-          child: Icon(Icons.inventory_2_outlined, color: AppColors.cobalt),
+        InkWell(
+          onTap: material.imagenRuta == null
+              ? null
+              : () => mostrarVistaPreviaImagenMaterial(
+                  context,
+                  ruta: material.imagenRuta,
+                  bytes: null,
+                  atribucion: material.atribucionImagen,
+                ),
+          borderRadius: BorderRadius.circular(12),
+          child: ImagenMaterial(ruta: material.imagenRuta, ancho: 56),
         ),
         const SizedBox(width: 12),
         Expanded(

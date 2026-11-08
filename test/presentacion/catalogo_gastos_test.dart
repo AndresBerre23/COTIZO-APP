@@ -1,4 +1,5 @@
 import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
+import 'package:cotizo_app/aplicacion/edicion_material.dart';
 import 'package:cotizo_app/core/theme/app_theme.dart';
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:cotizo_app/funcionalidades/gastos/formulario_gasto.dart';
@@ -105,14 +106,25 @@ void main() {
       expect(find.text('Completa este campo.'), findsOneWidget);
       expect(repositorio.datos.materiales, isEmpty);
       await tester.enterText(find.byType(TextFormField).at(0), 'Cemento');
-      await tester.enterText(find.byType(TextFormField).at(1), 'saco');
-      await tester.enterText(find.byType(TextFormField).at(2), '12,50');
+      await tester.tap(find.byType(DropdownMenu<String>));
+      await tester.pumpAndSettle();
+      final campoUnidad = find.descendant(
+        of: find.byType(DropdownMenu<String>),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(campoUnidad, 'm2');
+      await tester.pumpAndSettle();
+      expect(find.text('m²'), findsOneWidget);
+      await tester.tap(find.text('m²').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).at(1), '12,50');
       await _pulsar(tester, find.text('Guardar material'));
       expect(repositorio.datos.materiales.single.costoBaseCentavos, 1250);
+      expect(repositorio.datos.materiales.single.unidadMedida, 'm²');
       expect(find.text('Cemento'), findsOneWidget);
       await _pulsar(tester, find.byTooltip('Opciones del material'));
       await _pulsar(tester, find.text('Editar'));
-      await tester.enterText(find.byType(TextFormField).at(2), '14.20');
+      await tester.enterText(find.byType(TextFormField).at(1), '14.20');
       await _pulsar(tester, find.text('Guardar material'));
       expect(repositorio.datos.materiales.single.costoBaseCentavos, 1420);
       await tester.enterText(find.byType(TextField), 'pintura');
@@ -190,6 +202,39 @@ void main() {
     await _pulsar(tester, find.text('Guardar gasto'));
     expect(resultado?.proyectoId, 1);
     expect(resultado?.montoCentavos, 2500);
+  });
+
+  testWidgets('material permite conservar una unidad personalizada', (
+    tester,
+  ) async {
+    EdicionMaterial? guardado;
+    await tester.pumpWidget(
+      _aplicacion(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () async =>
+                guardado = await mostrarFormularioMaterial(context),
+            child: const Text('Abrir'),
+          ),
+        ),
+      ),
+    );
+    await _pulsar(tester, find.text('Abrir'));
+    await tester.enterText(find.byType(TextFormField).first, 'Pintura');
+    await tester.tap(find.byType(DropdownMenu<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Otra unidad').last);
+    await tester.pumpAndSettle();
+    final campoUnidad = find.descendant(
+      of: find.byType(DropdownMenu<String>),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(campoUnidad, 'balde especial');
+    await tester.enterText(find.byType(TextFormField).last, '8,50');
+    await _pulsar(tester, find.text('Guardar material'));
+
+    expect(guardado?.material.unidadMedida, 'balde especial');
+    expect(tester.takeException(), isNull);
   });
 
   for (final ancho in [360.0, 800.0, 1280.0, 1440.0]) {

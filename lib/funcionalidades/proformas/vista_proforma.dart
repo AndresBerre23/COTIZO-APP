@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../core/formato.dart';
 import '../../core/theme/app_theme.dart';
+import '../../dominio/calcular_desglose_proforma.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
 
 class VistaProforma extends StatelessWidget {
-  const VistaProforma({super.key, required this.proyecto, required this.items});
+  const VistaProforma({
+    super.key,
+    required this.proyecto,
+    required this.items,
+    this.gastosPrevistos = const [],
+  });
   final Proyecto proyecto;
   final List<ItemProyecto> items;
+  final List<GastoPrevisto> gastosPrevistos;
   @override
   Widget build(BuildContext context) {
-    final materiales = items.fold<int>(
-      0,
-      (total, item) => total + item.subtotalCentavos,
-    );
+    final desglose = calcularDesgloseProforma(proyecto, items, gastosPrevistos);
     return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,12 +86,16 @@ class VistaProforma extends StatelessWidget {
               ),
             ),
           ),
-          _Importe('Materiales', materiales),
-          if (materiales != proyecto.totalCotizadoCentavos)
+          _Importe('Materiales', desglose.totalMaterialesCentavos),
+          for (final gasto in gastosPrevistos)
             _Importe(
-              'Ajuste al total cotizado',
-              proyecto.totalCotizadoCentavos - materiales,
+              gasto.descripcion.isEmpty
+                  ? gasto.categoria
+                  : '${gasto.categoria} · ${gasto.descripcion}',
+              gasto.montoCentavos,
             ),
+          if (desglose.ajusteComercialCentavos != 0)
+            _Importe('Ajuste comercial', desglose.ajusteComercialCentavos),
           const Divider(height: 24),
           _Importe(
             'TOTAL COTIZADO (USD)',

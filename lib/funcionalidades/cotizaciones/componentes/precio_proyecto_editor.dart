@@ -2,20 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../dominio/leer_margen_deseado.dart';
 import 'seccion_cotizacion.dart';
 
 class PrecioProyectoEditor extends StatelessWidget {
   const PrecioProyectoEditor({
     super.key,
     required this.total,
-    required this.costoMateriales,
+    required this.costoPrevisto,
+    required this.margen,
+    required this.precioSugerido,
+    required this.aplicarSugerido,
     required this.guardando,
     required this.alCambiar,
     required this.alGuardar,
   });
 
   final TextEditingController total;
-  final int costoMateriales;
+  final int costoPrevisto;
+  final TextEditingController margen;
+  final int? precioSugerido;
+  final VoidCallback? aplicarSugerido;
   final bool guardando;
   final VoidCallback alCambiar, alGuardar;
 
@@ -42,30 +49,57 @@ class PrecioProyectoEditor extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Text('Costo de materiales: ${dinero(costoMateriales)}'),
+          Text('Costo previsto: ${dinero(costoPrevisto)}'),
+          TextFormField(
+            controller: margen,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Margen deseado sobre el precio de venta (%)',
+            ),
+            validator: validarMargenDeseado,
+            onChanged: (_) => alCambiar(),
+          ),
+          if (precioSugerido != null) ...[
+            const SizedBox(height: 8),
+            Text('Precio sugerido: ${dinero(precioSugerido!)}'),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: aplicarSugerido,
+                child: const Text('Usar precio sugerido'),
+              ),
+            ),
+          ],
+          if (precioSugerido != null && aplicarSugerido == null)
+            const Text('El precio sugerido supera el límite admitido.'),
           const SizedBox(height: 12),
           Text(
-            'Disponible antes de gastos',
+            'Ganancia prevista',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
-              dinero(cotizado - costoMateriales),
+              dinero(cotizado - costoPrevisto),
               style: TextStyle(
                 fontSize: 28,
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                color: cotizado < costoMateriales
+                color: cotizado < costoPrevisto
                     ? AppColors.error
                     : AppColors.cobalt,
               ),
             ),
           ),
+          if (cotizado < costoPrevisto)
+            const Text(
+              'El precio cotizado está por debajo del costo previsto.',
+              style: TextStyle(color: AppColors.error),
+            ),
           const SizedBox(height: 8),
           const Text(
-            'Registra después transporte, mano de obra y otros gastos del proyecto para conocer su rentabilidad.',
+            'El precio final sigue siendo editable. Los gastos registrados se calcularán por separado.',
           ),
           const SizedBox(height: 24),
           FilledButton.icon(

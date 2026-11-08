@@ -1,4 +1,5 @@
 import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
+import 'package:cotizo_app/aplicacion/edicion_material.dart';
 import 'package:cotizo_app/core/formato.dart';
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,9 +30,10 @@ void main() {
         unidadMedida: 'm',
         costoBaseCentavos: 100,
       );
-      expect(await cubit.guardarMaterial(material), isTrue);
+      const edicion = EdicionMaterial(material: material);
+      expect(await cubit.guardarMaterial(edicion), isTrue);
       expect(cubit.state.falloCarga, isTrue);
-      expect(await cubit.guardarMaterial(material), isFalse);
+      expect(await cubit.guardarMaterial(edicion), isFalse);
       expect(repositorio.escrituras, 1);
       await cubit.close();
     },

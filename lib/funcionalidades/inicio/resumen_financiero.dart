@@ -11,14 +11,8 @@ class ResumenFinanciero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final confirmados = datos.proyectos
-        .where(
-          (proyecto) =>
-              proyecto.estado == EstadoProyecto.aprobado ||
-              proyecto.estado == EstadoProyecto.finalizado,
-        )
-        .toList();
-    final ingresos = confirmados.fold<int>(
+    final obras = datos.proyectos.where((proyecto) => proyecto.esObra).toList();
+    final ingresos = obras.fold<int>(
       0,
       (total, proyecto) => total + proyecto.totalCotizadoCentavos,
     );
@@ -26,18 +20,19 @@ class ResumenFinanciero extends StatelessWidget {
         .where((gasto) => gasto.proyectoId == null)
         .fold<int>(0, (total, gasto) => total + gasto.montoCentavos);
     final resultado =
-        confirmados.fold<int>(
+        obras.fold<int>(
           0,
           (total, proyecto) =>
               total + calcularRentabilidad(proyecto, datos.items, datos.gastos),
         ) -
         generales;
+    final costosObras = ingresos - generales - resultado;
     return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'BALANCE ESTIMADO',
+            'BALANCE ESTIMADO DE OBRAS',
             style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
@@ -61,7 +56,7 @@ class ResumenFinanciero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Proyectos aprobados y finalizados, menos sus costos y todos los gastos generales.',
+            'Obras iniciadas y finalizadas, menos sus costos y todos los gastos generales.',
             style: TextStyle(color: AppColors.muted),
           ),
           const SizedBox(height: 20),
@@ -70,7 +65,7 @@ class ResumenFinanciero extends StatelessWidget {
             runSpacing: 16,
             children: [
               _Dato('Total cotizado', dinero(ingresos)),
-              _Dato('Costos y gastos', dinero(ingresos - resultado)),
+              _Dato('Costos de obras', dinero(costosObras)),
               _Dato('Gastos generales', dinero(generales)),
             ],
           ),

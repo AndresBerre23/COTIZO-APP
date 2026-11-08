@@ -15,6 +15,9 @@ class Proyecto {
     required this.descripcion,
     required this.fechaInicio,
     this.fechaFin,
+    this.fechaInicioReal,
+    this.fechaFinReal,
+    this.margenDeseadoPuntos,
     this.estado = EstadoProyecto.borrador,
     required this.totalCotizadoCentavos,
   });
@@ -24,8 +27,34 @@ class Proyecto {
   final String descripcion;
   final DateTime fechaInicio;
   final DateTime? fechaFin;
+  final DateTime? fechaInicioReal;
+  final DateTime? fechaFinReal;
+  final int? margenDeseadoPuntos;
   final EstadoProyecto estado;
   final int totalCotizadoCentavos;
+
+  bool get esObra =>
+      fechaInicioReal != null || estado == EstadoProyecto.finalizado;
+  bool get estaEnCurso =>
+      fechaInicioReal != null &&
+      fechaFinReal == null &&
+      estado != EstadoProyecto.finalizado;
+  bool get estaFinalizada => estado == EstadoProyecto.finalizado;
+
+  String get etapa {
+    if (estaEnCurso) return 'En curso';
+    if (estaFinalizada) return 'Finalizada';
+    return estado.etiqueta;
+  }
+
+  bool estaRetrasada(DateTime ahora) {
+    if (!estaEnCurso || fechaFin == null) return false;
+    return _soloFecha(ahora).isAfter(_soloFecha(fechaFin!));
+  }
+
+  int diasDeRetraso(DateTime ahora) => estaRetrasada(ahora)
+      ? _soloFecha(ahora).difference(_soloFecha(fechaFin!)).inDays
+      : 0;
 
   Proyecto conEstado(EstadoProyecto nuevoEstado) => Proyecto(
     id: id,
@@ -33,7 +62,13 @@ class Proyecto {
     descripcion: descripcion,
     fechaInicio: fechaInicio,
     fechaFin: fechaFin,
+    fechaInicioReal: fechaInicioReal,
+    fechaFinReal: fechaFinReal,
+    margenDeseadoPuntos: margenDeseadoPuntos,
     estado: nuevoEstado,
     totalCotizadoCentavos: totalCotizadoCentavos,
   );
 }
+
+DateTime _soloFecha(DateTime fecha) =>
+    DateTime(fecha.year, fecha.month, fecha.day);

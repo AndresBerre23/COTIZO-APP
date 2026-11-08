@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../aplicacion/cotizo_cubit.dart';
@@ -10,11 +12,54 @@ import '../widgets/pagina_base.dart';
 import '../widgets/surface_card.dart';
 import '../funcionalidades/inicio/resumen_financiero.dart';
 import '../funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
+import '../funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
 import '../funcionalidades/gastos/formulario_gasto.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key, this.cambiarSeccion});
   final ValueChanged<int>? cambiarSeccion;
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage>
+    with WidgetsBindingObserver {
+  DateTime _ahora = DateTime.now();
+  Timer? _cambioDia;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _programarCambioDia();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() => _ahora = DateTime.now());
+      _programarCambioDia();
+    }
+  }
+
+  void _programarCambioDia() {
+    _cambioDia?.cancel();
+    final ahora = DateTime.now();
+    final siguienteDia = DateTime(ahora.year, ahora.month, ahora.day + 1);
+    _cambioDia = Timer(siguienteDia.difference(ahora), () {
+      if (!mounted) return;
+      setState(() => _ahora = DateTime.now());
+      _programarCambioDia();
+    });
+  }
+
+  @override
+  void dispose() {
+    _cambioDia?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
   Future<void> _registrarGasto(BuildContext context, DatosLocales datos) async {
     final gasto = await mostrarFormularioGasto(
@@ -35,7 +80,7 @@ class DashboardPage extends StatelessWidget {
     builder: (context, estado) {
       final datos = estado.datos;
       final activos = datos.proyectos
-          .where((proyecto) => proyecto.estado != EstadoProyecto.finalizado)
+          .where((proyecto) => proyecto.estaEnCurso)
           .toList();
       return PaginaBase(
         titulo: 'Inicio',
@@ -89,11 +134,12 @@ class DashboardPage extends StatelessWidget {
               mensaje:
                   'Añade tus materiales y crea una cotización. Todo queda guardado en este dispositivo.',
               accion: TextButton(
-                onPressed: () => cambiarSeccion?.call(2),
+                onPressed: () => widget.cambiarSeccion?.call(2),
                 child: const Text('Preparar mis materiales'),
               ),
             ),
           ...activos.map((proyecto) {
+            final retrasada = proyecto.estaRetrasada(_ahora);
             final rentabilidad = calcularRentabilidad(
               proyecto,
               datos.items,
@@ -105,62 +151,108 @@ class DashboardPage extends StatelessWidget {
                 : 0.0;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: SurfaceCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      proyecto.descripcion,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+              child: Semantics(
+                button: true,
+                label: 'Abrir detalle de ${proyecto.descripcion}',
+                child: SurfaceCard(
+                  padding: EdgeInsets.zero,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(20),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => DetalleProyectoPagina(
+                          proyectoId: proyecto.id,
+                          confirmarRetraso: retrasada,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      proyecto.nombreCliente,
-                      style: const TextStyle(color: AppColors.muted),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Chip(label: Text(proyecto.estado.etiqueta)),
-                        Text(
-                          'Cotizado: ${dinero(proyecto.totalCotizadoCentavos)}',
-                        ),
-                        Text(
-                          'Disponible: ${dinero(rentabilidad)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (retrasada) ...[
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppColors.error,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Obra en retraso · ${proyecto.diasDeRetraso(_ahora)} '
+                                    '${proyecto.diasDeRetraso(_ahora) == 1 ? 'día' : 'días'}',
+                                    style: const TextStyle(
+                                      color: AppColors.error,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          Text(
+                            proyecto.descripcion,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            proyecto.nombreCliente,
+                            style: const TextStyle(color: AppColors.muted),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Chip(label: Text(proyecto.etapa)),
+                              Text(
+                                'Cotizado: ${dinero(proyecto.totalCotizadoCentavos)}',
+                              ),
+                              Text(
+                                'Disponible: ${dinero(rentabilidad)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: rentabilidad < 0
+                                      ? AppColors.error
+                                      : AppColors.cobalt,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          LinearProgressIndicator(
+                            value: proporcion,
                             color: rentabilidad < 0
                                 ? AppColors.error
-                                : AppColors.cobalt,
+                                : AppColors.blue,
+                            backgroundColor: AppColors.softBlue,
+                            minHeight: 6,
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: proporcion,
-                      color: rentabilidad < 0
-                          ? AppColors.error
-                          : AppColors.blue,
-                      backgroundColor: AppColors.softBlue,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Costos registrados: ${dinero(costo)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.muted,
+                          const SizedBox(height: 8),
+                          Text(
+                            'Costos registrados: ${dinero(costo)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Ver detalle',
+                            style: TextStyle(color: AppColors.blue),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
             );

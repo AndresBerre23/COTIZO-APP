@@ -21,8 +21,13 @@ class RepositorioLectura implements RepositorioLocal {
   @override
   Future<int> guardarProyecto(
     Proyecto proyecto,
-    List<ItemProyecto> items,
-  ) async => 1;
+    List<ItemProyecto> items, {
+    List<GastoPrevisto>? gastosPrevistos,
+  }) async => 1;
+  @override
+  Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal) async {}
+  @override
+  Future<void> finalizarObra(int proyectoId, DateTime fechaFinReal) async {}
   @override
   Future<int> guardarGasto(Gasto gasto) async => 1;
   @override
@@ -42,6 +47,7 @@ DatosLocales datosMuestra() => DatosLocales(
       nombreCliente: 'María Gómez',
       descripcion: 'Remodelación de cocina',
       fechaInicio: DateTime(2026, 11, 5),
+      fechaFin: DateTime(2026, 11, 15),
       estado: EstadoProyecto.aprobado,
       totalCotizadoCentavos: 180000,
     ),

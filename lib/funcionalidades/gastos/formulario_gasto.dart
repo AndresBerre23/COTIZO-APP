@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/formato.dart';
+import '../../dominio/categorias_gasto.dart';
 import '../../dominio/modelos.dart';
 
 Future<Gasto?> mostrarFormularioGasto(
@@ -40,14 +41,7 @@ class _GastoFormularioState extends State<GastoFormulario> {
   late DateTime _fecha;
   late String _categoria;
   late int _proyectoId;
-  final _categorias = [
-    'Transporte',
-    'Alimentación',
-    'Mano de obra',
-    'Materiales adicionales',
-    'Herramientas',
-    'Otros',
-  ];
+  late final List<String> _categorias;
 
   @override
   void initState() {
@@ -58,7 +52,8 @@ class _GastoFormularioState extends State<GastoFormulario> {
     );
     _nota = TextEditingController(text: gasto?.nota ?? '');
     _fecha = gasto?.fecha ?? DateTime.now();
-    _categoria = gasto?.categoria ?? _categorias.first;
+    _categorias = List.of(categoriasGasto);
+    _categoria = gasto?.categoria ?? categoriasGasto.first;
     if (!_categorias.contains(_categoria)) _categorias.add(_categoria);
     _proyectoId = gasto?.proyectoId ?? widget.proyectoId ?? 0;
   }

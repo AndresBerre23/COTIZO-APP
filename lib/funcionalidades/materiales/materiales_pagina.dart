@@ -22,14 +22,12 @@ class _MaterialsPageState extends State<MaterialsPage> {
   String _busqueda = '';
 
   Future<void> _editar([MaterialObra? existente]) async {
-    final material = await mostrarFormularioMaterial(
+    final edicion = await mostrarFormularioMaterial(
       context,
       material: existente,
     );
-    if (material == null || !mounted) return;
-    final guardado = await context.read<CotizoCubit>().guardarMaterial(
-      material,
-    );
+    if (edicion == null || !mounted) return;
+    final guardado = await context.read<CotizoCubit>().guardarMaterial(edicion);
     if (guardado && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Material guardado en este dispositivo.')),

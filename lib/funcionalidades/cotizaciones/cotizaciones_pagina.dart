@@ -19,6 +19,8 @@ class QuotePage extends StatefulWidget {
 class _QuotePageState extends State<QuotePage> {
   String _busqueda = '';
   EstadoProyecto? _estado;
+  bool _verObras = false;
+  _FiltroObras _filtroObras = _FiltroObras.todas;
 
   void _crear() => Navigator.of(
     context,
@@ -30,8 +32,15 @@ class _QuotePageState extends State<QuotePage> {
       final proyectos = estado.datos.proyectos.where((proyecto) {
         final texto = '${proyecto.nombreCliente} ${proyecto.descripcion}'
             .toLowerCase();
-        return texto.contains(_busqueda) &&
-            (_estado == null || proyecto.estado == _estado);
+        if (!texto.contains(_busqueda) || proyecto.esObra != _verObras) {
+          return false;
+        }
+        if (!_verObras) return _estado == null || proyecto.estado == _estado;
+        return switch (_filtroObras) {
+          _FiltroObras.todas => true,
+          _FiltroObras.enCurso => proyecto.estaEnCurso,
+          _FiltroObras.finalizadas => proyecto.estaFinalizada,
+        };
       }).toList();
       return PaginaBase(
         titulo: 'Cotizaciones',
@@ -41,8 +50,29 @@ class _QuotePageState extends State<QuotePage> {
           label: const Text('Nueva cotización'),
         ),
         children: [
-          const Text('Tus proyectos, desde el primer presupuesto.'),
+          const Text('Tus proyectos, desde el presupuesto hasta la entrega.'),
           const SizedBox(height: 20),
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.request_quote_outlined),
+                label: Text('Cotizaciones'),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.construction_outlined),
+                label: Text('Obras'),
+              ),
+            ],
+            selected: {_verObras},
+            onSelectionChanged: (seleccion) => setState(() {
+              _verObras = seleccion.single;
+              _estado = null;
+              _filtroObras = _FiltroObras.todas;
+            }),
+          ),
+          const SizedBox(height: 16),
           TextField(
             onChanged: (texto) =>
                 setState(() => _busqueda = texto.trim().toLowerCase()),
@@ -56,31 +86,46 @@ class _QuotePageState extends State<QuotePage> {
             spacing: 8,
             runSpacing: 4,
             children: [
-              ChoiceChip(
-                label: const Text('Todas'),
-                selected: _estado == null,
-                onSelected: (_) => setState(() => _estado = null),
-              ),
-              for (final filtro in EstadoProyecto.values)
+              if (!_verObras)
+                ChoiceChip(
+                  label: const Text('Todas'),
+                  selected: _estado == null,
+                  onSelected: (_) => setState(() => _estado = null),
+                ),
+              for (final filtro
+                  in _verObras
+                      ? const <EstadoProyecto>[]
+                      : EstadoProyecto.values.where(
+                          (opcion) => opcion != EstadoProyecto.finalizado,
+                        ))
                 ChoiceChip(
                   label: Text(filtro.etiqueta),
                   selected: _estado == filtro,
                   onSelected: (_) => setState(() => _estado = filtro),
                 ),
+              if (_verObras)
+                for (final filtro in _FiltroObras.values)
+                  ChoiceChip(
+                    label: Text(filtro.etiqueta),
+                    selected: _filtroObras == filtro,
+                    onSelected: (_) => setState(() => _filtroObras = filtro),
+                  ),
             ],
           ),
           const SizedBox(height: 20),
           if (proyectos.isEmpty)
             EstadoVacio(
               icono: Icons.request_quote_outlined,
-              titulo: estado.datos.proyectos.isEmpty
-                  ? 'Tu próxima obra empieza aquí'
+              titulo: estado.datos.proyectos.isEmpty && !_verObras
+                  ? 'Tu próxima cotización empieza aquí'
                   : 'No hay coincidencias',
-              mensaje: estado.datos.proyectos.isEmpty
+              mensaje: estado.datos.proyectos.isEmpty && !_verObras
                   ? 'Añade un cliente, tus materiales y el precio que '
                         'quieres cotizar. Todo se guarda en este dispositivo.'
+                  : _verObras
+                  ? 'Inicia una cotización aceptada o cambia el filtro seleccionado.'
                   : 'Prueba con otro cliente o cambia el estado seleccionado.',
-              accion: estado.datos.proyectos.isEmpty
+              accion: estado.datos.proyectos.isEmpty && !_verObras
                   ? FilledButton(
                       onPressed: _crear,
                       child: const Text('Crear mi primera cotización'),
@@ -101,4 +146,13 @@ class _QuotePageState extends State<QuotePage> {
       );
     },
   );
+}
+
+enum _FiltroObras {
+  todas('Todas'),
+  enCurso('En curso'),
+  finalizadas('Finalizadas');
+
+  const _FiltroObras(this.etiqueta);
+  final String etiqueta;
 }

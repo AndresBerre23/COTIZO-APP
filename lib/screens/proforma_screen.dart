@@ -27,12 +27,17 @@ class _ProformaPageState extends State<ProformaPage> {
   Future<void> _exportar(
     Proyecto proyecto,
     List<ItemProyecto> items, {
+    required List<GastoPrevisto> gastosPrevistos,
     bool imprimir = false,
   }) async {
     if (_generando) return;
     setState(() => _generando = true);
     try {
-      final datos = await ServicioPdf().generar(proyecto, items);
+      final datos = await ServicioPdf().generar(
+        proyecto,
+        items,
+        gastosPrevistos: gastosPrevistos,
+      );
       if (imprimir) {
         await Printing.layoutPdf(
           onLayout: (_) async => datos,
@@ -81,6 +86,9 @@ class _ProformaPageState extends State<ProformaPage> {
         orElse: () => proyectos.first,
       );
       final items = estado.datos.itemsDeProyecto(proyecto.id);
+      final gastosPrevistos = estado.datos.gastosPrevistosDeProyecto(
+        proyecto.id,
+      );
       return PaginaBase(
         titulo: 'Proforma',
         children: [
@@ -108,21 +116,36 @@ class _ProformaPageState extends State<ProformaPage> {
                 : (valor) => setState(() => _seleccion = valor),
           ),
           const SizedBox(height: 20),
-          VistaProforma(proyecto: proyecto, items: items),
+          VistaProforma(
+            proyecto: proyecto,
+            items: items,
+            gastosPrevistos: gastosPrevistos,
+          ),
           const SizedBox(height: 20),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
               FilledButton.icon(
-                onPressed: _generando ? null : () => _exportar(proyecto, items),
+                onPressed: _generando
+                    ? null
+                    : () => _exportar(
+                        proyecto,
+                        items,
+                        gastosPrevistos: gastosPrevistos,
+                      ),
                 icon: const Icon(Icons.ios_share),
                 label: Text(_generando ? 'Preparando PDF...' : 'Compartir PDF'),
               ),
               OutlinedButton.icon(
                 onPressed: _generando
                     ? null
-                    : () => _exportar(proyecto, items, imprimir: true),
+                    : () => _exportar(
+                        proyecto,
+                        items,
+                        gastosPrevistos: gastosPrevistos,
+                        imprimir: true,
+                      ),
                 icon: const Icon(Icons.print_outlined),
                 label: const Text('Imprimir / guardar PDF'),
               ),

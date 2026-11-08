@@ -58,6 +58,34 @@ void main() {
     },
   );
 
+  test('persiste origen y licencia de la imagen del material', () async {
+    const atribucion = AtribucionImagenMaterial(
+      titulo: 'Ladrillo cerámico',
+      autor: 'Autora de prueba',
+      fuenteUrl: 'https://commons.wikimedia.org/wiki/File:Ladrillo.jpg',
+      licencia: 'CC BY-SA 4.0',
+      licenciaUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+    );
+    await repositorio.guardarMaterial(
+      MaterialObra(
+        id: materialId,
+        nombre: 'Ladrillo',
+        unidadMedida: 'Unidad',
+        costoBaseCentavos: 125,
+        imagenRuta: 'imagen-guardada.jpg',
+        atribucionImagen: atribucion,
+      ),
+    );
+
+    final material = (await repositorio.obtenerDatos()).materiales.single;
+    expect(material.imagenRuta, 'imagen-guardada.jpg');
+    expect(material.atribucionImagen?.titulo, atribucion.titulo);
+    expect(material.atribucionImagen?.autor, atribucion.autor);
+    expect(material.atribucionImagen?.fuenteUrl, atribucion.fuenteUrl);
+    expect(material.atribucionImagen?.licencia, atribucion.licencia);
+    expect(material.atribucionImagen?.licenciaUrl, atribucion.licenciaUrl);
+  });
+
   test(
     'editar un proyecto preserva sus gastos y sustituye solo el detalle',
     () async {
@@ -73,6 +101,39 @@ void main() {
       expect(datos.proyectos.single.totalCotizadoCentavos, 8000);
       expect(datos.gastos.single.id, gastoId);
       expect(datos.items.single.cantidad, 4);
+    },
+  );
+
+  test(
+    'persiste gastos previstos sin mezclarlos con gastos registrados',
+    () async {
+      final proyectoId = await repositorio.guardarProyecto(_proyecto(), []);
+      const previsto = GastoPrevisto(
+        categoria: 'Transporte de materiales',
+        montoCentavos: 2500,
+        descripcion: 'Entrega de arena',
+      );
+      await repositorio.guardarProyecto(
+        _proyecto(id: proyectoId),
+        [],
+        gastosPrevistos: const [previsto],
+      );
+      await repositorio.guardarGasto(_gasto(proyectoId, 800));
+
+      var datos = await repositorio.obtenerDatos();
+      expect(datos.gastosPrevistos.single.montoCentavos, 2500);
+      expect(datos.gastos.single.montoCentavos, 800);
+
+      await repositorio.guardarProyecto(_proyecto(id: proyectoId), []);
+      datos = await repositorio.obtenerDatos();
+      expect(datos.gastosPrevistos.single.descripcion, 'Entrega de arena');
+
+      await repositorio.guardarProyecto(
+        _proyecto(id: proyectoId),
+        [],
+        gastosPrevistos: const [],
+      );
+      expect((await repositorio.obtenerDatos()).gastosPrevistos, isEmpty);
     },
   );
 
@@ -189,6 +250,175 @@ void main() {
       await carpeta.delete();
     }
   });
+
+  test('inicia y finaliza una obra sin reemplazar sus partidas', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), [
+      _item(materialId),
+    ]);
+    await repositorio.iniciarObra(id, DateTime(2026, 11, 6));
+    var datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos.single.estado, EstadoProyecto.aprobado);
+    expect(datos.proyectos.single.fechaInicioReal, DateTime(2026, 11, 6));
+    expect(datos.proyectos.single.estaEnCurso, isTrue);
+    expect(datos.items.single.materialId, materialId);
+
+    await repositorio.finalizarObra(id, DateTime(2026, 11, 7));
+    datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos.single.estado, EstadoProyecto.finalizado);
+    expect(datos.proyectos.single.fechaFinReal, DateTime(2026, 11, 7));
+    expect(datos.proyectos.single.fechaFin, DateTime(2026, 11, 15));
+    expect(datos.items, hasLength(1));
+  });
+
+  test('rechaza transiciones y fechas reales inválidas', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), []);
+    await expectLater(
+      repositorio.finalizarObra(id, DateTime(2026, 11, 6)),
+      throwsFormatException,
+    );
+    await expectLater(
+      repositorio.iniciarObra(id, DateTime.now().add(const Duration(days: 2))),
+      throwsFormatException,
+    );
+    await repositorio.iniciarObra(id, DateTime(2026, 11, 6));
+    await expectLater(
+      repositorio.iniciarObra(id, DateTime(2026, 11, 6)),
+      throwsFormatException,
+    );
+    await expectLater(
+      repositorio.finalizarObra(id, DateTime(2026, 11, 5)),
+      throwsFormatException,
+    );
+  });
+
+  test(
+    'exige fecha final prevista antes de iniciar una cotización histórica',
+    () async {
+      final id = await repositorio.guardarProyecto(_proyecto(), []);
+      await repositorio.base.update(
+        'proyectos',
+        {'fecha_fin': null},
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      await expectLater(
+        repositorio.iniciarObra(id, DateTime(2026, 11, 6)),
+        throwsFormatException,
+      );
+      final proyecto = (await repositorio.obtenerDatos()).proyectos.single;
+      expect(proyecto.fechaFin, isNull);
+      expect(proyecto.fechaInicioReal, isNull);
+    },
+  );
+
+  test('migra una base v1 sin perder relaciones ni inventar fechas', () async {
+    final carpeta = await Directory.systemTemp.createTemp('cotizo_migracion_');
+    final ruta = rutas.join(carpeta.path, 'version1.sqlite');
+    RepositorioSqlite? local;
+    try {
+      final antigua = await databaseFactoryFfi.openDatabase(
+        ruta,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (base, _) => _crearEsquemaVersion1(base),
+        ),
+      );
+      await antigua.insert('proyectos', {
+        'id': 7,
+        'nombre_cliente': 'Cliente histórico',
+        'descripcion': 'Trabajo conservado',
+        'fecha_inicio': DateTime(2025, 1, 1).millisecondsSinceEpoch,
+        'fecha_fin': DateTime(2025, 1, 10).millisecondsSinceEpoch,
+        'estado': 'finalizado',
+        'total_cotizado': 5000,
+      });
+      await antigua.insert('materiales', {
+        'id': 3,
+        'nombre': 'Cable',
+        'unidad_medida': 'm',
+        'costo_base': 100,
+      });
+      await antigua.insert('items_proyecto', {
+        'proyecto_id': 7,
+        'material_id': 3,
+        'cantidad': 2.0,
+        'costo_unitario_aplicado': 100,
+        'subtotal': 200,
+        'nombre_material': 'Cable',
+        'unidad_medida': 'm',
+      });
+      await antigua.insert('gastos', {
+        'proyecto_id': 7,
+        'monto': 50,
+        'categoria': 'Transporte',
+        'fecha': DateTime(2025, 1, 2).millisecondsSinceEpoch,
+        'nota': '',
+      });
+      await antigua.close();
+
+      local = await RepositorioSqlite.abrir(
+        ruta: ruta,
+        fabrica: databaseFactoryFfi,
+      );
+      final datos = await local.obtenerDatos();
+      expect(datos.proyectos.single.id, 7);
+      expect(datos.proyectos.single.fechaInicioReal, isNull);
+      expect(datos.proyectos.single.fechaFinReal, isNull);
+      expect(datos.proyectos.single.esObra, isTrue);
+      expect(datos.items.single.proyectoId, 7);
+      expect(datos.gastos.single.proyectoId, 7);
+      expect(datos.materiales.single.imagenRuta, isNull);
+      expect(datos.materiales.single.atribucionImagen, isNull);
+    } finally {
+      await local?.cerrar();
+      await databaseFactoryFfi.deleteDatabase(ruta);
+      await carpeta.delete();
+    }
+  });
+}
+
+Future<void> _crearEsquemaVersion1(Database base) async {
+  await base.execute('''
+    CREATE TABLE proyectos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre_cliente TEXT NOT NULL,
+      descripcion TEXT NOT NULL,
+      fecha_inicio INTEGER NOT NULL,
+      fecha_fin INTEGER,
+      estado TEXT NOT NULL,
+      total_cotizado INTEGER NOT NULL
+    )
+  ''');
+  await base.execute('''
+    CREATE TABLE materiales (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nombre TEXT NOT NULL,
+      unidad_medida TEXT NOT NULL,
+      costo_base INTEGER NOT NULL
+    )
+  ''');
+  await base.execute('''
+    CREATE TABLE items_proyecto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      proyecto_id INTEGER NOT NULL REFERENCES proyectos(id) ON DELETE CASCADE,
+      material_id INTEGER NOT NULL REFERENCES materiales(id) ON DELETE RESTRICT,
+      cantidad REAL NOT NULL,
+      costo_unitario_aplicado INTEGER NOT NULL,
+      subtotal INTEGER NOT NULL,
+      nombre_material TEXT NOT NULL,
+      unidad_medida TEXT NOT NULL
+    )
+  ''');
+  await base.execute('''
+    CREATE TABLE gastos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      proyecto_id INTEGER REFERENCES proyectos(id) ON DELETE CASCADE,
+      monto INTEGER NOT NULL,
+      categoria TEXT NOT NULL,
+      fecha INTEGER NOT NULL,
+      nota TEXT NOT NULL
+    )
+  ''');
 }
 
 Proyecto _proyecto({int id = 0, int total = 5000}) => Proyecto(
@@ -196,6 +426,7 @@ Proyecto _proyecto({int id = 0, int total = 5000}) => Proyecto(
   nombreCliente: 'Cliente Álvarez',
   descripcion: 'Instalación eléctrica',
   fechaInicio: DateTime(2026, 11, 5),
+  fechaFin: DateTime(2026, 11, 15),
   totalCotizadoCentavos: total,
 );
 

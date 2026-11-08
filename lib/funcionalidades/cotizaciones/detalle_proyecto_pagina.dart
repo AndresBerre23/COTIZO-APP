@@ -9,13 +9,20 @@ import '../../screens/proforma_screen.dart';
 import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
 import '../gastos/formulario_gasto.dart';
+import 'componentes/acciones_obra.dart';
+import 'componentes/confirmacion_retraso.dart';
+import 'componentes/detalle_listas_proyecto.dart';
 import 'componentes/resumen_rentabilidad.dart';
-import 'componentes/seccion_cotizacion.dart';
 import 'editor_proyecto_pagina.dart';
 
 class DetalleProyectoPagina extends StatelessWidget {
-  const DetalleProyectoPagina({super.key, required this.proyectoId});
+  const DetalleProyectoPagina({
+    super.key,
+    required this.proyectoId,
+    this.confirmarRetraso = false,
+  });
   final int proyectoId;
+  final bool confirmarRetraso;
 
   Future<void> _registrarGasto(BuildContext context) async {
     final cubit = context.read<CotizoCubit>();
@@ -41,21 +48,37 @@ class DetalleProyectoPagina extends StatelessWidget {
   ) async {
     if (estado == null || estado == proyecto.estado) return;
     final guardado = await context.read<CotizoCubit>().guardarProyecto(
-      Proyecto(
-        id: proyecto.id,
-        nombreCliente: proyecto.nombreCliente,
-        descripcion: proyecto.descripcion,
-        fechaInicio: proyecto.fechaInicio,
-        fechaFin: proyecto.fechaFin,
-        estado: estado,
-        totalCotizadoCentavos: proyecto.totalCotizadoCentavos,
-      ),
+      proyecto.conEstado(estado),
       partidas,
     );
     if (!context.mounted || !guardado) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Estado actualizado: ${estado.etiqueta}')),
     );
+  }
+
+  Future<void> _iniciar(BuildContext context, DateTime fecha) async {
+    final guardado = await context.read<CotizoCubit>().iniciarObra(
+      proyectoId,
+      fecha,
+    );
+    if (guardado && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Obra iniciada')));
+    }
+  }
+
+  Future<void> _finalizar(BuildContext context, DateTime fecha) async {
+    final guardado = await context.read<CotizoCubit>().finalizarObra(
+      proyectoId,
+      fecha,
+    );
+    if (guardado && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Obra finalizada')));
+    }
   }
 
   Future<void> _eliminar(BuildContext context) async {
@@ -91,6 +114,9 @@ class DetalleProyectoPagina extends StatelessWidget {
         final proyecto = coincidencias.first;
         final partidas = estado.datos.itemsDeProyecto(proyectoId);
         final gastos = estado.datos.gastosDeProyecto(proyectoId);
+        final gastosPrevistos = estado.datos.gastosPrevistosDeProyecto(
+          proyectoId,
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1120),
@@ -111,16 +137,23 @@ class DetalleProyectoPagina extends StatelessWidget {
                   proyecto.nombreCliente,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Chip(label: Text(proyecto.etapa)),
+                ),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 20,
                   runSpacing: 8,
                   children: [
-                    Text('Inicio: ${fechaCorta(proyecto.fechaInicio)}'),
+                    Text(
+                      'Inicio previsto: ${fechaCorta(proyecto.fechaInicio)}',
+                    ),
                     Text(
                       proyecto.fechaFin == null
-                          ? 'Sin fecha de entrega'
-                          : 'Entrega: ${fechaCorta(proyecto.fechaFin!)}',
+                          ? 'Fin previsto sin definir'
+                          : 'Fin previsto: ${fechaCorta(proyecto.fechaFin!)}',
                     ),
                   ],
                 ),
@@ -158,26 +191,47 @@ class DetalleProyectoPagina extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 20),
-                DropdownButtonFormField<EstadoProyecto>(
-                  key: ValueKey('${proyecto.estado.name}:${estado.guardando}'),
-                  value: proyecto.estado,
-                  decoration: const InputDecoration(
-                    labelText: 'Estado del proyecto',
-                    helperText: 'Actualízalo según el acuerdo con tu cliente.',
+                if (!proyecto.esObra)
+                  DropdownButtonFormField<EstadoProyecto>(
+                    key: ValueKey(
+                      '${proyecto.estado.name}:${estado.guardando}',
+                    ),
+                    value: proyecto.estado,
+                    decoration: const InputDecoration(
+                      labelText: 'Estado de la cotización',
+                      helperText:
+                          'Actualízalo según el acuerdo con tu cliente.',
+                    ),
+                    items: EstadoProyecto.values
+                        .where((opcion) => opcion != EstadoProyecto.finalizado)
+                        .map(
+                          (opcion) => DropdownMenuItem(
+                            value: opcion,
+                            child: Text(opcion.etiqueta),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: estado.guardando
+                        ? null
+                        : (valor) => _cambiarEstado(
+                            context,
+                            proyecto,
+                            valor,
+                            partidas,
+                          ),
                   ),
-                  items: EstadoProyecto.values
-                      .map(
-                        (opcion) => DropdownMenuItem(
-                          value: opcion,
-                          child: Text(opcion.etiqueta),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: estado.guardando
-                      ? null
-                      : (valor) =>
-                            _cambiarEstado(context, proyecto, valor, partidas),
+                if (!proyecto.esObra) const SizedBox(height: 20),
+                AccionesObra(
+                  proyecto: proyecto,
+                  guardando: estado.guardando,
+                  alIniciar: (fecha) => _iniciar(context, fecha),
+                  alFinalizar: (fecha) => _finalizar(context, fecha),
                 ),
+                if (confirmarRetraso)
+                  ConfirmacionRetraso(
+                    proyecto: proyecto,
+                    alFinalizar: (fecha) => _finalizar(context, fecha),
+                  ),
                 const SizedBox(height: 24),
                 ResumenRentabilidad(
                   proyecto: proyecto,
@@ -185,80 +239,14 @@ class DetalleProyectoPagina extends StatelessWidget {
                   gastos: gastos,
                 ),
                 const SizedBox(height: 20),
-                SeccionCotizacion(
-                  titulo: 'Materiales del proyecto',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (partidas.isEmpty)
-                        const Text('No se han añadido materiales.'),
-                      for (final partida in partidas)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                partida.nombreMaterial,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                '${partida.cantidad} ${partida.unidadMedida} × '
-                                '${dinero(partida.costoUnitarioAplicadoCentavos)}',
-                              ),
-                              Text(
-                                dinero(partida.subtotalCentavos),
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  color: AppColors.cobalt,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                MaterialesProyectoDetalle(partidas: partidas),
                 const SizedBox(height: 20),
-                SeccionCotizacion(
-                  titulo: 'Gastos registrados',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      OutlinedButton.icon(
-                        onPressed: estado.guardando
-                            ? null
-                            : () => _registrarGasto(context),
-                        icon: const Icon(Icons.add),
-                        label: const Text('Registrar gasto'),
-                      ),
-                      const SizedBox(height: 12),
-                      if (gastos.isEmpty)
-                        const Text(
-                          'Aún no hay gastos en este proyecto. '
-                          'Añade el primero para actualizar la rentabilidad.',
-                        ),
-                      for (final gasto in gastos)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${gasto.categoria} · ${fechaCorta(gasto.fecha)}',
-                              ),
-                              if (gasto.nota.isNotEmpty) Text(gasto.nota),
-                              Text(
-                                dinero(gasto.montoCentavos),
-                                style: const TextStyle(fontFamily: 'monospace'),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
+                GastosPrevistosProyectoDetalle(gastos: gastosPrevistos),
+                const SizedBox(height: 20),
+                GastosProyectoDetalle(
+                  gastos: gastos,
+                  guardando: estado.guardando,
+                  alRegistrar: () => _registrarGasto(context),
                 ),
                 const SizedBox(height: 24),
                 Align(
@@ -271,7 +259,9 @@ class DetalleProyectoPagina extends StatelessWidget {
                       foregroundColor: AppColors.error,
                     ),
                     icon: const Icon(Icons.delete_outline),
-                    label: const Text('Eliminar cotización'),
+                    label: Text(
+                      proyecto.esObra ? 'Eliminar obra' : 'Eliminar cotización',
+                    ),
                   ),
                 ),
               ],

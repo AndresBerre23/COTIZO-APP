@@ -3,17 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../core/formato.dart';
+import '../../dominio/calcular_desglose_proforma.dart';
 import '../../dominio/modelos.dart';
 
 class ServicioPdf {
-  Future<Uint8List> generar(Proyecto proyecto, List<ItemProyecto> items) async {
+  Future<Uint8List> generar(
+    Proyecto proyecto,
+    List<ItemProyecto> items, {
+    List<GastoPrevisto> gastosPrevistos = const [],
+  }) async {
     final partidas = items
         .where((item) => item.proyectoId == proyecto.id)
         .toList();
-    final costoMateriales = partidas.fold<int>(
-      0,
-      (total, item) => total + item.subtotalCentavos,
-    );
+    final gastos = gastosPrevistos
+        .where((gasto) => gasto.proyectoId == proyecto.id)
+        .toList();
+    final desglose = calcularDesgloseProforma(proyecto, partidas, gastos);
     final fuente = pw.Font.ttf(
       await rootBundle.load('assets/fuentes/Roboto-Regular.ttf'),
     );
@@ -113,12 +118,16 @@ class ServicioPdf {
               },
             ),
           pw.SizedBox(height: 24),
-          _fila('Materiales', dinero(costoMateriales)),
-          if (proyecto.totalCotizadoCentavos != costoMateriales)
+          _fila('Materiales', dinero(desglose.totalMaterialesCentavos)),
+          for (final gasto in gastos)
             _fila(
-              'Ajuste al total cotizado',
-              dinero(proyecto.totalCotizadoCentavos - costoMateriales),
+              gasto.descripcion.isEmpty
+                  ? gasto.categoria
+                  : '${gasto.categoria} · ${gasto.descripcion}',
+              dinero(gasto.montoCentavos),
             ),
+          if (desglose.ajusteComercialCentavos != 0)
+            _fila('Ajuste comercial', dinero(desglose.ajusteComercialCentavos)),
           pw.Divider(),
           _fila(
             'TOTAL COTIZADO (USD)',
@@ -139,13 +148,17 @@ class ServicioPdf {
   Future<File> guardarEn(
     Directory directorio,
     Proyecto proyecto,
-    List<ItemProyecto> items,
-  ) async {
+    List<ItemProyecto> items, {
+    List<GastoPrevisto> gastosPrevistos = const [],
+  }) async {
     await directorio.create(recursive: true);
     final archivo = File(
       '${directorio.path}${Platform.pathSeparator}cotizacion-${proyecto.id}.pdf',
     );
-    return archivo.writeAsBytes(await generar(proyecto, items), flush: true);
+    return archivo.writeAsBytes(
+      await generar(proyecto, items, gastosPrevistos: gastosPrevistos),
+      flush: true,
+    );
   }
 
   pw.Widget _fila(String etiqueta, String valor, {bool destacado = false}) =>

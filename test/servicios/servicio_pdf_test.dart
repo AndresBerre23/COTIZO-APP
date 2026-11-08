@@ -9,9 +9,18 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test('genera PDF con fuentes locales sin servicios remotos', () async {
     final datos = datosMuestra();
+    const gastosPrevistos = [
+      GastoPrevisto(
+        proyectoId: 1,
+        categoria: 'Transporte propio',
+        montoCentavos: 2500,
+        descripcion: 'Traslado del usuario',
+      ),
+    ];
     final bytes = await ServicioPdf().generar(
       datos.proyectos.single,
       datos.items,
+      gastosPrevistos: gastosPrevistos,
     );
     expect(ascii.decode(bytes.take(5).toList()), '%PDF-');
     expect(bytes.length, greaterThan(1000));
@@ -35,7 +44,20 @@ void main() {
         unidadMedida: 'unidad',
       ),
     );
-    final bytes = await ServicioPdf().generar(datos.proyectos.single, items);
+    final gastosPrevistos = List.generate(
+      30,
+      (indice) => GastoPrevisto(
+        proyectoId: 1,
+        categoria: 'Transporte de materiales',
+        montoCentavos: 2500,
+        descripcion: 'Gasto previsto $indice para traslado de materiales',
+      ),
+    );
+    final bytes = await ServicioPdf().generar(
+      datos.proyectos.single,
+      items,
+      gastosPrevistos: gastosPrevistos,
+    );
     expect(bytes.length, greaterThan(5000));
   });
 }

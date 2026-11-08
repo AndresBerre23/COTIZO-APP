@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../aplicacion/cotizo_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/modelos.dart';
+import '../materiales/componentes/imagen_material.dart';
 import '../materiales/formulario_material.dart';
 
 Future<ItemProyecto?> mostrarFormularioPartida(
@@ -61,11 +62,11 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
 
   Future<void> _crearMaterial() async {
     final cubit = context.read<CotizoCubit>();
-    final nuevo = await mostrarFormularioMaterial(context);
-    if (nuevo == null || !mounted) return;
+    final edicion = await mostrarFormularioMaterial(context);
+    if (edicion == null || !mounted) return;
     final idsPrevios = cubit.state.datos.materiales.map((m) => m.id).toSet();
     setState(() => _creandoMaterial = true);
-    final guardado = await cubit.guardarMaterial(nuevo);
+    final guardado = await cubit.guardarMaterial(edicion);
     if (!mounted) return;
     setState(() => _creandoMaterial = false);
     if (guardado) {
@@ -127,9 +128,20 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
                           .map(
                             (material) => DropdownMenuItem(
                               value: material.id,
-                              child: Text(
-                                material.nombre,
-                                overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                children: [
+                                  ImagenMaterial(
+                                    ruta: material.imagenRuta,
+                                    ancho: 36,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      material.nombre,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           )
