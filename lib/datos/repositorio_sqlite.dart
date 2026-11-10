@@ -29,7 +29,7 @@ class RepositorioSqlite implements RepositorioLocal {
     final base = await fabricaLocal.openDatabase(
       rutaLocal,
       options: OpenDatabaseOptions(
-        version: 5,
+        version: 6,
         onConfigure: (base) => base.execute('PRAGMA foreign_keys = ON'),
         onCreate: crearEsquema,
         onUpgrade: migrarEsquema,

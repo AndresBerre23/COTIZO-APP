@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cotizo_app/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
@@ -164,6 +165,7 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
+                    onTapOutside: cerrarFocoAlTocarFuera,
                     controller: _cantidad,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -178,6 +180,7 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    onTapOutside: cerrarFocoAlTocarFuera,
                     controller: _costo,
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,

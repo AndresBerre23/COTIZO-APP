@@ -5,7 +5,8 @@ import '../../aplicacion/cotizo_cubit.dart';
 import '../../core/formato.dart';
 import '../../core/theme/app_theme.dart';
 import '../../dominio/modelos.dart';
-import '../../screens/proforma_screen.dart';
+import '../proformas/reporte_cierre_page.dart';
+import '../proformas/proforma_documento_page.dart';
 import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
 import '../gastos/formulario_gasto.dart';
@@ -167,27 +168,41 @@ class DetalleProyectoPagina extends StatelessWidget {
                           ? null
                           : () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (_) => Scaffold(
-                                  appBar: AppBar(title: const Text('Proforma')),
-                                  body: ProformaPage(proyectoId: proyecto.id),
+                                builder: (_) => ProformaDocumentoPage(
+                                  proyectoId: proyecto.id,
                                 ),
                               ),
                             ),
                       icon: const Icon(Icons.picture_as_pdf_outlined),
                       label: const Text('Ver proforma'),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: estado.guardando
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    EditorProyectoPagina(proyecto: proyecto),
+                    if (proyecto.estaFinalizada)
+                      OutlinedButton.icon(
+                        onPressed: estado.guardando
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => ReporteCierrePage(
+                                    proyectoId: proyecto.id,
+                                  ),
+                                ),
                               ),
-                            ),
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Editar'),
-                    ),
+                        icon: const Icon(Icons.assignment_turned_in_outlined),
+                        label: const Text('Reporte de cierre'),
+                      ),
+                    if (!proyecto.estaFinalizada)
+                      OutlinedButton.icon(
+                        onPressed: estado.guardando
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      EditorProyectoPagina(proyecto: proyecto),
+                                ),
+                              ),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: const Text('Editar'),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 20),

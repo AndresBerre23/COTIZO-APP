@@ -158,6 +158,55 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('agrega un gasto previsto sin usar controladores liberados', (
+    tester,
+  ) async {
+    await _montarEditor(tester, _RepositorioCotizaciones());
+
+    await _pulsar(tester, 'Añadir gasto previsto');
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Transporte de materiales').last);
+    await tester.pumpAndSettle();
+    await _escribir(tester, 'Importe previsto', '45,50');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Descripción (opcional)'),
+      'Traslado de material',
+    );
+    await _pulsar(tester, 'Guardar');
+
+    expect(find.text('Transporte de materiales'), findsOneWidget);
+    expect(find.text('Traslado de material'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('usa el margen fijo del 15 % y conserva el total editable', (
+    tester,
+  ) async {
+    final repositorio = _RepositorioCotizaciones();
+    await _montarEditor(
+      tester,
+      repositorio,
+      proyecto: repositorio.datos.proyectos.single,
+    );
+
+    expect(
+      find.text('Margen deseado sobre el precio de venta (%)'),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('Precio sugerido (margen fijo del 15 %):'),
+      findsOneWidget,
+    );
+    await _pulsar(tester, 'Usar precio sugerido');
+    await _escribir(tester, 'Total cotizado', '999');
+    await _pulsar(tester, 'Guardar cotización');
+
+    expect(repositorio.proyectoGuardado!.totalCotizadoCentavos, 99900);
+    expect(repositorio.proyectoGuardado!.margenDeseadoPuntos, 1500);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('editar una partida conserva su precio histórico', (
     tester,
   ) async {
@@ -230,6 +279,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Editar'), findsOneWidget);
     await _pulsar(tester, 'Iniciar obra');
     await tester.tap(
       find.descendant(
@@ -254,6 +304,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(cubit.state.datos.proyectos.single.estaFinalizada, isTrue);
+    expect(find.text('Editar'), findsNothing);
+    expect(find.text('Ver proforma'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -118,14 +118,14 @@ class _AppShellState extends State<AppShell> {
     'Gastos',
     'Materiales',
     'Cotizaciones',
-    'Proforma',
+    'Documentos',
   ];
   static const _iconos = [
     Icons.dashboard_outlined,
     Icons.receipt_long_outlined,
     Icons.inventory_2_outlined,
     Icons.request_quote_outlined,
-    Icons.picture_as_pdf_outlined,
+    Icons.folder_open_outlined,
   ];
 
   @override

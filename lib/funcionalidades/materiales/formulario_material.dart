@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../aplicacion/edicion_material.dart';
 import '../../core/formato.dart';
@@ -103,6 +104,7 @@ class _MaterialFormularioState extends State<MaterialFormulario> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                onTapOutside: cerrarFocoAlTocarFuera,
                 controller: _nombre,
                 autofocus: true,
                 textCapitalization: TextCapitalization.sentences,
@@ -117,6 +119,7 @@ class _MaterialFormularioState extends State<MaterialFormulario> {
               SelectorUnidadMedida(controlador: _unidad),
               const SizedBox(height: 12),
               TextFormField(
+                onTapOutside: cerrarFocoAlTocarFuera,
                 controller: _costo,
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,

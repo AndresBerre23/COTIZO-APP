@@ -4,17 +4,22 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import '../../../dominio/modelos.dart';
+import 'consultas_alternativas_wikimedia.dart';
 import 'imagen_wikimedia.dart';
 import 'licencias_wikimedia.dart';
 
 class ServicioWikimedia {
   ServicioWikimedia({HttpClient? cliente})
     : _cliente = cliente ?? HttpClient() {
-    _cliente.connectionTimeout = const Duration(seconds: 15);
+    _cliente
+      ..connectionTimeout = const Duration(seconds: 15)
+      ..maxConnectionsPerHost = 3;
   }
 
   static const _dominioApi = 'commons.wikimedia.org';
   static const _dominioArchivos = 'upload.wikimedia.org';
+  static const _agenteUsuario =
+      'Cotizo/1.0 (https://github.com/AndresBerre23/COTIZO-APP)';
   static const _maximoJson = 2 * 1024 * 1024;
   static const _maximoMiniatura = 1024 * 1024;
   static const _maximoImagen = 8 * 1024 * 1024;
@@ -31,12 +36,26 @@ class ServicioWikimedia {
     if (texto.isEmpty || texto.length > 100 || offset < 0) {
       throw const ErrorWikimedia('Escribe un nombre de material para buscar.');
     }
+    for (final termino in [
+      texto,
+      ...obtenerConsultasAlternativasWikimedia(texto),
+    ]) {
+      final pagina = await _buscarTermino(termino, offset);
+      if (pagina.imagenes.isNotEmpty) return pagina;
+    }
+    return const PaginaImagenesWikimedia(imagenes: [], siguienteOffset: null);
+  }
+
+  Future<PaginaImagenesWikimedia> _buscarTermino(
+    String termino,
+    int offset,
+  ) async {
     final uri = Uri.https(_dominioApi, '/w/api.php', {
       'action': 'query',
       'format': 'json',
       'formatversion': '2',
       'generator': 'search',
-      'gsrsearch': texto,
+      'gsrsearch': termino,
       'gsrnamespace': '6',
       'gsrlimit': '20',
       'gsroffset': '$offset',
@@ -127,7 +146,7 @@ class ServicioWikimedia {
             .timeout(const Duration(seconds: 20));
         solicitudLocal
           ..followRedirects = false
-          ..headers.set(HttpHeaders.userAgentHeader, 'Cotizo/1.0')
+          ..headers.set(HttpHeaders.userAgentHeader, _agenteUsuario)
           ..headers.set(
             HttpHeaders.acceptHeader,
             exigirImagen ? 'image/*' : 'application/json',
@@ -168,7 +187,13 @@ class ServicioWikimedia {
       throw const ErrorWikimedia('No se pudo conectar con Wikimedia.');
     }
     if (respuesta.statusCode != HttpStatus.ok) {
+      final estado = respuesta.statusCode;
       await respuesta.drain<void>();
+      if (estado == HttpStatus.tooManyRequests) {
+        throw const ErrorWikimedia(
+          'Wikimedia limitó temporalmente las descargas. Espera unos segundos y reintenta.',
+        );
+      }
       throw const ErrorWikimedia('Wikimedia no pudo completar la solicitud.');
     }
     if (respuesta.contentLength > maximo) {

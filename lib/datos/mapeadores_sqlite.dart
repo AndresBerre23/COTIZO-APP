@@ -17,6 +17,7 @@ Proyecto leerProyecto(Map<String, Object?> fila) => Proyecto(
   margenDeseadoPuntos: fila['margen_deseado_puntos'] as int?,
   estado: EstadoProyecto.values.byName(fila['estado'] as String),
   totalCotizadoCentavos: fila['total_cotizado'] as int,
+  cobroManoObraCentavos: fila['cobro_mano_obra'] as int? ?? 0,
 );
 
 Map<String, Object?> escribirProyecto(Proyecto proyecto) => {
@@ -29,6 +30,7 @@ Map<String, Object?> escribirProyecto(Proyecto proyecto) => {
   'margen_deseado_puntos': proyecto.margenDeseadoPuntos,
   'estado': proyecto.estado.name,
   'total_cotizado': proyecto.totalCotizadoCentavos,
+  'cobro_mano_obra': proyecto.cobroManoObraCentavos,
 };
 
 MaterialObra leerMaterial(Map<String, Object?> fila) => MaterialObra(

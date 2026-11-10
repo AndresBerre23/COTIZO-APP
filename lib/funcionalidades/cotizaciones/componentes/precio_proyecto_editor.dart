@@ -1,120 +1,244 @@
 import 'package:flutter/material.dart';
+import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../../core/formato.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../dominio/leer_margen_deseado.dart';
+import '../../../dominio/calcular_precio_sugerido.dart';
+import 'selector_mano_obra_propia.dart';
 import 'seccion_cotizacion.dart';
 
 class PrecioProyectoEditor extends StatelessWidget {
   const PrecioProyectoEditor({
     super.key,
     required this.total,
+    required this.cobroManoObra,
+    required this.incluirManoObra,
+    required this.alCambiarInclusionManoObra,
     required this.costoPrevisto,
-    required this.margen,
     required this.precioSugerido,
     required this.aplicarSugerido,
-    required this.guardando,
     required this.alCambiar,
-    required this.alGuardar,
   });
 
   final TextEditingController total;
+  final TextEditingController cobroManoObra;
+  final bool incluirManoObra;
+  final ValueChanged<bool> alCambiarInclusionManoObra;
   final int costoPrevisto;
-  final TextEditingController margen;
   final int? precioSugerido;
   final VoidCallback? aplicarSugerido;
-  final bool guardando;
-  final VoidCallback alCambiar, alGuardar;
+  final VoidCallback alCambiar;
 
   @override
   Widget build(BuildContext context) {
-    final cotizado = leerCentavos(total.text) ?? 0;
+    final cotizadoLeido = leerCentavos(total.text);
+    final totalValido = cotizadoLeido != null && cotizadoLeido > 0;
+    final cotizado = cotizadoLeido ?? 0;
+    final manoObra = incluirManoObra
+        ? leerCentavos(cobroManoObra.text) ?? 0
+        : 0;
+    final precioPorDebajoDeCostos =
+        totalValido && cotizado < costoPrevisto + manoObra;
+    final margenSugerido = precioSugerido == null
+        ? null
+        : precioSugerido! - costoPrevisto - manoObra;
     return SeccionCotizacion(
-      titulo: '2. Precio de tu trabajo',
+      titulo: 'Precio de tu trabajo',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Define el total que pagará el cliente, incluyendo tu trabajo y margen.',
+          SelectorManoObraPropia(
+            incluido: incluirManoObra,
+            alCambiar: alCambiarInclusionManoObra,
           ),
+          if (incluirManoObra) ...[
+            TextFormField(
+              onTapOutside: cerrarFocoAlTocarFuera,
+              controller: cobroManoObra,
+              validator: validarImporte,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (_) => alCambiar(),
+              decoration: const InputDecoration(
+                labelText: 'Cobro por mano de obra propia',
+                prefixText: '\$ ',
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (precioSugerido != null)
+            _PrecioSugeridoDestacado(
+              precio: precioSugerido!,
+              costos: costoPrevisto,
+              manoObra: manoObra,
+              margen: margenSugerido!,
+              aplicar: aplicarSugerido,
+            )
+          else
+            const Text(
+              'Agrega costos previstos o un cobro de mano de obra para calcular un precio sugerido.',
+            ),
           const SizedBox(height: 16),
           TextFormField(
+            onTapOutside: cerrarFocoAlTocarFuera,
             controller: total,
             validator: validarImporte,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             onChanged: (_) => alCambiar(),
             decoration: const InputDecoration(
-              labelText: 'Total cotizado',
+              labelText: 'Total que cobrarás al cliente',
+              helperText: 'Puedes usar el precio sugerido o escribir otro.',
               prefixText: '\$ ',
             ),
           ),
           const SizedBox(height: 20),
-          Text('Costo previsto: ${dinero(costoPrevisto)}'),
-          TextFormField(
-            controller: margen,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'Margen deseado sobre el precio de venta (%)',
-            ),
-            validator: validarMargenDeseado,
-            onChanged: (_) => alCambiar(),
-          ),
-          if (precioSugerido != null) ...[
-            const SizedBox(height: 8),
-            Text('Precio sugerido: ${dinero(precioSugerido!)}'),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: aplicarSugerido,
-                child: const Text('Usar precio sugerido'),
-              ),
-            ),
-          ],
-          if (precioSugerido != null && aplicarSugerido == null)
-            const Text('El precio sugerido supera el límite admitido.'),
-          const SizedBox(height: 12),
           Text(
-            'Ganancia prevista',
+            incluirManoObra
+                ? 'Margen adicional, aparte de tu mano de obra'
+                : 'Margen adicional sobre costos',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
-              dinero(cotizado - costoPrevisto),
+              totalValido
+                  ? dinero(cotizado - costoPrevisto - manoObra)
+                  : 'Completa el total para calcularlo',
               style: TextStyle(
                 fontSize: 28,
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                color: cotizado < costoPrevisto
+                color: precioPorDebajoDeCostos
                     ? AppColors.error
-                    : AppColors.cobalt,
+                    : totalValido
+                    ? AppColors.cobalt
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
-          if (cotizado < costoPrevisto)
+          if (precioPorDebajoDeCostos)
             const Text(
-              'El precio cotizado está por debajo del costo previsto.',
+              'El precio cotizado está por debajo de los costos y el cobro de mano de obra.',
               style: TextStyle(color: AppColors.error),
             ),
           const SizedBox(height: 8),
-          const Text(
-            'El precio final sigue siendo editable. Los gastos registrados se calcularán por separado.',
-          ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: guardando ? null : alGuardar,
-            icon: const Icon(Icons.save_outlined),
-            label: Text(guardando ? 'Guardando…' : 'Guardar cotización'),
+          Text(
+            '${manoObra > 0 ? 'Ganancia prevista total (incluye tu mano de obra)' : 'Ganancia prevista total'}: ${totalValido ? dinero(cotizado - costoPrevisto) : 'Pendiente'}',
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Guardado local · Sin conexión',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.muted, fontSize: 12),
+            'El precio final sigue siendo editable. Los gastos registrados se calcularán por separado.',
           ),
         ],
       ),
     );
   }
+}
+
+class _PrecioSugeridoDestacado extends StatelessWidget {
+  const _PrecioSugeridoDestacado({
+    required this.precio,
+    required this.costos,
+    required this.manoObra,
+    required this.margen,
+    required this.aplicar,
+  });
+
+  final int precio;
+  final int costos;
+  final int manoObra;
+  final int margen;
+  final VoidCallback? aplicar;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.softBlue,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.blue),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'PRECIO SUGERIDO TOTAL',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            color: AppColors.cobalt,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            dinero(precio),
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: AppColors.cobalt,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Aplica un margen del ${margenSugeridoFijoPuntos ~/ 100} % al precio de materiales y otros costos. Tu mano de obra se suma aparte.',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const Divider(height: 20),
+        _FilaDesglosePrecio(
+          etiqueta: 'Materiales y otros costos',
+          monto: costos,
+        ),
+        if (manoObra > 0)
+          _FilaDesglosePrecio(
+            etiqueta: 'Cobro por tu mano de obra',
+            monto: manoObra,
+          ),
+        _FilaDesglosePrecio(etiqueta: 'Margen estimado', monto: margen),
+        if (aplicar == null)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text(
+              'El precio sugerido supera el límite admitido.',
+              style: TextStyle(color: AppColors.error),
+            ),
+          )
+        else ...[
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: aplicar,
+            icon: const Icon(Icons.check),
+            label: const Text('Usar este precio'),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+class _FilaDesglosePrecio extends StatelessWidget {
+  const _FilaDesglosePrecio({required this.etiqueta, required this.monto});
+
+  final String etiqueta;
+  final int monto;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Text(etiqueta)),
+        const SizedBox(width: 12),
+        Text(
+          dinero(monto),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ],
+    ),
+  );
 }

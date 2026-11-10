@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../../core/formato.dart';
 import '../../../core/theme/app_theme.dart';
@@ -26,11 +27,12 @@ class DatosClienteEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
-    titulo: '1. Cliente y proyecto',
+    titulo: 'Cliente y proyecto',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextFormField(
+          onTapOutside: cerrarFocoAlTocarFuera,
           controller: cliente,
           validator: validarRequerido,
           textCapitalization: TextCapitalization.words,
@@ -39,6 +41,7 @@ class DatosClienteEditor extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         TextFormField(
+          onTapOutside: cerrarFocoAlTocarFuera,
           controller: descripcion,
           validator: validarRequerido,
           textCapitalization: TextCapitalization.sentences,

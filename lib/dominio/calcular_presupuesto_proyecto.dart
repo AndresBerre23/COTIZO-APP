@@ -15,9 +15,9 @@ class PresupuestoProyecto {
 
 PresupuestoProyecto calcularPresupuestoProyecto(
   List<ItemProyecto> partidas,
-  List<GastoPrevisto> gastosPrevistos,
-  int? margenDeseadoPuntos,
-) {
+  List<GastoPrevisto> gastosPrevistos, {
+  int cobroManoObraCentavos = 0,
+}) {
   final materiales = partidas.fold<int>(
     0,
     (total, item) => total + item.subtotalCentavos,
@@ -29,6 +29,9 @@ PresupuestoProyecto calcularPresupuestoProyecto(
   return PresupuestoProyecto(
     costoMaterialesCentavos: materiales,
     costoPrevistoCentavos: costo,
-    precioSugeridoCentavos: calcularPrecioSugerido(costo, margenDeseadoPuntos),
+    precioSugeridoCentavos: calcularPrecioSugerido(
+      costo,
+      cobroManoObraCentavos: cobroManoObraCentavos,
+    ),
   );
 }

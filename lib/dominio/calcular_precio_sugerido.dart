@@ -1,6 +1,14 @@
-int? calcularPrecioSugerido(int costoCentavos, int? margenPuntos) {
-  if (costoCentavos <= 0 || margenPuntos == null) return null;
-  if (margenPuntos < 0 || margenPuntos >= 10000) return null;
-  final denominador = 10000 - margenPuntos;
-  return (costoCentavos * 10000 + denominador - 1) ~/ denominador;
+const margenSugeridoFijoPuntos = 2000;
+
+int? calcularPrecioSugerido(
+  int costoCentavos, {
+  int cobroManoObraCentavos = 0,
+}) {
+  if (costoCentavos < 0 || cobroManoObraCentavos < 0) return null;
+  if (costoCentavos == 0) {
+    return cobroManoObraCentavos == 0 ? null : cobroManoObraCentavos;
+  }
+  const denominador = 10000 - margenSugeridoFijoPuntos;
+  return (costoCentavos * 10000 + denominador - 1) ~/ denominador +
+      cobroManoObraCentavos;
 }

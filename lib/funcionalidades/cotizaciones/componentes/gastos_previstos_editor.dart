@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../dominio/categorias_gasto.dart';
 import '../../../dominio/modelos.dart';
+import 'dialogo_gasto_previsto.dart';
 import 'seccion_cotizacion.dart';
 
 class GastosPrevistosEditor extends StatelessWidget {
@@ -18,106 +18,24 @@ class GastosPrevistosEditor extends StatelessWidget {
 
   Future<void> _editar(BuildContext context, [int? indice]) async {
     final anterior = indice == null ? null : gastos[indice];
-    var categoria = anterior?.categoria ?? categoriasGasto.first;
-    final importe = TextEditingController(
-      text: anterior == null
-          ? ''
-          : (anterior.montoCentavos / 100).toStringAsFixed(2),
-    );
-    final descripcion = TextEditingController(
-      text: anterior?.descripcion ?? '',
-    );
-    final formulario = GlobalKey<FormState>();
-    final aceptado = await showDialog<bool>(
+    final actualizado = await showDialog<GastoPrevisto>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, actualizar) => AlertDialog(
-          title: Text(
-            anterior == null
-                ? 'Añadir gasto previsto'
-                : 'Editar gasto previsto',
-          ),
-          content: Form(
-            key: formulario,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: categoria,
-                  decoration: InputDecoration(
-                    labelText: 'Categoría',
-                    helperText: categoria == 'Materiales adicionales'
-                        ? 'Usa esta opción para materiales que no estén '
-                              'en las partidas.'
-                        : null,
-                  ),
-                  items: categoriasGasto
-                      .map(
-                        (valor) =>
-                            DropdownMenuItem(value: valor, child: Text(valor)),
-                      )
-                      .toList(),
-                  onChanged: (valor) =>
-                      actualizar(() => categoria = valor ?? categoria),
-                ),
-                TextFormField(
-                  controller: importe,
-                  decoration: const InputDecoration(
-                    labelText: 'Importe previsto',
-                    prefixText: '\$ ',
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: validarImporte,
-                ),
-                TextField(
-                  controller: descripcion,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción (opcional)',
-                  ),
-                  maxLength: 2000,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.pop(context, formulario.currentState!.validate()),
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => DialogoGastoPrevisto(gasto: anterior),
     );
-    if (aceptado == true && context.mounted) {
-      final nuevo = GastoPrevisto(
-        id: anterior?.id ?? 0,
-        proyectoId: anterior?.proyectoId ?? 0,
-        categoria: categoria,
-        montoCentavos: leerCentavos(importe.text)!,
-        descripcion: descripcion.text.trim(),
-      );
+    if (actualizado != null && context.mounted) {
       final actualizados = List<GastoPrevisto>.of(gastos);
       if (indice == null) {
-        actualizados.add(nuevo);
+        actualizados.add(actualizado);
       } else {
-        actualizados[indice] = nuevo;
+        actualizados[indice] = actualizado;
       }
       alCambiar(actualizados);
     }
-    importe.dispose();
-    descripcion.dispose();
   }
 
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
-    titulo: '2. Gastos previstos',
+    titulo: 'Gastos previstos',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

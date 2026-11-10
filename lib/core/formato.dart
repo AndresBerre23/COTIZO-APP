@@ -10,6 +10,12 @@ String dinero(int centavos) {
 String fechaCorta(DateTime fecha) =>
     '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
 
+String horaCorta(DateTime fecha) =>
+    '${fecha.hour.toString().padLeft(2, '0')}:${fecha.minute.toString().padLeft(2, '0')}';
+
+String fechaHoraCorta(DateTime fecha) =>
+    '${fechaCorta(fecha)} · ${horaCorta(fecha)}';
+
 int? leerCentavos(String texto) {
   final normalizado = texto.trim().replaceAll(',', '.');
   if (!RegExp(r'^\d{1,9}(\.\d{1,2})?$').hasMatch(normalizado)) return null;

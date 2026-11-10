@@ -43,7 +43,17 @@ class _MiniaturaWikimediaState extends State<MiniaturaWikimedia> {
     future: _carga,
     builder: (context, estado) {
       if (estado.hasError) {
-        return const Center(child: Icon(Icons.broken_image_outlined, size: 36));
+        return Center(
+          child: IconButton(
+            tooltip: 'No se pudo cargar. Toca para reintentar.',
+            onPressed: () => setState(
+              () => _carga = widget.servicio.descargarMiniatura(
+                widget.imagen.miniaturaUrl,
+              ),
+            ),
+            icon: const Icon(Icons.refresh, size: 36),
+          ),
+        );
       }
       if (!estado.hasData) {
         return const Center(child: CircularProgressIndicator());

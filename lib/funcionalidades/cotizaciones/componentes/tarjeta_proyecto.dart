@@ -15,6 +15,18 @@ class TarjetaProyecto extends StatelessWidget {
   final Proyecto proyecto;
   final VoidCallback alAbrir;
 
+  DateTime get _fecha => proyecto.estaFinalizada
+      ? proyecto.fechaFinReal ?? proyecto.fechaInicio
+      : proyecto.estaEnCurso
+      ? proyecto.fechaInicioReal ?? proyecto.fechaInicio
+      : proyecto.fechaInicio;
+
+  String get _etiquetaFecha => proyecto.estaFinalizada
+      ? 'Finalizada'
+      : proyecto.estaEnCurso
+      ? 'Inicio real'
+      : 'Inicio previsto';
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
@@ -24,59 +36,112 @@ class TarjetaProyecto extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         onTap: alAbrir,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          proyecto.nombreCliente,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          proyecto.descripcion,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Chip(
+                    visualDensity: VisualDensity.compact,
+                    label: Text(proyecto.etapa),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
               Wrap(
-                spacing: 12,
-                runSpacing: 4,
+                alignment: WrapAlignment.spaceBetween,
                 crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 16,
+                runSpacing: 12,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'TOTAL COTIZADO',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        dinero(proyecto.totalCotizadoCentavos),
+                        style: const TextStyle(
+                          color: AppColors.cobalt,
+                          fontFamily: 'monospace',
+                          fontSize: 21,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'FECHA',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text('$_etiquetaFecha: ${fechaCorta(_fecha)}'),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
                 children: [
                   Text(
                     'COT-${proyecto.id.toString().padLeft(3, '0')}',
                     style: const TextStyle(color: AppColors.muted),
                   ),
-                  Chip(label: Text(proyecto.etapa)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                proyecto.descripcion,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                proyecto.nombreCliente,
-                style: const TextStyle(color: AppColors.muted),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 20,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    dinero(proyecto.totalCotizadoCentavos),
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.cobalt,
+                  const Spacer(),
+                  const Text(
+                    'Ver detalle',
+                    style: TextStyle(
+                      color: AppColors.blue,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  Text('Inicio previsto: ${fechaCorta(proyecto.fechaInicio)}'),
-                ],
-              ),
-              const SizedBox(height: 8),
-              const Row(
-                children: [
-                  Text('Ver detalle', style: TextStyle(color: AppColors.blue)),
-                  SizedBox(width: 4),
-                  Icon(Icons.arrow_forward, size: 16, color: AppColors.blue),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: AppColors.blue,
+                  ),
                 ],
               ),
             ],

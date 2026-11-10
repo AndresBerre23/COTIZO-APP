@@ -5,6 +5,7 @@ import '../../aplicacion/cotizo_cubit.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/estado_vacio.dart';
 import '../../widgets/pagina_base.dart';
+import 'componentes/controles_cotizaciones.dart';
 import 'componentes/tarjeta_proyecto.dart';
 import 'detalle_proyecto_pagina.dart';
 import 'editor_proyecto_pagina.dart';
@@ -19,140 +20,193 @@ class QuotePage extends StatefulWidget {
 class _QuotePageState extends State<QuotePage> {
   String _busqueda = '';
   EstadoProyecto? _estado;
+  DateTimeRange? _rangoFechas;
   bool _verObras = false;
-  _FiltroObras _filtroObras = _FiltroObras.todas;
+  FiltroObras _filtroObras = FiltroObras.todas;
+  OrdenProyectos _orden = OrdenProyectos.recientes;
 
   void _crear() => Navigator.of(
     context,
   ).push(MaterialPageRoute<void>(builder: (_) => const EditorProyectoPagina()));
 
+  DateTime _fechaInicio(Proyecto proyecto) => _verObras
+      ? proyecto.fechaInicioReal ?? proyecto.fechaInicio
+      : proyecto.fechaInicio;
+
+  List<Proyecto> _filtrar(List<Proyecto> origen) {
+    final consulta = _busqueda.trim().toLowerCase();
+    final resultado = origen.where((proyecto) {
+      if (proyecto.esObra != _verObras) return false;
+      if (!_verObras && _estado != null && proyecto.estado != _estado) {
+        return false;
+      }
+      if (_verObras) {
+        final coincide = switch (_filtroObras) {
+          FiltroObras.todas => true,
+          FiltroObras.enCurso => proyecto.estaEnCurso,
+          FiltroObras.finalizadas => proyecto.estaFinalizada,
+        };
+        if (!coincide) return false;
+      }
+      final codigos =
+          'cot-${proyecto.id.toString().padLeft(3, '0')} cot-${proyecto.id.toString().padLeft(4, '0')}';
+      final texto =
+          '${proyecto.nombreCliente} ${proyecto.descripcion} $codigos ${proyecto.id}'
+              .toLowerCase();
+      if (consulta.isNotEmpty && !texto.contains(consulta)) return false;
+      final rango = _rangoFechas;
+      if (rango != null) {
+        final fecha = _fechaInicio(proyecto);
+        final limite = DateTime(
+          rango.end.year,
+          rango.end.month,
+          rango.end.day + 1,
+        );
+        if (fecha.isBefore(rango.start) || !fecha.isBefore(limite)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+    switch (_orden) {
+      case OrdenProyectos.recientes:
+        resultado.sort((a, b) => b.id.compareTo(a.id));
+      case OrdenProyectos.cliente:
+        resultado.sort((a, b) => a.nombreCliente.compareTo(b.nombreCliente));
+      case OrdenProyectos.fecha:
+        resultado.sort((a, b) => _fechaInicio(b).compareTo(_fechaInicio(a)));
+      case OrdenProyectos.importe:
+        resultado.sort(
+          (a, b) => b.totalCotizadoCentavos.compareTo(a.totalCotizadoCentavos),
+        );
+    }
+    return resultado;
+  }
+
+  Future<void> _elegirPeriodo() async {
+    final rango = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2200),
+      initialDateRange: _rangoFechas,
+      helpText: 'Filtrar por fecha de inicio',
+    );
+    if (rango != null && mounted) setState(() => _rangoFechas = rango);
+  }
+
+  void _cambiarTipo(bool verObras) => setState(() {
+    _verObras = verObras;
+    _estado = null;
+    _filtroObras = FiltroObras.todas;
+    _rangoFechas = null;
+  });
+
+  void _abrirDetalle(Proyecto proyecto) => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => DetalleProyectoPagina(proyectoId: proyecto.id),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
     builder: (context, estado) {
-      final proyectos = estado.datos.proyectos.where((proyecto) {
-        final texto = '${proyecto.nombreCliente} ${proyecto.descripcion}'
-            .toLowerCase();
-        if (!texto.contains(_busqueda) || proyecto.esObra != _verObras) {
-          return false;
-        }
-        if (!_verObras) return _estado == null || proyecto.estado == _estado;
-        return switch (_filtroObras) {
-          _FiltroObras.todas => true,
-          _FiltroObras.enCurso => proyecto.estaEnCurso,
-          _FiltroObras.finalizadas => proyecto.estaFinalizada,
-        };
-      }).toList();
-      return PaginaBase(
-        titulo: 'Cotizaciones',
-        accion: FilledButton.icon(
-          onPressed: _crear,
-          icon: const Icon(Icons.add),
-          label: const Text('Nueva cotización'),
-        ),
-        children: [
-          const Text('Tus proyectos, desde el presupuesto hasta la entrega.'),
-          const SizedBox(height: 20),
-          SegmentedButton<bool>(
-            segments: const [
-              ButtonSegment(
-                value: false,
-                icon: Icon(Icons.request_quote_outlined),
-                label: Text('Cotizaciones'),
-              ),
-              ButtonSegment(
-                value: true,
-                icon: Icon(Icons.construction_outlined),
-                label: Text('Obras'),
-              ),
-            ],
-            selected: {_verObras},
-            onSelectionChanged: (seleccion) => setState(() {
-              _verObras = seleccion.single;
-              _estado = null;
-              _filtroObras = _FiltroObras.todas;
-            }),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            onChanged: (texto) =>
-                setState(() => _busqueda = texto.trim().toLowerCase()),
-            decoration: const InputDecoration(
-              labelText: 'Buscar cliente o proyecto',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: [
-              if (!_verObras)
-                ChoiceChip(
-                  label: const Text('Todas'),
-                  selected: _estado == null,
-                  onSelected: (_) => setState(() => _estado = null),
-                ),
-              for (final filtro
-                  in _verObras
-                      ? const <EstadoProyecto>[]
-                      : EstadoProyecto.values.where(
-                          (opcion) => opcion != EstadoProyecto.finalizado,
-                        ))
-                ChoiceChip(
-                  label: Text(filtro.etiqueta),
-                  selected: _estado == filtro,
-                  onSelected: (_) => setState(() => _estado = filtro),
-                ),
-              if (_verObras)
-                for (final filtro in _FiltroObras.values)
-                  ChoiceChip(
-                    label: Text(filtro.etiqueta),
-                    selected: _filtroObras == filtro,
-                    onSelected: (_) => setState(() => _filtroObras = filtro),
+      final todos = estado.datos.proyectos;
+      final cotizaciones = todos.where((proyecto) => !proyecto.esObra).length;
+      final obras = todos.where((proyecto) => proyecto.esObra).length;
+      final proyectos = _filtrar(todos);
+      final ancho = MediaQuery.sizeOf(context).width;
+      final mostrarAccionMovil = ancho < 840 && todos.isNotEmpty;
+      return Scaffold(
+        body: PaginaBase(
+          titulo: 'Cotizaciones',
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: const Text(
+                    'Tus proyectos, desde el presupuesto hasta la entrega.',
                   ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (proyectos.isEmpty)
-            EstadoVacio(
-              icono: Icons.request_quote_outlined,
-              titulo: estado.datos.proyectos.isEmpty && !_verObras
-                  ? 'Tu próxima cotización empieza aquí'
-                  : 'No hay coincidencias',
-              mensaje: estado.datos.proyectos.isEmpty && !_verObras
-                  ? 'Añade un cliente, tus materiales y el precio que '
-                        'quieres cotizar. Todo se guarda en este dispositivo.'
-                  : _verObras
-                  ? 'Inicia una cotización aceptada o cambia el filtro seleccionado.'
-                  : 'Prueba con otro cliente o cambia el estado seleccionado.',
-              accion: estado.datos.proyectos.isEmpty && !_verObras
-                  ? FilledButton(
-                      onPressed: _crear,
-                      child: const Text('Crear mi primera cotización'),
-                    )
-                  : null,
-            ),
-          for (final proyecto in proyectos)
-            TarjetaProyecto(
-              proyecto: proyecto,
-              alAbrir: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      DetalleProyectoPagina(proyectoId: proyecto.id),
                 ),
-              ),
+                if (ancho >= 840 && todos.isNotEmpty)
+                  FilledButton.icon(
+                    onPressed: _crear,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nueva cotización'),
+                  ),
+              ],
             ),
-        ],
+            const SizedBox(height: 20),
+            ControlesCotizaciones(
+              verObras: _verObras,
+              totalCotizaciones: cotizaciones,
+              totalObras: obras,
+              busqueda: _busqueda,
+              etapa: _estado,
+              filtroObras: _filtroObras,
+              rangoFechas: _rangoFechas,
+              orden: _orden,
+              totalResultados: proyectos.length,
+              alCambiarTipo: _cambiarTipo,
+              alBuscar: (texto) => setState(() => _busqueda = texto),
+              alCambiarEstado: (valor) => setState(() => _estado = valor),
+              alCambiarFiltroObras: (valor) =>
+                  setState(() => _filtroObras = valor),
+              alElegirPeriodo: _elegirPeriodo,
+              alLimpiarPeriodo: () => setState(() => _rangoFechas = null),
+              alOrdenar: (valor) => setState(() => _orden = valor),
+            ),
+            const SizedBox(height: 16),
+            if (proyectos.isEmpty)
+              _estadoVacio(todos)
+            else
+              for (final proyecto in proyectos)
+                TarjetaProyecto(
+                  proyecto: proyecto,
+                  alAbrir: () => _abrirDetalle(proyecto),
+                ),
+            if (mostrarAccionMovil) const SizedBox(height: 76),
+          ],
+        ),
+        floatingActionButton: mostrarAccionMovil
+            ? FloatingActionButton.extended(
+                heroTag: 'nueva-cotizacion',
+                onPressed: _crear,
+                icon: const Icon(Icons.add),
+                label: const Text('Nueva cotización'),
+              )
+            : null,
       );
     },
   );
-}
 
-enum _FiltroObras {
-  todas('Todas'),
-  enCurso('En curso'),
-  finalizadas('Finalizadas');
-
-  const _FiltroObras(this.etiqueta);
-  final String etiqueta;
+  Widget _estadoVacio(List<Proyecto> todos) {
+    final totalSeccion = todos
+        .where((proyecto) => proyecto.esObra == _verObras)
+        .length;
+    final primeraCotizacion = totalSeccion == 0 && !_verObras;
+    return EstadoVacio(
+      icono: Icons.request_quote_outlined,
+      titulo: primeraCotizacion
+          ? 'Tu próxima cotización empieza aquí'
+          : 'No hay coincidencias',
+      mensaje: primeraCotizacion
+          ? 'Añade un cliente, tus materiales y el precio que quieres cotizar. '
+                'Todo se guarda en este dispositivo.'
+          : totalSeccion == 0 && _verObras
+          ? 'Aprueba una cotización y comienza la obra para verla aquí.'
+          : 'Prueba con otro texto o ajusta los filtros seleccionados.',
+      accion: primeraCotizacion
+          ? FilledButton.icon(
+              onPressed: _crear,
+              icon: const Icon(Icons.add),
+              label: const Text('Crear mi primera cotización'),
+            )
+          : null,
+    );
+  }
 }

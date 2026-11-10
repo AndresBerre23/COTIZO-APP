@@ -4,11 +4,13 @@ class DesgloseProforma {
   const DesgloseProforma({
     required this.totalMaterialesCentavos,
     required this.totalGastosPrevistosCentavos,
+    required this.cobroManoObraCentavos,
     required this.ajusteComercialCentavos,
   });
 
   final int totalMaterialesCentavos;
   final int totalGastosPrevistosCentavos;
+  final int cobroManoObraCentavos;
   final int ajusteComercialCentavos;
 }
 
@@ -28,7 +30,22 @@ DesgloseProforma calcularDesgloseProforma(
   return DesgloseProforma(
     totalMaterialesCentavos: materiales,
     totalGastosPrevistosCentavos: gastos,
+    cobroManoObraCentavos: proyecto.cobroManoObraCentavos,
     ajusteComercialCentavos:
-        proyecto.totalCotizadoCentavos - materiales - gastos,
+        proyecto.totalCotizadoCentavos -
+        materiales -
+        gastos -
+        proyecto.cobroManoObraCentavos,
   );
 }
+
+int calcularResultadoCierre(
+  DesgloseProforma proforma,
+  List<Gasto> gastosAdicionales,
+) =>
+    proforma.ajusteComercialCentavos +
+    proforma.cobroManoObraCentavos -
+    gastosAdicionales.fold<int>(
+      0,
+      (total, gasto) => total + gasto.montoCentavos,
+    );

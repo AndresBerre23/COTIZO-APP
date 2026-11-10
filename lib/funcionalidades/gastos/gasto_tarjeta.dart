@@ -44,7 +44,7 @@ class GastoTarjeta extends StatelessWidget {
               Text(destino, style: const TextStyle(color: AppColors.muted)),
               const SizedBox(height: 4),
               Text(
-                fechaCorta(gasto.fecha),
+                fechaHoraCorta(gasto.fecha),
                 style: const TextStyle(fontSize: 12, color: AppColors.muted),
               ),
               if (gasto.nota.isNotEmpty) ...[

@@ -63,6 +63,16 @@ class ResumenRentabilidad extends StatelessWidget {
           _fila('Total cotizado', proyecto.totalCotizadoCentavos),
           _fila('Materiales', -materiales),
           _fila('Gastos del proyecto', -gastado),
+          if (proyecto.cobroManoObraCentavos > 0) ...[
+            _fila(
+              'Cobro por mano de obra propia',
+              proyecto.cobroManoObraCentavos,
+            ),
+            _fila(
+              'Margen sobre costos',
+              resultado - proyecto.cobroManoObraCentavos,
+            ),
+          ],
           const SizedBox(height: 8),
           const Text(
             'Calculada con los costos y gastos registrados. '

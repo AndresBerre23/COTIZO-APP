@@ -11,6 +11,27 @@ class ServicioPdf {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto> gastosPrevistos = const [],
+  }) => _generar(proyecto, items, gastosPrevistos: gastosPrevistos);
+
+  Future<Uint8List> generarReporteCierre(
+    Proyecto proyecto,
+    List<ItemProyecto> items, {
+    List<GastoPrevisto> gastosPrevistos = const [],
+    List<Gasto> gastosAdicionales = const [],
+  }) => _generar(
+    proyecto,
+    items,
+    gastosPrevistos: gastosPrevistos,
+    gastosAdicionales: gastosAdicionales,
+    reporteCierre: true,
+  );
+
+  Future<Uint8List> _generar(
+    Proyecto proyecto,
+    List<ItemProyecto> items, {
+    List<GastoPrevisto> gastosPrevistos = const [],
+    List<Gasto> gastosAdicionales = const [],
+    bool reporteCierre = false,
   }) async {
     final partidas = items
         .where((item) => item.proyectoId == proyecto.id)
@@ -18,7 +39,16 @@ class ServicioPdf {
     final gastos = gastosPrevistos
         .where((gasto) => gasto.proyectoId == proyecto.id)
         .toList();
+    final adicionales = gastosAdicionales
+        .where((gasto) => gasto.proyectoId == proyecto.id)
+        .toList();
     final desglose = calcularDesgloseProforma(proyecto, partidas, gastos);
+    final esCierre = reporteCierre;
+    final totalAdicionales = adicionales.fold<int>(
+      0,
+      (total, gasto) => total + gasto.montoCentavos,
+    );
+    final resultadoCierre = calcularResultadoCierre(desglose, adicionales);
     final fuente = pw.Font.ttf(
       await rootBundle.load('assets/fuentes/Roboto-Regular.ttf'),
     );
@@ -26,7 +56,7 @@ class ServicioPdf {
       await rootBundle.load('assets/fuentes/Roboto-Bold.ttf'),
     );
     final documento = pw.Document(
-      title: 'Cotización ${proyecto.id}',
+      title: '${esCierre ? 'Cierre' : 'Cotización'} ${proyecto.id}',
       author: 'ObraPro',
       theme: pw.ThemeData.withFont(base: fuente, bold: negrita),
     );
@@ -56,7 +86,10 @@ class ServicioPdf {
         footer: (contexto) => pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           children: [
-            pw.Text('Proforma / USD', style: const pw.TextStyle(fontSize: 9)),
+            pw.Text(
+              '${esCierre ? 'Cierre de obra' : 'Proforma'} / USD',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
             pw.Text(
               '${contexto.pageNumber} / ${contexto.pagesCount}',
               style: const pw.TextStyle(fontSize: 9),
@@ -71,8 +104,14 @@ class ServicioPdf {
           pw.SizedBox(height: 8),
           pw.Text(proyecto.descripcion),
           pw.SizedBox(height: 16),
-          pw.Text('Inicio: ${fechaCorta(proyecto.fechaInicio)}'),
-          if (proyecto.fechaFin != null)
+          pw.Text(
+            esCierre && proyecto.fechaInicioReal != null
+                ? 'Inicio real: ${fechaCorta(proyecto.fechaInicioReal!)}'
+                : 'Inicio previsto: ${fechaCorta(proyecto.fechaInicio)}',
+          ),
+          if (esCierre && proyecto.fechaFinReal != null)
+            pw.Text('Fin real: ${fechaCorta(proyecto.fechaFinReal!)}')
+          else if (proyecto.fechaFin != null)
             pw.Text('Fin previsto: ${fechaCorta(proyecto.fechaFin!)}'),
           pw.SizedBox(height: 8),
           pw.Text('Estado: ${proyecto.estado.etiqueta}'),
@@ -119,6 +158,11 @@ class ServicioPdf {
             ),
           pw.SizedBox(height: 24),
           _fila('Materiales', dinero(desglose.totalMaterialesCentavos)),
+          if (desglose.cobroManoObraCentavos > 0)
+            _fila(
+              'Mano de obra propia',
+              dinero(desglose.cobroManoObraCentavos),
+            ),
           for (final gasto in gastos)
             _fila(
               gasto.descripcion.isEmpty
@@ -126,17 +170,44 @@ class ServicioPdf {
                   : '${gasto.categoria} · ${gasto.descripcion}',
               dinero(gasto.montoCentavos),
             ),
-          if (desglose.ajusteComercialCentavos != 0)
+          if (desglose.ajusteComercialCentavos != 0 || esCierre)
             _fila('Ajuste comercial', dinero(desglose.ajusteComercialCentavos)),
+          if (esCierre) ...[
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Gastos adicionales registrados',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            if (adicionales.isEmpty)
+              pw.Padding(
+                padding: const pw.EdgeInsets.symmetric(vertical: 8),
+                child: pw.Text('No se registraron gastos adicionales.'),
+              )
+            else
+              for (final gasto in adicionales)
+                _fila(
+                  '${fechaHoraCorta(gasto.fecha)} · ${gasto.categoria}${gasto.nota.isEmpty ? '' : ' · ${gasto.nota}'}',
+                  dinero(gasto.montoCentavos),
+                ),
+            _fila('Total de gastos adicionales', dinero(totalAdicionales)),
+            pw.Divider(),
+            _fila(
+              'RESULTADO DESPUÉS DE GASTOS ADICIONALES',
+              dinero(resultadoCierre),
+              destacado: true,
+            ),
+          ],
           pw.Divider(),
           _fila(
-            'TOTAL COTIZADO (USD)',
+            esCierre ? 'TOTAL ORIGINAL COTIZADO (USD)' : 'TOTAL COTIZADO (USD)',
             dinero(proyecto.totalCotizadoCentavos),
             destacado: true,
           ),
           pw.SizedBox(height: 20),
           pw.Text(
-            'Cotización de referencia. No constituye una factura ni un comprobante de pago.',
+            esCierre
+                ? 'Reporte informativo de cierre. No constituye una factura ni un comprobante de pago.'
+                : 'Cotización de referencia. No constituye una factura ni un comprobante de pago.',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
 import 'package:cotizo_app/aplicacion/edicion_material.dart';
+import 'package:cotizo_app/core/formato.dart';
 import 'package:cotizo_app/core/theme/app_theme.dart';
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:cotizo_app/funcionalidades/gastos/formulario_gasto.dart';
@@ -154,6 +155,7 @@ void main() {
     await tester.pumpWidget(
       BlocProvider.value(value: cubit, child: _aplicacion(const ExpensePage())),
     );
+    final inicioRegistro = DateTime.now();
     await _pulsar(tester, find.text('Registrar gasto'));
     await tester.enterText(find.byType(TextFormField).first, '0');
     await _pulsar(tester, find.text('Guardar gasto'));
@@ -167,6 +169,20 @@ void main() {
     await _pulsar(tester, find.text('Guardar gasto'));
     expect(repositorio.datos.gastos.single.proyectoId, isNull);
     expect(repositorio.datos.gastos.single.montoCentavos, 325);
+    expect(
+      find.text(fechaHoraCorta(repositorio.datos.gastos.single.fecha)),
+      findsOneWidget,
+    );
+    expect(
+      repositorio.datos.gastos.single.fecha.isAfter(
+        inicioRegistro.subtract(const Duration(seconds: 1)),
+      ),
+      isTrue,
+    );
+    expect(
+      repositorio.datos.gastos.single.fecha.isBefore(DateTime.now()),
+      isTrue,
+    );
     await _pulsar(tester, find.byTooltip('Opciones del gasto'));
     await _pulsar(tester, find.text('Editar'));
     await tester.enterText(find.byType(TextFormField).first, '4.50');

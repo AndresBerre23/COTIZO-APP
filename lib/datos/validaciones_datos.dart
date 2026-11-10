@@ -27,6 +27,7 @@ void validarProyecto(
   validarTexto(proyecto.nombreCliente, 'El cliente');
   validarTexto(proyecto.descripcion, 'La descripción', maximo: 2000);
   validarImporte(proyecto.totalCotizadoCentavos);
+  validarImporte(proyecto.cobroManoObraCentavos);
   final margen = proyecto.margenDeseadoPuntos;
   if (margen != null && (margen < 0 || margen >= 10000)) {
     throw const FormatException('El margen debe estar entre 0 y 99,99 %.');

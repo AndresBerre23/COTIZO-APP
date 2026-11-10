@@ -87,6 +87,8 @@ class VistaProforma extends StatelessWidget {
             ),
           ),
           _Importe('Materiales', desglose.totalMaterialesCentavos),
+          if (desglose.cobroManoObraCentavos > 0)
+            _Importe('Mano de obra propia', desglose.cobroManoObraCentavos),
           for (final gasto in gastosPrevistos)
             _Importe(
               gasto.descripcion.isEmpty

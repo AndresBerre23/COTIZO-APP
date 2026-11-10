@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../core/formato.dart';
 import '../../dominio/categorias_gasto.dart';
@@ -72,7 +73,37 @@ class _GastoFormularioState extends State<GastoFormulario> {
       firstDate: DateTime(1900),
       lastDate: DateTime(2200),
     );
-    if (elegida != null && mounted) setState(() => _fecha = elegida);
+    if (elegida != null && mounted) {
+      setState(
+        () => _fecha = DateTime(
+          elegida.year,
+          elegida.month,
+          elegida.day,
+          _fecha.hour,
+          _fecha.minute,
+          _fecha.second,
+          _fecha.millisecond,
+        ),
+      );
+    }
+  }
+
+  Future<void> _elegirHora() async {
+    final elegida = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_fecha),
+    );
+    if (elegida != null && mounted) {
+      setState(
+        () => _fecha = DateTime(
+          _fecha.year,
+          _fecha.month,
+          _fecha.day,
+          elegida.hour,
+          elegida.minute,
+        ),
+      );
+    }
   }
 
   void _aceptar() {
@@ -110,6 +141,7 @@ class _GastoFormularioState extends State<GastoFormulario> {
               const Text('Cada gasto cuenta para conocer lo que ganas.'),
               const SizedBox(height: 24),
               TextFormField(
+                onTapOutside: cerrarFocoAlTocarFuera,
                 controller: _monto,
                 autofocus: true,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -181,13 +213,25 @@ class _GastoFormularioState extends State<GastoFormulario> {
                 onChanged: (valor) => setState(() => _categoria = valor!),
               ),
               const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _elegirFecha,
-                icon: const Icon(Icons.calendar_today_outlined),
-                label: Text('Fecha: ${fechaCorta(_fecha)}'),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _elegirFecha,
+                    icon: const Icon(Icons.calendar_today_outlined),
+                    label: Text('Fecha: ${fechaCorta(_fecha)}'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _elegirHora,
+                    icon: const Icon(Icons.schedule_outlined),
+                    label: Text('Hora: ${horaCorta(_fecha)}'),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               TextFormField(
+                onTapOutside: cerrarFocoAlTocarFuera,
                 controller: _nota,
                 minLines: 2,
                 maxLines: 4,

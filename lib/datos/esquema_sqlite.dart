@@ -15,6 +15,7 @@ Future<void> crearEsquema(Database base, int version) async {
       ),
       total_cotizado INTEGER NOT NULL CHECK (total_cotizado >= 0),
       margen_deseado_puntos INTEGER,
+      cobro_mano_obra INTEGER NOT NULL DEFAULT 0 CHECK (cobro_mano_obra >= 0),
       CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio)
     )
   ''');
@@ -126,6 +127,11 @@ Future<void> migrarEsquema(
     );
     await base.execute(
       'ALTER TABLE materiales ADD COLUMN atribucion_licencia_url TEXT',
+    );
+  }
+  if (versionAnterior < 6) {
+    await base.execute(
+      'ALTER TABLE proyectos ADD COLUMN cobro_mano_obra INTEGER NOT NULL DEFAULT 0 CHECK (cobro_mano_obra >= 0)',
     );
   }
 }

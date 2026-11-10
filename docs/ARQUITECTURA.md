@@ -66,10 +66,10 @@ Cada clase tiene su propio archivo, propiedades finales y constructor con parám
 
 | Entidad | Campos Dart | Relación |
 | --- | --- | --- |
-| Proyecto | id, nombreCliente, descripcion, fechaInicio, fechaFin?, fechaInicioReal?, fechaFinReal?, margenDeseadoPuntos?, estado, totalCotizadoCentavos | Tiene partidas, gastos previstos y registrados; conserva planificación y ejecución |
+| Proyecto | id, nombreCliente, descripcion, fechaInicio, fechaFin?, fechaInicioReal?, fechaFinReal?, margenDeseadoPuntos?, estado, totalCotizadoCentavos, cobroManoObraCentavos | Tiene partidas, gastos previstos y registrados; conserva planificación, ejecución y el cobro de mano de obra propia |
 | MaterialObra | id, nombre, unidadMedida, costoBaseCentavos, imagenRuta?, atribucionImagen? | Referenciado por partidas; imagen y licencia quedan en almacenamiento local y SQLite |
 | ItemProyecto | id, proyectoId, materialId, cantidad, costoUnitarioAplicadoCentavos, subtotalCentavos | Une proyecto y material |
-| Gasto | id, proyectoId?, montoCentavos, categoria, fecha, nota | Proyecto opcional; null representa gasto general |
+| Gasto | id, proyectoId?, montoCentavos, categoria, fecha y hora, nota | Guarda fecha y hora local; proyecto opcional y null representa gasto general |
 | GastoPrevisto | id, proyectoId, categoria, montoCentavos, descripcion | Pertenece a una cotización; no representa un desembolso |
 
 `ItemProyecto` añade `nombreMaterial` y `unidadMedida` como instantáneas históricas. Editar el catálogo no modifica las propuestas guardadas. `subtotalCentavos` se calcula a partir de cantidad y costo aplicado; el mapeador persiste el resultado, sin aceptar un subtotal independiente del cálculo.
@@ -91,11 +91,11 @@ El SQL ejecutable está en `lib/datos/esquema_sqlite.dart`:
 
 `PRAGMA foreign_keys = ON` se activa en cada apertura. Guardar proyecto, partidas y gastos previstos es una transacción. Omitir la lista de gastos previstos al actualizar conserva el presupuesto existente; pasar una lista la sustituye. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
 
-`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 5 y migraciones desde las versiones 1, 2, 3 y 4.
+`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 6 y migraciones desde las versiones anteriores.
 
 Las fotos del catálogo se seleccionan desde galería, cámara o Wikimedia Commons; se decodifican y optimizan en un isolate con orientación normalizada, sin metadatos, hasta 1280 píxeles por lado y 300 KB. Se guardan como JPEG en `Application Support/imagenes_materiales`; SQLite conserva el nombre relativo y, cuando corresponde, la atribución. Al reemplazar una imagen, la anterior se mantiene hasta confirmar el guardado del material. Cancelar el formulario no crea archivos persistentes.
 
-La búsqueda web consulta la API de Wikimedia Commons, pide resultados del espacio de archivos y lee URL, licencia y atribución mediante `imageinfo`. Solo muestra dominio público, CC0, CC BY y CC BY-SA; descarta licencias no comerciales o sin obras derivadas. Las URL de miniaturas/descargas deben ser HTTPS de `upload.wikimedia.org`; las solicitudes limitan tamaño y tiempo, y las imágenes seleccionadas pasan por el mismo optimizador y almacenamiento offline. El título, autor, fuente y licencia permanecen en SQLite y aparecen al ampliar la imagen.
+La búsqueda web consulta la API de Wikimedia Commons, pide resultados del espacio de archivos y lee URL, licencia y atribución mediante `imageinfo`. Solo muestra dominio público, CC0, CC BY y CC BY-SA; descarta licencias no comerciales o sin obras derivadas. Las URL de miniaturas/descargas deben ser HTTPS de `upload.wikimedia.org`; las solicitudes usan un agente identificable, limitan las conexiones concurrentes por servidor, el tamaño y el tiempo, y las imágenes seleccionadas pasan por el mismo optimizador y almacenamiento offline. Para consultas conocidas en español, se intenta un término equivalente en inglés cuando la consulta original no devuelve imágenes compatibles. El título, autor, fuente y licencia permanecen en SQLite y aparecen al ampliar la imagen.
 
 ## 3. Rentabilidad
 
@@ -117,7 +117,7 @@ rentabilidad = total cotizado
              - suma de gastos asociados al proyecto
 ```
 
-Filtra por `proyectoId`, excluye gastos generales y registros de otros proyectos, y permite resultados negativos. Los gastos previstos permanecen fuera de este cálculo y de los desembolsos registrados. El editor calcula aparte `costo previsto = materiales + gastos previstos` y `ganancia prevista = precio elegido - costo previsto`. El margen opcional se expresa en centésimas de porcentaje y propone `costo previsto / (1 - margen / 100)`; la sugerencia no reemplaza el precio elegido. Para interpretar la rentabilidad registrada como resultado real deben registrarse los costos efectivamente incurridos, incluyendo mano de obra. No hay impuestos, cobros ni gastos inferidos.
+Filtra por `proyectoId`, excluye gastos generales y registros de otros proyectos, y permite resultados negativos. Los gastos previstos permanecen fuera de este cálculo y de los desembolsos registrados. El editor calcula `costo previsto = materiales + gastos previstos`. El precio sugerido aplica un margen del 20 % sobre esos costos y suma aparte el cobro de mano de obra propia. El usuario puede aplicar la sugerencia y seguir editando el precio. El resumen separa ese cobro del margen restante y de la ganancia prevista total. No hay impuestos ni gastos inferidos.
 
 El resumen general usa solo obras iniciadas o finalizadas. Después de sumar su rentabilidad descuenta gastos generales una sola vez. Las cotizaciones aprobadas que todavía no iniciaron no inflan ese balance.
 
@@ -133,9 +133,11 @@ final archivo = await servicio.guardarEn(directorio, proyecto, items);
 
 `generar` devuelve `Future<Uint8List>` con el documento listo para compartir. `guardarEn` devuelve `Future<File>` en un directorio elegido por el llamador. La pantalla utiliza `Printing.sharePdf` y `Printing.layoutPdf`.
 
-Incluye identificador, cliente, descripción, fechas, estado, cantidades, unidades, valores aplicados, cada gasto previsto y el total cotizado. El ajuste comercial se calcula como total elegido menos materiales y gastos previstos, y puede ser positivo o negativo. Los gastos efectivamente registrados y el margen usado para sugerir el precio no se agregan al documento.
+La proforma incluye identificador, cliente, descripción, fechas, estado, cantidades, unidades, valores aplicados, cada gasto previsto y el total cotizado. El ajuste comercial se calcula como total elegido menos materiales y gastos previstos, y puede ser positivo o negativo. En obras finalizadas, el detalle permite abrir un reporte de cierre separado que repite el desglose cotizado, detalla los gastos adicionales registrados con fecha y hora, y calcula el resultado restándolos del ajuste comercial. El formulario de gastos indica registrar solo costos adicionales; así no se descuentan de nuevo materiales o gastos ya incluidos en la proforma.
 
 El documento admite varias páginas y usa fuentes Roboto incluidas en `assets/fuentes/`, con su licencia original. No utiliza fuentes de Google descargadas durante la ejecución. La propuesta indica que no es una factura.
+
+La pestaña de navegación se llama «Documentos» y muestra un archivo con pestañas para proformas y cierres. Busca por cliente, descripción o código; filtra por estado y rango de fechas; y permite ordenar por código reciente, cliente, fecha o importe. En proformas, las fechas usan el inicio previsto; en cierres, la fecha de finalización real. El orden reciente usa el ID descendente, que refleja el orden de inserción mientras el modelo no almacene fecha de creación.
 
 ## Estado, rendimiento y extensión
 

@@ -3,7 +3,6 @@ import 'package:cotizo_app/dominio/calcular_presupuesto_proyecto.dart';
 import 'package:cotizo_app/dominio/calcular_precio_sugerido.dart';
 import 'package:cotizo_app/dominio/calcular_rentabilidad.dart';
 import 'package:cotizo_app/dominio/categorias_gasto.dart';
-import 'package:cotizo_app/dominio/leer_margen_deseado.dart';
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,21 +16,14 @@ void main() {
     },
   );
 
-  test('sugiere un precio con margen sobre venta y redondea hacia arriba', () {
-    expect(calcularPrecioSugerido(10000, 2000), 12500);
-    expect(calcularPrecioSugerido(1, 3333), 2);
-    expect(calcularPrecioSugerido(10000, null), isNull);
-  });
-
-  test('lee márgenes de hasta dos decimales sin aproximaciones', () {
-    expect(leerMargenDeseadoPuntos('20'), 2000);
-    expect(leerMargenDeseadoPuntos('20,05'), 2005);
-    expect(leerMargenDeseadoPuntos('99.99'), 9999);
-    expect(leerMargenDeseadoPuntos('100'), isNull);
-    expect(leerMargenDeseadoPuntos('20.001'), isNull);
-    expect(validarMargenDeseado(''), isNull);
-    expect(validarMargenDeseado('20.001'), isNotNull);
-  });
+  test(
+    'sugiere el precio con margen fijo del 15 % y redondeo hacia arriba',
+    () {
+      expect(calcularPrecioSugerido(10000), 11765);
+      expect(calcularPrecioSugerido(1), 2);
+      expect(calcularPrecioSugerido(0), isNull);
+    },
+  );
 
   test('desglosa gastos previstos y ajuste sin mezclar gastos reales', () {
     final proyecto = Proyecto(
@@ -63,14 +55,14 @@ void main() {
     );
 
     final desglose = calcularDesgloseProforma(proyecto, [item], [previsto]);
-    final presupuesto = calcularPresupuestoProyecto([item], [previsto], 2000);
+    final presupuesto = calcularPresupuestoProyecto([item], [previsto]);
 
     expect(desglose.totalMaterialesCentavos, 10000);
     expect(desglose.totalGastosPrevistosCentavos, 10000);
     expect(desglose.ajusteComercialCentavos, 0);
     expect(presupuesto.costoMaterialesCentavos, 10000);
     expect(presupuesto.costoPrevistoCentavos, 20000);
-    expect(presupuesto.precioSugeridoCentavos, 25000);
+    expect(presupuesto.precioSugeridoCentavos, 23530);
     expect(calcularRentabilidad(proyecto, [item], [registrado]), 2000);
 
     final descuento = Proyecto(

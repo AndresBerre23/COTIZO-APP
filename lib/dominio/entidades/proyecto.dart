@@ -20,6 +20,7 @@ class Proyecto {
     this.margenDeseadoPuntos,
     this.estado = EstadoProyecto.borrador,
     required this.totalCotizadoCentavos,
+    this.cobroManoObraCentavos = 0,
   });
 
   final int id;
@@ -32,6 +33,7 @@ class Proyecto {
   final int? margenDeseadoPuntos;
   final EstadoProyecto estado;
   final int totalCotizadoCentavos;
+  final int cobroManoObraCentavos;
 
   bool get esObra =>
       fechaInicioReal != null || estado == EstadoProyecto.finalizado;
@@ -67,6 +69,7 @@ class Proyecto {
     margenDeseadoPuntos: margenDeseadoPuntos,
     estado: nuevoEstado,
     totalCotizadoCentavos: totalCotizadoCentavos,
+    cobroManoObraCentavos: cobroManoObraCentavos,
   );
 }
 

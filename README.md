@@ -6,8 +6,8 @@ Aplicación Flutter para cotizar trabajos, mantener un catálogo propio de mater
 
 1. En **Materiales**, registra nombre, unidad, costo de referencia e imagen opcional desde la galería, la cámara o Wikimedia Commons. La foto se optimiza y se conserva en el dispositivo; las imágenes de Commons muestran su autoría y licencia. El selector permite buscar unidades habituales o escribir otra; no convierte cantidades.
 2. En **Cotizaciones**, crea un proyecto con cliente, descripción, inicio previsto y fin previsto. Añade materiales, cantidades y costos aplicados. También puedes crear materiales desde el editor.
-3. Agrega gastos previstos como alimentación, mano de obra o transporte y define el total que cobrarás. Si indicas tu margen, recibirás un precio sugerido que puedes editar.
-4. Revisa la ganancia prevista y el ajuste comercial en la proforma. Los gastos previstos no se registran como desembolsos ni se mezclan con la rentabilidad calculada a partir de gastos reales.
+3. Agrega gastos previstos como alimentación, pagos a trabajadores o transporte. En el paso del precio puedes agregar aparte el cobro por tu mano de obra; la sugerencia aplica un margen fijo del 20 % a los costos y suma ese cobro por separado.
+4. Revisa el desglose y confirma antes de guardar. Los gastos previstos no se registran como desembolsos ni se mezclan con la rentabilidad calculada a partir de gastos reales.
 5. Abre el detalle para editar la cotización o marcarla como Borrador, Enviada o Aprobada. Usa **Iniciar obra** cuando el cliente acepte el trabajo; las fechas reales se guardan sin modificar las previstas.
 6. Consulta las obras en curso y finalizadas desde la vista **Obras**. Inicio muestra únicamente obras activas y avisa cuando superan el fin previsto.
 7. En **Gastos**, registra desembolsos y asígnalos a un proyecto o déjalos como gastos generales.

@@ -8,3 +8,14 @@ const categoriasGasto = <String>[
   'Materiales adicionales',
   'Otros',
 ];
+
+const categoriaManoObra = 'Mano de obra';
+const categoriaPagoTrabajadores = 'Pago a trabajadores';
+
+final categoriasGastoPrevisto = categoriasGasto
+    .map(
+      (categoria) => categoria == categoriaManoObra
+          ? categoriaPagoTrabajadores
+          : categoria,
+    )
+    .toList(growable: false);
