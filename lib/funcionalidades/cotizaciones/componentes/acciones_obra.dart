@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import 'seccion_cotizacion.dart';
 
@@ -26,12 +25,12 @@ class AccionesObra extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, actualizar) => AlertDialog(
-          title: const Text('Iniciar obra'),
+          title: Text('Iniciar obra'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'La cotización se marcará como aprobada y pasará a Obras. '
                 'Confirma que el cliente aceptó el trabajo.',
               ),
@@ -49,7 +48,7 @@ class AccionesObra extends StatelessWidget {
                   );
                   if (fecha != null) actualizar(() => seleccion = fecha);
                 },
-                icon: const Icon(Icons.calendar_today_outlined),
+                icon: Icon(Icons.calendar_today_outlined),
                 label: Text('Inicio real: ${fechaCorta(seleccion)}'),
               ),
             ],
@@ -57,11 +56,11 @@ class AccionesObra extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
+              child: Text('Cancelar'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, seleccion),
-              child: const Text('Iniciar obra'),
+              child: Text('Iniciar obra'),
             ),
           ],
         ),
@@ -76,12 +75,12 @@ class AccionesObra extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, actualizar) => AlertDialog(
-          title: const Text('Finalizar obra'),
+          title: Text('Finalizar obra'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              Text(
                 'Registra el día en que culminó el trabajo. La fecha prevista '
                 'se conservará para comparar el plazo.',
               ),
@@ -99,7 +98,7 @@ class AccionesObra extends StatelessWidget {
                   );
                   if (fecha != null) actualizar(() => seleccion = fecha);
                 },
-                icon: const Icon(Icons.event_available_outlined),
+                icon: Icon(Icons.event_available_outlined),
                 label: Text('Finalización real: ${fechaCorta(seleccion)}'),
               ),
             ],
@@ -107,11 +106,11 @@ class AccionesObra extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Aún no termino'),
+              child: Text('Aún no termino'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, seleccion),
-              child: const Text('Finalizar obra'),
+              child: Text('Finalizar obra'),
             ),
           ],
         ),
@@ -129,15 +128,17 @@ class AccionesObra extends StatelessWidget {
         children: [
           if (retrasada) ...[
             Material(
-              color: AppColors.error.withValues(alpha: 0.08),
+              color: Theme.of(
+                context,
+              ).colorScheme.error.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(14),
                 child: Text(
                   'Obra en retraso · ${proyecto.diasDeRetraso(DateTime.now())} '
                   '${proyecto.diasDeRetraso(DateTime.now()) == 1 ? 'día' : 'días'}',
-                  style: const TextStyle(
-                    color: AppColors.error,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -150,9 +151,7 @@ class AccionesObra extends StatelessWidget {
           if (proyecto.fechaFinReal != null)
             Text('Finalización real: ${fechaCorta(proyecto.fechaFinReal!)}'),
           if (proyecto.estaFinalizada && proyecto.fechaInicioReal == null)
-            const Text(
-              'Fechas reales no registradas en este proyecto histórico.',
-            ),
+            Text('Fechas reales no registradas en este proyecto histórico.'),
           if (!proyecto.esObra)
             FilledButton.icon(
               onPressed: guardando
@@ -161,8 +160,8 @@ class AccionesObra extends StatelessWidget {
                       final fecha = await _pedirInicio(context);
                       if (fecha != null) await alIniciar(fecha);
                     },
-              icon: const Icon(Icons.construction_outlined),
-              label: const Text('Iniciar obra'),
+              icon: Icon(Icons.construction_outlined),
+              label: Text('Iniciar obra'),
             ),
           if (proyecto.estaEnCurso) ...[
             const SizedBox(height: 12),
@@ -173,8 +172,8 @@ class AccionesObra extends StatelessWidget {
                       final fecha = await _pedirFinalizacion(context);
                       if (fecha != null) await alFinalizar(fecha);
                     },
-              icon: const Icon(Icons.task_alt_outlined),
-              label: const Text('Finalizar obra'),
+              icon: Icon(Icons.task_alt_outlined),
+              label: Text('Finalizar obra'),
             ),
           ],
         ],

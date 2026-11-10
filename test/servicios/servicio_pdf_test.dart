@@ -21,6 +21,7 @@ void main() {
       datos.proyectos.single,
       datos.items,
       gastosPrevistos: gastosPrevistos,
+      nombreEmisor: 'Ana Pérez',
     );
     expect(ascii.decode(bytes.take(5).toList()), '%PDF-');
     expect(bytes.length, greaterThan(1000));

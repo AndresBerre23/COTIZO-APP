@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import 'fechas_proyecto.dart';
 import 'seccion_cotizacion.dart';
 
@@ -60,7 +59,10 @@ class DatosClienteEditor extends StatelessWidget {
           alCambiarFin: alCambiarFin,
         ),
         if (errorFecha != null)
-          Text(errorFecha!, style: const TextStyle(color: AppColors.error)),
+          Text(
+            errorFecha!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
       ],
     ),
   );

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../datos/almacen_imagenes_materiales.dart';
 
 class ImagenMaterial extends StatefulWidget {
@@ -64,9 +63,12 @@ class _ImagenMaterialState extends State<ImagenMaterial> {
   Widget _marcador() => SizedBox(
     width: widget.ancho,
     height: widget.ancho,
-    child: const CircleAvatar(
-      backgroundColor: AppColors.softBlue,
-      child: Icon(Icons.inventory_2_outlined, color: AppColors.cobalt),
+    child: CircleAvatar(
+      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      child: Icon(
+        Icons.inventory_2_outlined,
+        color: Theme.of(context).colorScheme.primary,
+      ),
     ),
   );
 }

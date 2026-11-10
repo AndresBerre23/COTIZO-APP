@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/formato.dart';
-import '../../core/theme/app_theme.dart';
 import '../../dominio/calcular_rentabilidad.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
@@ -31,13 +30,13 @@ class ResumenFinanciero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'BALANCE ESTIMADO DE OBRAS',
             style: TextStyle(
               fontSize: 12,
               letterSpacing: 1,
               fontWeight: FontWeight.w700,
-              color: AppColors.muted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),
@@ -50,14 +49,18 @@ class ResumenFinanciero extends StatelessWidget {
                 fontSize: 36,
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                color: resultado < 0 ? AppColors.error : AppColors.cobalt,
+                color: resultado < 0
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Obras iniciadas y finalizadas, menos sus costos y todos los gastos generales.',
-            style: TextStyle(color: AppColors.muted),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           Wrap(
@@ -70,9 +73,12 @@ class ResumenFinanciero extends StatelessWidget {
             ],
           ),
           const Divider(height: 28),
-          const Text(
+          Text(
             'Estimación basada en lo registrado. No representa cobros ni pagos confirmados.',
-            style: TextStyle(fontSize: 12, color: AppColors.muted),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -89,12 +95,15 @@ class _Dato extends StatelessWidget {
     children: [
       Text(
         etiqueta,
-        style: const TextStyle(fontSize: 12, color: AppColors.muted),
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       ),
       const SizedBox(height: 4),
       Text(
         valor,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'monospace',
           fontWeight: FontWeight.w700,
           fontSize: 17,

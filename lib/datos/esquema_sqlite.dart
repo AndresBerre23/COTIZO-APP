@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 Future<void> crearEsquema(Database base, int version) async {
+  await _crearTablaPreferencias(base);
   await base.execute('''
     CREATE TABLE proyectos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,4 +135,20 @@ Future<void> migrarEsquema(
       'ALTER TABLE proyectos ADD COLUMN cobro_mano_obra INTEGER NOT NULL DEFAULT 0 CHECK (cobro_mano_obra >= 0)',
     );
   }
+  if (versionAnterior < 7) await _crearTablaPreferencias(base);
 }
+
+Future<void> _crearTablaPreferencias(DatabaseExecutor base) => base.execute('''
+  CREATE TABLE preferencias_app (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    nombre TEXT NOT NULL DEFAULT '',
+    apellido TEXT NOT NULL DEFAULT '',
+    foto_ruta TEXT,
+    modo_tema TEXT NOT NULL DEFAULT 'sistema' CHECK (
+      modo_tema IN ('sistema', 'claro', 'oscuro')
+    ),
+    omitir_aviso_nombre INTEGER NOT NULL DEFAULT 0 CHECK (
+      omitir_aviso_nombre IN (0, 1)
+    )
+  )
+''');

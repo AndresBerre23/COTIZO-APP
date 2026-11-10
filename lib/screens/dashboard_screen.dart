@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../aplicacion/cotizo_cubit.dart';
 import '../core/formato.dart';
-import '../core/theme/app_theme.dart';
 import '../dominio/calcular_rentabilidad.dart';
 import '../dominio/modelos.dart';
 import '../widgets/estado_vacio.dart';
@@ -85,14 +84,16 @@ class _DashboardPageState extends State<DashboardPage>
       return PaginaBase(
         titulo: 'Inicio',
         children: [
-          const Text(
+          Text(
             'Tus proyectos, con cuentas claras.',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Cotiza con tus precios y conoce cuánto queda después de cada gasto.',
-            style: TextStyle(color: AppColors.muted),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 24),
           ResumenFinanciero(datos: datos),
@@ -109,22 +110,22 @@ class _DashboardPageState extends State<DashboardPage>
                           builder: (_) => const EditorProyectoPagina(),
                         ),
                       ),
-                icon: const Icon(Icons.add),
-                label: const Text('Crear cotización'),
+                icon: Icon(Icons.add),
+                label: Text('Crear cotización'),
               ),
               OutlinedButton.icon(
                 onPressed: estado.guardando
                     ? null
                     : () => _registrarGasto(context, datos),
-                icon: const Icon(Icons.receipt_long_outlined),
-                label: const Text('Registrar gasto'),
+                icon: Icon(Icons.receipt_long_outlined),
+                label: Text('Registrar gasto'),
               ),
             ],
           ),
           const SizedBox(height: 28),
           Text(
             'Proyectos activos · ${activos.length}',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           if (activos.isEmpty)
@@ -135,7 +136,7 @@ class _DashboardPageState extends State<DashboardPage>
                   'Añade tus materiales y crea una cotización. Todo queda guardado en este dispositivo.',
               accion: TextButton(
                 onPressed: () => widget.cambiarSeccion?.call(2),
-                child: const Text('Preparar mis materiales'),
+                child: Text('Preparar mis materiales'),
               ),
             ),
           ...activos.map((proyecto) {
@@ -174,17 +175,19 @@ class _DashboardPageState extends State<DashboardPage>
                           if (retrasada) ...[
                             Row(
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.warning_amber_rounded,
-                                  color: AppColors.error,
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
                                     'Obra en retraso · ${proyecto.diasDeRetraso(_ahora)} '
                                     '${proyecto.diasDeRetraso(_ahora) == 1 ? 'día' : 'días'}',
-                                    style: const TextStyle(
-                                      color: AppColors.error,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -195,7 +198,7 @@ class _DashboardPageState extends State<DashboardPage>
                           ],
                           Text(
                             proyecto.descripcion,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w700,
                             ),
@@ -203,7 +206,11 @@ class _DashboardPageState extends State<DashboardPage>
                           const SizedBox(height: 4),
                           Text(
                             proyecto.nombreCliente,
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                           const SizedBox(height: 12),
                           Wrap(
@@ -220,8 +227,8 @@ class _DashboardPageState extends State<DashboardPage>
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: rentabilidad < 0
-                                      ? AppColors.error
-                                      : AppColors.cobalt,
+                                      ? Theme.of(context).colorScheme.error
+                                      : Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ],
@@ -230,24 +237,30 @@ class _DashboardPageState extends State<DashboardPage>
                           LinearProgressIndicator(
                             value: proporcion,
                             color: rentabilidad < 0
-                                ? AppColors.error
-                                : AppColors.blue,
-                            backgroundColor: AppColors.softBlue,
+                                ? Theme.of(context).colorScheme.error
+                                : Theme.of(context).colorScheme.secondary,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer,
                             minHeight: 6,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Costos registrados: ${dinero(costo)}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.muted,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             'Ver detalle',
-                            style: TextStyle(color: AppColors.blue),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
                           ),
                         ],
                       ),

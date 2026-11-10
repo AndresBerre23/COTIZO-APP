@@ -5,13 +5,20 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../core/formato.dart';
 import '../../dominio/calcular_desglose_proforma.dart';
 import '../../dominio/modelos.dart';
+import 'componentes/diseno_documento_pdf.dart';
 
 class ServicioPdf {
   Future<Uint8List> generar(
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto> gastosPrevistos = const [],
-  }) => _generar(proyecto, items, gastosPrevistos: gastosPrevistos);
+    String? nombreEmisor,
+  }) => _generar(
+    proyecto,
+    items,
+    gastosPrevistos: gastosPrevistos,
+    nombreEmisor: nombreEmisor,
+  );
 
   Future<Uint8List> generarReporteCierre(
     Proyecto proyecto,
@@ -32,6 +39,7 @@ class ServicioPdf {
     List<GastoPrevisto> gastosPrevistos = const [],
     List<Gasto> gastosAdicionales = const [],
     bool reporteCierre = false,
+    String? nombreEmisor,
   }) async {
     final partidas = items
         .where((item) => item.proyectoId == proyecto.id)
@@ -55,67 +63,107 @@ class ServicioPdf {
     final negrita = pw.Font.ttf(
       await rootBundle.load('assets/fuentes/Roboto-Bold.ttf'),
     );
+    final logo = await DisenoDocumentoPdf.cargarLogo();
+    final nombreAutor = nombreEmisor?.trim();
     final documento = pw.Document(
       title: '${esCierre ? 'Cierre' : 'Cotización'} ${proyecto.id}',
-      author: 'ObraPro',
+      author: nombreEmisor?.trim().isNotEmpty == true ? nombreEmisor : 'Coti',
       theme: pw.ThemeData.withFont(base: fuente, bold: negrita),
     );
-    final azul = PdfColor.fromHex('#1E3A8A');
+    final azul = PdfColor.fromHex('#10144C');
+    final morado = PdfColor.fromHex('#4C36B8');
+    final turquesa = PdfColor.fromHex('#00796F');
+    final superficie = PdfColor.fromHex('#F5F4FA');
     documento.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(36),
         maxPages: 100,
-        header: (contexto) => pw.Container(
-          padding: const pw.EdgeInsets.only(bottom: 18),
-          child: pw.Row(
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              pw.Text(
-                'OBRAPRO',
-                style: pw.TextStyle(
-                  color: azul,
-                  fontSize: 22,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Text('COT-${proyecto.id.toString().padLeft(4, '0')}'),
-            ],
-          ),
+        header: (contexto) => DisenoDocumentoPdf.encabezadoPagina(
+          logo,
+          esCierre,
+          proyecto.id,
+          contexto.pageNumber > 1,
+          azul,
+          morado,
         ),
-        footer: (contexto) => pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text(
-              '${esCierre ? 'Cierre de obra' : 'Proforma'} / USD',
-              style: const pw.TextStyle(fontSize: 9),
-            ),
-            pw.Text(
-              '${contexto.pageNumber} / ${contexto.pagesCount}',
-              style: const pw.TextStyle(fontSize: 9),
-            ),
-          ],
+        footer: (contexto) => DisenoDocumentoPdf.piePagina(
+          esCierre,
+          contexto.pageNumber,
+          contexto.pagesCount,
         ),
         build: (contexto) => [
-          pw.Text(
+          DisenoDocumentoPdf.encabezado(
+            logo,
+            esCierre,
+            proyecto.id,
+            azul,
+            morado,
+          ),
+          pw.SizedBox(height: 20),
+          DisenoDocumentoPdf.bloquePersonas(
+            nombreAutor?.isNotEmpty == true ? nombreAutor! : 'Coti',
             proyecto.nombreCliente,
-            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            azul,
+            turquesa,
           ),
-          pw.SizedBox(height: 8),
-          pw.Text(proyecto.descripcion),
-          pw.SizedBox(height: 16),
+          pw.SizedBox(height: 12),
           pw.Text(
-            esCierre && proyecto.fechaInicioReal != null
-                ? 'Inicio real: ${fechaCorta(proyecto.fechaInicioReal!)}'
-                : 'Inicio previsto: ${fechaCorta(proyecto.fechaInicio)}',
+            proyecto.descripcion,
+            style: pw.TextStyle(
+              fontSize: 11,
+              color: PdfColor.fromHex('#404252'),
+            ),
           ),
-          if (esCierre && proyecto.fechaFinReal != null)
-            pw.Text('Fin real: ${fechaCorta(proyecto.fechaFinReal!)}')
-          else if (proyecto.fechaFin != null)
-            pw.Text('Fin previsto: ${fechaCorta(proyecto.fechaFin!)}'),
+          pw.SizedBox(height: 16),
+          pw.Row(
+            children: [
+              pw.Expanded(
+                child: DisenoDocumentoPdf.datoCompacto(
+                  esCierre && proyecto.fechaInicioReal != null
+                      ? 'INICIO REAL'
+                      : 'INICIO PREVISTO',
+                  fechaCorta(
+                    esCierre && proyecto.fechaInicioReal != null
+                        ? proyecto.fechaInicioReal!
+                        : proyecto.fechaInicio,
+                  ),
+                  superficie,
+                  azul,
+                ),
+              ),
+              pw.SizedBox(width: 8),
+              pw.Expanded(
+                child: DisenoDocumentoPdf.datoCompacto(
+                  esCierre && proyecto.fechaFinReal != null
+                      ? 'FIN REAL'
+                      : 'FIN PREVISTO',
+                  esCierre && proyecto.fechaFinReal != null
+                      ? fechaCorta(proyecto.fechaFinReal!)
+                      : proyecto.fechaFin == null
+                      ? 'Sin definir'
+                      : fechaCorta(proyecto.fechaFin!),
+                  superficie,
+                  azul,
+                ),
+              ),
+              pw.SizedBox(width: 8),
+              pw.Expanded(
+                child: DisenoDocumentoPdf.datoCompacto(
+                  'ESTADO',
+                  proyecto.estado.etiqueta,
+                  superficie,
+                  azul,
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 22),
+          DisenoDocumentoPdf.tituloSeccion(
+            esCierre ? 'Detalle de la obra' : 'Detalle de la proforma',
+            azul,
+          ),
           pw.SizedBox(height: 8),
-          pw.Text('Estado: ${proyecto.estado.etiqueta}'),
-          pw.SizedBox(height: 24),
           if (partidas.isNotEmpty)
             pw.TableHelper.fromTextArray(
               headers: [
@@ -146,7 +194,7 @@ class ServicioPdf {
               cellPadding: const pw.EdgeInsets.all(8),
               border: null,
               oddRowDecoration: pw.BoxDecoration(
-                color: PdfColor.fromHex('#F0F4FF'),
+                color: PdfColor.fromHex('#F3F1FF'),
               ),
               columnWidths: {
                 0: const pw.FlexColumnWidth(3),
@@ -156,22 +204,33 @@ class ServicioPdf {
                 4: const pw.FlexColumnWidth(1.5),
               },
             ),
-          pw.SizedBox(height: 24),
-          _fila('Materiales', dinero(desglose.totalMaterialesCentavos)),
+          pw.SizedBox(height: 20),
+          DisenoDocumentoPdf.tituloSeccion(
+            esCierre ? 'Resumen de costos' : 'Resumen de inversión',
+            azul,
+          ),
+          pw.SizedBox(height: 4),
+          DisenoDocumentoPdf.fila(
+            'Materiales',
+            dinero(desglose.totalMaterialesCentavos),
+          ),
           if (desglose.cobroManoObraCentavos > 0)
-            _fila(
+            DisenoDocumentoPdf.fila(
               'Mano de obra propia',
               dinero(desglose.cobroManoObraCentavos),
             ),
           for (final gasto in gastos)
-            _fila(
+            DisenoDocumentoPdf.fila(
               gasto.descripcion.isEmpty
                   ? gasto.categoria
                   : '${gasto.categoria} · ${gasto.descripcion}',
               dinero(gasto.montoCentavos),
             ),
           if (desglose.ajusteComercialCentavos != 0 || esCierre)
-            _fila('Ajuste comercial', dinero(desglose.ajusteComercialCentavos)),
+            DisenoDocumentoPdf.fila(
+              'Ajuste comercial',
+              dinero(desglose.ajusteComercialCentavos),
+            ),
           if (esCierre) ...[
             pw.SizedBox(height: 16),
             pw.Text(
@@ -185,23 +244,25 @@ class ServicioPdf {
               )
             else
               for (final gasto in adicionales)
-                _fila(
+                DisenoDocumentoPdf.fila(
                   '${fechaHoraCorta(gasto.fecha)} · ${gasto.categoria}${gasto.nota.isEmpty ? '' : ' · ${gasto.nota}'}',
                   dinero(gasto.montoCentavos),
                 ),
-            _fila('Total de gastos adicionales', dinero(totalAdicionales)),
+            DisenoDocumentoPdf.fila(
+              'Total de gastos adicionales',
+              dinero(totalAdicionales),
+            ),
             pw.Divider(),
-            _fila(
+            DisenoDocumentoPdf.fila(
               'RESULTADO DESPUÉS DE GASTOS ADICIONALES',
               dinero(resultadoCierre),
               destacado: true,
             ),
           ],
-          pw.Divider(),
-          _fila(
-            esCierre ? 'TOTAL ORIGINAL COTIZADO (USD)' : 'TOTAL COTIZADO (USD)',
+          DisenoDocumentoPdf.panelTotal(
+            esCierre ? 'TOTAL ORIGINAL COTIZADO' : 'TOTAL DE LA PROFORMA',
             dinero(proyecto.totalCotizadoCentavos),
-            destacado: true,
+            azul,
           ),
           pw.SizedBox(height: 20),
           pw.Text(
@@ -221,41 +282,20 @@ class ServicioPdf {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto> gastosPrevistos = const [],
+    String? nombreEmisor,
   }) async {
     await directorio.create(recursive: true);
     final archivo = File(
       '${directorio.path}${Platform.pathSeparator}cotizacion-${proyecto.id}.pdf',
     );
     return archivo.writeAsBytes(
-      await generar(proyecto, items, gastosPrevistos: gastosPrevistos),
+      await generar(
+        proyecto,
+        items,
+        gastosPrevistos: gastosPrevistos,
+        nombreEmisor: nombreEmisor,
+      ),
       flush: true,
     );
   }
-
-  pw.Widget _fila(String etiqueta, String valor, {bool destacado = false}) =>
-      pw.Padding(
-        padding: const pw.EdgeInsets.symmetric(vertical: 6),
-        child: pw.Row(
-          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Expanded(
-              child: pw.Text(
-                etiqueta,
-                style: pw.TextStyle(
-                  fontWeight: destacado
-                      ? pw.FontWeight.bold
-                      : pw.FontWeight.normal,
-                ),
-              ),
-            ),
-            pw.Text(
-              valor,
-              style: pw.TextStyle(
-                fontSize: destacado ? 16 : 12,
-                fontWeight: pw.FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
 }

@@ -29,7 +29,7 @@ class RepositorioSqlite implements RepositorioLocal {
     final base = await fabricaLocal.openDatabase(
       rutaLocal,
       options: OpenDatabaseOptions(
-        version: 6,
+        version: 7,
         onConfigure: (base) => base.execute('PRAGMA foreign_keys = ON'),
         onCreate: crearEsquema,
         onUpgrade: migrarEsquema,
@@ -114,6 +114,39 @@ class RepositorioSqlite implements RepositorioLocal {
       ),
     );
   });
+
+  @override
+  Future<PreferenciasApp> obtenerPreferencias() async {
+    final filas = await base.query(
+      'preferencias_app',
+      where: 'id = 1',
+      limit: 1,
+    );
+    if (filas.isEmpty) return const PreferenciasApp();
+    final fila = filas.single;
+    return PreferenciasApp(
+      nombre: fila['nombre'] as String,
+      apellido: fila['apellido'] as String,
+      fotoRuta: fila['foto_ruta'] as String?,
+      modoTema: ModoTema.values.firstWhere(
+        (modo) => modo.name == fila['modo_tema'],
+        orElse: () => ModoTema.sistema,
+      ),
+      omitirAvisoNombre: fila['omitir_aviso_nombre'] == 1,
+    );
+  }
+
+  @override
+  Future<void> guardarPreferencias(PreferenciasApp preferencias) async {
+    await base.insert('preferencias_app', {
+      'id': 1,
+      'nombre': preferencias.nombre.trim(),
+      'apellido': preferencias.apellido.trim(),
+      'foto_ruta': preferencias.fotoRuta,
+      'modo_tema': preferencias.modoTema.name,
+      'omitir_aviso_nombre': preferencias.omitirAvisoNombre ? 1 : 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
 
   @override
   Future<int> guardarProyecto(

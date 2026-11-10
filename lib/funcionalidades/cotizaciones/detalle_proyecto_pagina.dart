@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
 import '../../core/formato.dart';
-import '../../core/theme/app_theme.dart';
 import '../../dominio/modelos.dart';
 import '../proformas/reporte_cierre_page.dart';
 import '../proformas/proforma_documento_page.dart';
@@ -97,7 +96,7 @@ class DetalleProyectoPagina extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Detalle del proyecto')),
+    appBar: AppBar(title: Text('Detalle del proyecto')),
     body: BlocBuilder<CotizoCubit, EstadoCotizo>(
       builder: (context, estado) {
         final coincidencias = estado.datos.proyectos.where(
@@ -126,7 +125,9 @@ class DetalleProyectoPagina extends StatelessWidget {
               children: [
                 Text(
                   'COT-${proyecto.id.toString().padLeft(3, '0')}',
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -173,8 +174,8 @@ class DetalleProyectoPagina extends StatelessWidget {
                                 ),
                               ),
                             ),
-                      icon: const Icon(Icons.picture_as_pdf_outlined),
-                      label: const Text('Ver proforma'),
+                      icon: Icon(Icons.picture_as_pdf_outlined),
+                      label: Text('Ver proforma'),
                     ),
                     if (proyecto.estaFinalizada)
                       OutlinedButton.icon(
@@ -187,8 +188,8 @@ class DetalleProyectoPagina extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                        icon: const Icon(Icons.assignment_turned_in_outlined),
-                        label: const Text('Reporte de cierre'),
+                        icon: Icon(Icons.assignment_turned_in_outlined),
+                        label: Text('Reporte de cierre'),
                       ),
                     if (!proyecto.estaFinalizada)
                       OutlinedButton.icon(
@@ -200,8 +201,8 @@ class DetalleProyectoPagina extends StatelessWidget {
                                       EditorProyectoPagina(proyecto: proyecto),
                                 ),
                               ),
-                        icon: const Icon(Icons.edit_outlined),
-                        label: const Text('Editar'),
+                        icon: Icon(Icons.edit_outlined),
+                        label: Text('Editar'),
                       ),
                   ],
                 ),
@@ -271,9 +272,9 @@ class DetalleProyectoPagina extends StatelessWidget {
                         ? null
                         : () => _eliminar(context),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.error,
+                      foregroundColor: Theme.of(context).colorScheme.error,
                     ),
-                    icon: const Icon(Icons.delete_outline),
+                    icon: Icon(Icons.delete_outline),
                     label: Text(
                       proyecto.esObra ? 'Eliminar obra' : 'Eliminar cotización',
                     ),

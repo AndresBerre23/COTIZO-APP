@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../core/imagenes/optimizar_imagen.dart';
 import '../../../dominio/modelos.dart';
 import '../busqueda_wikimedia/busqueda_wikimedia_pagina.dart';
 import '../busqueda_wikimedia/imagen_wikimedia.dart';
-import '../servicios/optimizar_imagen_material.dart';
 import 'cambio_imagen_material.dart';
 import 'imagen_material.dart';
 import 'origen_imagen_material.dart';
@@ -91,7 +91,7 @@ class _SelectorImagenMaterialState extends State<SelectorImagenMaterial> {
     });
     widget.alProcesar(true);
     try {
-      final imagen = await optimizarImagenMaterial(originales);
+      final imagen = await optimizarImagen(originales);
       if (!mounted) return;
       setState(() {
         _bytes = imagen;

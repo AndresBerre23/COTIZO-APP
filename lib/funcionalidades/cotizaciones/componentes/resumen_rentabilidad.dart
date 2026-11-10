@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/calcular_rentabilidad.dart';
 import '../../../dominio/modelos.dart';
 import '../../../widgets/surface_card.dart';
@@ -36,10 +35,10 @@ class ResumenRentabilidad extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'RENTABILIDAD DEL PROYECTO',
             style: TextStyle(
-              color: AppColors.muted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -54,7 +53,9 @@ class ResumenRentabilidad extends StatelessWidget {
                 fontSize: 32,
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
-                color: resultado < 0 ? AppColors.error : AppColors.cobalt,
+                color: resultado < 0
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
@@ -74,10 +75,13 @@ class ResumenRentabilidad extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Calculada con los costos y gastos registrados. '
             'Los gastos generales no se descuentan aquí.',
-            style: TextStyle(fontSize: 12, color: AppColors.muted),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -92,7 +96,7 @@ class ResumenRentabilidad extends StatelessWidget {
       runSpacing: 4,
       children: [
         Text(titulo),
-        Text(dinero(monto), style: const TextStyle(fontFamily: 'monospace')),
+        Text(dinero(monto), style: TextStyle(fontFamily: 'monospace')),
       ],
     ),
   );

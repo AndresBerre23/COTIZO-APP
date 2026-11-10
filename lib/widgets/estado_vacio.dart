@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
 import 'surface_card.dart';
 
 class EstadoVacio extends StatelessWidget {
@@ -22,20 +21,26 @@ class EstadoVacio extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 32,
-            backgroundColor: AppColors.softBlue,
-            child: Icon(icono, size: 32, color: AppColors.cobalt),
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            child: Icon(
+              icono,
+              size: 32,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 20),
           Text(
             titulo,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           Text(
             mensaje,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.muted),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           if (accion != null) ...[const SizedBox(height: 20), accion!],
         ],

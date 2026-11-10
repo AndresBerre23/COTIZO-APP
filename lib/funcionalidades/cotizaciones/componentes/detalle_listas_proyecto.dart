@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import 'seccion_cotizacion.dart';
 
@@ -16,7 +15,7 @@ class MaterialesProyectoDetalle extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (partidas.isEmpty) const Text('No se han añadido materiales.'),
+        if (partidas.isEmpty) Text('No se han añadido materiales.'),
         for (final partida in partidas)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -25,7 +24,7 @@ class MaterialesProyectoDetalle extends StatelessWidget {
               children: [
                 Text(
                   partida.nombreMaterial,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Text(
                   '${partida.cantidad} ${partida.unidadMedida} × '
@@ -33,9 +32,9 @@ class MaterialesProyectoDetalle extends StatelessWidget {
                 ),
                 Text(
                   dinero(partida.subtotalCentavos),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
-                    color: AppColors.cobalt,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],
@@ -66,12 +65,12 @@ class GastosProyectoDetalle extends StatelessWidget {
       children: [
         OutlinedButton.icon(
           onPressed: guardando ? null : alRegistrar,
-          icon: const Icon(Icons.add),
-          label: const Text('Registrar gasto'),
+          icon: Icon(Icons.add),
+          label: Text('Registrar gasto'),
         ),
         const SizedBox(height: 12),
         if (gastos.isEmpty)
-          const Text(
+          Text(
             'Aún no hay gastos en este proyecto. '
             'Añade el primero para actualizar la rentabilidad.',
           ),
@@ -85,7 +84,7 @@ class GastosProyectoDetalle extends StatelessWidget {
                 if (gasto.nota.isNotEmpty) Text(gasto.nota),
                 Text(
                   dinero(gasto.montoCentavos),
-                  style: const TextStyle(fontFamily: 'monospace'),
+                  style: TextStyle(fontFamily: 'monospace'),
                 ),
               ],
             ),
@@ -112,7 +111,7 @@ class GastosPrevistosProyectoDetalle extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (gastos.isEmpty)
-            const Text('Esta cotización no tiene gastos previstos.'),
+            Text('Esta cotización no tiene gastos previstos.'),
           for (final gasto in gastos)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -127,7 +126,11 @@ class GastosPrevistosProyectoDetalle extends StatelessWidget {
                         if (gasto.descripcion.isNotEmpty)
                           Text(
                             gasto.descripcion,
-                            style: const TextStyle(color: AppColors.muted),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
                       ],
                     ),
@@ -142,9 +145,12 @@ class GastosPrevistosProyectoDetalle extends StatelessWidget {
             Text('Total previsto: ${dinero(total)}'),
           ],
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Se muestra por separado de los gastos registrados para evitar descontarlos dos veces.',
-            style: TextStyle(fontSize: 12, color: AppColors.muted),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

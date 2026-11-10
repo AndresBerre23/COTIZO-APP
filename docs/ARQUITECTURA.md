@@ -9,6 +9,7 @@ lib/
   main.dart
   app.dart
   dominio/
+    preferencias_app.dart
     entidades/
       proyecto.dart
       material_obra.dart
@@ -21,6 +22,7 @@ lib/
     unidades_medida.dart
   datos/
     almacen_imagenes_materiales.dart
+    almacen_foto_perfil.dart
     esquema_sqlite.dart
     mapeadores_sqlite.dart
     validaciones_datos.dart
@@ -28,7 +30,9 @@ lib/
   aplicacion/
     cotizo_cubit.dart
     edicion_material.dart
+    preferencias_cubit.dart
   funcionalidades/
+    perfil/
     cotizaciones/
       componentes/
       cotizaciones_pagina.dart
@@ -45,6 +49,7 @@ lib/
       vista_proforma.dart
   core/
     formato.dart
+    imagenes/optimizar_imagen.dart
     theme/app_theme.dart
   widgets/
   screens/
@@ -87,13 +92,16 @@ El SQL ejecutable está en `lib/datos/esquema_sqlite.dart`:
 - `items_proyecto`: claves foráneas, cantidad positiva, costo aplicado, subtotal e instantáneas.
 - `gastos`: monto positivo y relación opcional con proyecto.
 - `gastos_previstos`: presupuesto separado de los gastos registrados.
+- `preferencias_app`: perfil local, tema elegido y decisión de omitir el aviso de nombre.
 - Índices en las relaciones y fecha de gastos.
 
 `PRAGMA foreign_keys = ON` se activa en cada apertura. Guardar proyecto, partidas y gastos previstos es una transacción. Omitir la lista de gastos previstos al actualizar conserva el presupuesto existente; pasar una lista la sustituye. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
 
-`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 6 y migraciones desde las versiones anteriores.
+`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras, además de las preferencias de perfil. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 7 y migraciones desde las versiones anteriores.
 
 Las fotos del catálogo se seleccionan desde galería, cámara o Wikimedia Commons; se decodifican y optimizan en un isolate con orientación normalizada, sin metadatos, hasta 1280 píxeles por lado y 300 KB. Se guardan como JPEG en `Application Support/imagenes_materiales`; SQLite conserva el nombre relativo y, cuando corresponde, la atribución. Al reemplazar una imagen, la anterior se mantiene hasta confirmar el guardado del material. Cancelar el formulario no crea archivos persistentes.
+
+La foto de perfil usa el mismo optimizador de imágenes y se guarda en `Application Support/foto_perfil`. SQLite conserva solo el nombre del archivo. El perfil y el tema se mantienen en el dispositivo; el avatar muestra la foto o las iniciales. Al exportar una proforma sin nombre, la persona puede agregarlo, continuar sin avisos futuros o posponer el aviso hasta el siguiente intento.
 
 La búsqueda web consulta la API de Wikimedia Commons, pide resultados del espacio de archivos y lee URL, licencia y atribución mediante `imageinfo`. Solo muestra dominio público, CC0, CC BY y CC BY-SA; descarta licencias no comerciales o sin obras derivadas. Las URL de miniaturas/descargas deben ser HTTPS de `upload.wikimedia.org`; las solicitudes usan un agente identificable, limitan las conexiones concurrentes por servidor, el tamaño y el tiempo, y las imágenes seleccionadas pasan por el mismo optimizador y almacenamiento offline. Para consultas conocidas en español, se intenta un término equivalente en inglés cuando la consulta original no devuelve imágenes compatibles. El título, autor, fuente y licencia permanecen en SQLite y aparecen al ampliar la imagen.
 
@@ -133,7 +141,7 @@ final archivo = await servicio.guardarEn(directorio, proyecto, items);
 
 `generar` devuelve `Future<Uint8List>` con el documento listo para compartir. `guardarEn` devuelve `Future<File>` en un directorio elegido por el llamador. La pantalla utiliza `Printing.sharePdf` y `Printing.layoutPdf`.
 
-La proforma incluye identificador, cliente, descripción, fechas, estado, cantidades, unidades, valores aplicados, cada gasto previsto y el total cotizado. El ajuste comercial se calcula como total elegido menos materiales y gastos previstos, y puede ser positivo o negativo. En obras finalizadas, el detalle permite abrir un reporte de cierre separado que repite el desglose cotizado, detalla los gastos adicionales registrados con fecha y hora, y calcula el resultado restándolos del ajuste comercial. El formulario de gastos indica registrar solo costos adicionales; así no se descuentan de nuevo materiales o gastos ya incluidos en la proforma.
+La proforma incluye la marca Coti, el nombre del cliente y, cuando está configurado, el nombre del emisor, además de descripción, fechas, estado, cantidades, unidades, valores aplicados, gastos previstos y total cotizado. El ajuste comercial se calcula como total elegido menos materiales y gastos previstos, y puede ser positivo o negativo. En obras finalizadas, el detalle permite abrir un reporte de cierre separado que repite el desglose cotizado, detalla los gastos adicionales registrados con fecha y hora, y calcula el resultado restándolos del ajuste comercial. El formulario de gastos indica registrar solo costos adicionales; así no se descuentan de nuevo materiales o gastos ya incluidos en la proforma.
 
 El documento admite varias páginas y usa fuentes Roboto incluidas en `assets/fuentes/`, con su licencia original. No utiliza fuentes de Google descargadas durante la ejecución. La propuesta indica que no es una factura.
 

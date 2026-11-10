@@ -5,3 +5,4 @@ export 'entidades/gasto_previsto.dart';
 export 'entidades/item_proyecto.dart';
 export 'entidades/material_obra.dart';
 export 'entidades/proyecto.dart';
+export 'preferencias_app.dart';

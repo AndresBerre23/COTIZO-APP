@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import 'dialogo_gasto_previsto.dart';
 import 'seccion_cotizacion.dart';
@@ -39,7 +38,7 @@ class GastosPrevistosEditor extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Presupuesta transporte, alimentación, mano de obra y otros costos antes de cotizar.',
         ),
         for (var indice = 0; indice < gastos.length; indice++)
@@ -53,13 +52,13 @@ class GastosPrevistosEditor extends StatelessWidget {
               onPressed: () => alCambiar(
                 gastos.where((gasto) => gasto != gastos[indice]).toList(),
               ),
-              icon: const Icon(Icons.delete_outline),
+              icon: Icon(Icons.delete_outline),
               tooltip: 'Quitar gasto previsto',
             ),
             trailing: Text(
               dinero(gastos[indice].montoCentavos),
-              style: const TextStyle(
-                color: AppColors.cobalt,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -67,8 +66,8 @@ class GastosPrevistosEditor extends StatelessWidget {
           ),
         OutlinedButton.icon(
           onPressed: () => _editar(context),
-          icon: const Icon(Icons.add),
-          label: const Text('Añadir gasto previsto'),
+          icon: Icon(Icons.add),
+          label: Text('Añadir gasto previsto'),
         ),
       ],
     ),

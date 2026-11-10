@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
 import '../../core/formato.dart';
-import '../../core/theme/app_theme.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
@@ -158,15 +157,15 @@ class _ExpensePageState extends State<ExpensePage> {
               children: [
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 420),
-                  child: const Text(
+                  child: Text(
                     'Registra y encuentra los costos de tus proyectos y gastos generales.',
                   ),
                 ),
                 if (ancho >= 840 && todos.isNotEmpty)
                   FilledButton.icon(
                     onPressed: estado.guardando ? null : () => _editar(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Registrar gasto'),
+                    icon: Icon(Icons.add),
+                    label: Text('Registrar gasto'),
                   ),
               ],
             ),
@@ -175,7 +174,7 @@ class _ExpensePageState extends State<ExpensePage> {
               onTapOutside: cerrarFocoAlTocarFuera,
               onChanged: (valor) => setState(() => _busqueda = valor),
               decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: Icon(Icons.search),
                 labelText: 'Buscar categoría, nota, proyecto o código',
                 hintText: 'Ej.: COT-012',
                 suffixIcon: _busqueda.isEmpty
@@ -183,7 +182,7 @@ class _ExpensePageState extends State<ExpensePage> {
                     : IconButton(
                         tooltip: 'Limpiar búsqueda',
                         onPressed: () => setState(() => _busqueda = ''),
-                        icon: const Icon(Icons.close),
+                        icon: Icon(Icons.close),
                       ),
               ),
             ),
@@ -207,23 +206,23 @@ class _ExpensePageState extends State<ExpensePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'TOTAL DE LA VISTA',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.muted,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                       letterSpacing: 0.5,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     dinero(total),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 30,
                       fontFamily: 'monospace',
                       fontWeight: FontWeight.w700,
-                      color: AppColors.cobalt,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -252,8 +251,8 @@ class _ExpensePageState extends State<ExpensePage> {
             ? FloatingActionButton.extended(
                 heroTag: 'registrar-gasto',
                 onPressed: estado.guardando ? null : () => _editar(),
-                icon: const Icon(Icons.add),
-                label: const Text('Registrar gasto'),
+                icon: Icon(Icons.add),
+                label: Text('Registrar gasto'),
               )
             : null,
       );
@@ -271,7 +270,7 @@ class _ExpensePageState extends State<ExpensePage> {
     accion: todos.isEmpty
         ? OutlinedButton(
             onPressed: guardando ? null : () => _editar(),
-            child: const Text('Registrar el primer gasto'),
+            child: Text('Registrar el primer gasto'),
           )
         : null,
   );

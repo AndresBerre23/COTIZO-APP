@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'aplicacion/cotizo_cubit.dart';
+import 'aplicacion/preferencias_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'datos/repositorio_sqlite.dart';
 import 'dominio/repositorio_local.dart';
+import 'dominio/modelos.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/expense_screen.dart';
 import 'screens/materials_screen.dart';
@@ -21,6 +23,7 @@ class CotizoApp extends StatefulWidget {
 
 class _CotizoAppState extends State<CotizoApp> {
   late Future<RepositorioLocal> _apertura;
+  late Future<PreferenciasApp> _preferencias;
   final _mensajero = GlobalKey<ScaffoldMessengerState>();
   @override
   void initState() {
@@ -32,18 +35,42 @@ class _CotizoAppState extends State<CotizoApp> {
     _apertura = widget.repositorio != null
         ? Future.value(widget.repositorio!)
         : RepositorioSqlite.abrir();
+    _preferencias = _apertura.then((repositorio) {
+      return repositorio.obtenerPreferencias();
+    });
   }
 
-  Widget _aplicacion(Widget inicio) => MaterialApp(
-    debugShowCheckedModeBanner: false,
-    title: 'ObraPro',
-    theme: appTheme,
-    scaffoldMessengerKey: _mensajero,
-    locale: const Locale('es'),
-    supportedLocales: const [Locale('es')],
-    localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    home: inicio,
-  );
+  void _recargarPreferencias() => setState(() {
+    _preferencias = _apertura.then((repositorio) {
+      return repositorio.obtenerPreferencias();
+    });
+  });
+
+  Widget _aplicacion(Widget inicio, {ThemeMode modoTema = ThemeMode.system}) =>
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Coti',
+        theme: appTheme,
+        darkTheme: darkAppTheme,
+        themeMode: modoTema,
+        scaffoldMessengerKey: _mensajero,
+        locale: const Locale('es'),
+        supportedLocales: const [Locale('es')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: inicio,
+      );
+
+  Widget _aplicacionConPreferencias(Widget inicio) =>
+      BlocBuilder<PreferenciasCubit, PreferenciasApp>(
+        builder: (context, preferencias) => _aplicacion(
+          inicio,
+          modoTema: switch (preferencias.modoTema) {
+            ModoTema.sistema => ThemeMode.system,
+            ModoTema.claro => ThemeMode.light,
+            ModoTema.oscuro => ThemeMode.dark,
+          },
+        ),
+      );
 
   @override
   Widget build(BuildContext context) => FutureBuilder<RepositorioLocal>(
@@ -71,12 +98,11 @@ class _CotizoAppState extends State<CotizoApp> {
                       : const Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'OBRAPRO',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
+                            Image(
+                              image: AssetImage(
+                                'assets/images/Coti-SplashScreen.png',
                               ),
+                              width: 240,
                             ),
                             SizedBox(height: 20),
                             LinearProgressIndicator(),
@@ -90,18 +116,76 @@ class _CotizoAppState extends State<CotizoApp> {
           ),
         );
       }
-      return BlocProvider(
-        create: (_) => CotizoCubit(resultado.data!)..cargar(),
-        child: BlocListener<CotizoCubit, EstadoCotizo>(
-          listenWhen: (anterior, actual) =>
-              actual.error != null && anterior.error != actual.error,
-          listener: (_, estado) => _mensajero.currentState?.showSnackBar(
-            SnackBar(content: Text(estado.error!)),
-          ),
-          child: _aplicacion(const AppShell()),
-        ),
+      final repositorio = resultado.data!;
+      return FutureBuilder<PreferenciasApp>(
+        future: _preferencias,
+        builder: (context, resultadoPreferencias) {
+          if (!resultadoPreferencias.hasData) {
+            if (resultadoPreferencias.hasError) {
+              return _aplicacion(
+                Scaffold(
+                  body: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 440),
+                        child: EstadoVacio(
+                          icono: Icons.settings_outlined,
+                          titulo: 'No se pudieron cargar tus ajustes',
+                          mensaje:
+                              'Vuelve a intentar. Tus datos siguen guardados.',
+                          accion: FilledButton(
+                            onPressed: _recargarPreferencias,
+                            child: const Text('Reintentar'),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+            return _aplicacion(_pantallaCarga('Cargando tus ajustes locales'));
+          }
+          return _aplicacionConDatos(repositorio, resultadoPreferencias.data!);
+        },
       );
     },
+  );
+
+  Widget _pantallaCarga(String mensaje) => Scaffold(
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset('assets/images/Coti-SplashScreen.png', width: 240),
+          const SizedBox(height: 20),
+          const SizedBox(width: 240, child: LinearProgressIndicator()),
+          const SizedBox(height: 12),
+          Text(mensaje),
+        ],
+      ),
+    ),
+  );
+
+  Widget _aplicacionConDatos(
+    RepositorioLocal repositorio,
+    PreferenciasApp preferencias,
+  ) => MultiBlocProvider(
+    providers: [
+      BlocProvider(create: (_) => CotizoCubit(repositorio)..cargar()),
+      BlocProvider(
+        create: (_) => PreferenciasCubit(repositorio, inicial: preferencias),
+      ),
+    ],
+    child: BlocListener<CotizoCubit, EstadoCotizo>(
+      listenWhen: (anterior, actual) =>
+          actual.error != null && anterior.error != actual.error,
+      listener: (_, estado) => _mensajero.currentState?.showSnackBar(
+        SnackBar(content: Text(estado.error!)),
+      ),
+      child: _aplicacionConPreferencias(const AppShell()),
+    ),
   );
 }
 

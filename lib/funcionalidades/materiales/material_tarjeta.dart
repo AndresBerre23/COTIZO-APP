@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/formato.dart';
-import '../../core/theme/app_theme.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
 import 'componentes/imagen_material.dart';
@@ -43,23 +42,22 @@ class MaterialTarjeta extends StatelessWidget {
             children: [
               Text(
                 material.nombre,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 'Por ${material.unidadMedida}',
-                style: const TextStyle(color: AppColors.muted),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 dinero(material.costoBaseCentavos),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontWeight: FontWeight.w700,
-                  color: AppColors.cobalt,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],

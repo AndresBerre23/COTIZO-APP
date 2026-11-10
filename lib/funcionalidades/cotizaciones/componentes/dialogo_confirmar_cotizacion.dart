@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import 'resumen_cotizacion_final.dart';
 
@@ -12,7 +11,7 @@ Future<bool?> mostrarConfirmacionCotizacion({
 }) => showDialog<bool>(
   context: context,
   builder: (contextoDialogo) => Dialog(
-    backgroundColor: AppColors.canvas,
+    backgroundColor: Theme.of(context).colorScheme.surface,
     insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     child: ConstrainedBox(
@@ -34,12 +33,12 @@ Future<bool?> mostrarConfirmacionCotizacion({
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.softBlue,
+                      color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.fact_check_outlined,
-                      color: AppColors.cobalt,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -84,13 +83,13 @@ Future<bool?> mostrarConfirmacionCotizacion({
                 children: [
                   OutlinedButton.icon(
                     onPressed: () => Navigator.pop(contextoDialogo, false),
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Editar'),
+                    icon: Icon(Icons.edit_outlined),
+                    label: Text('Editar'),
                   ),
                   FilledButton.icon(
                     onPressed: () => Navigator.pop(contextoDialogo, true),
-                    icon: const Icon(Icons.save_outlined),
-                    label: const Text('Guardar cotización'),
+                    icon: Icon(Icons.save_outlined),
+                    label: Text('Guardar cotización'),
                   ),
                 ],
               ),

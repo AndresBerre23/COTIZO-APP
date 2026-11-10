@@ -50,7 +50,7 @@ void main() {
         'Gastos',
         'Materiales',
         'Cotizaciones',
-        'Proforma',
+        'Documentos',
       ];
       for (var indice = 0; indice < etiquetas.length; indice++) {
         final destino = ancho >= 840
@@ -87,6 +87,12 @@ void main() {
           });
         }
       }
+      await tester.tap(find.byTooltip('Mi perfil'));
+      await tester.pumpAndSettle();
+      expect(find.text('Mi perfil'), findsOneWidget);
+      expect(find.text('Nombre'), findsOneWidget);
+      expect(find.text('Apellido'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'Mi perfil a $ancho px');
       await tester.pumpWidget(const SizedBox());
     });
   }

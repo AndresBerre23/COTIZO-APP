@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../core/theme/app_theme.dart';
 
 class SurfaceCard extends StatelessWidget {
   const SurfaceCard({
@@ -13,9 +12,9 @@ class SurfaceCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: padding,
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppColors.outline),
+      border: Border.all(color: Theme.of(context).colorScheme.outline),
       boxShadow: const [
         BoxShadow(
           color: Color(0x0A111C2D),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/calcular_precio_sugerido.dart';
 import 'selector_mano_obra_propia.dart';
 import 'seccion_cotizacion.dart';
@@ -76,7 +75,7 @@ class PrecioProyectoEditor extends StatelessWidget {
               aplicar: aplicarSugerido,
             )
           else
-            const Text(
+            Text(
               'Agrega costos previstos o un cobro de mano de obra para calcular un precio sugerido.',
             ),
           const SizedBox(height: 16),
@@ -111,25 +110,25 @@ class PrecioProyectoEditor extends StatelessWidget {
                 fontFamily: 'monospace',
                 fontWeight: FontWeight.w700,
                 color: precioPorDebajoDeCostos
-                    ? AppColors.error
+                    ? Theme.of(context).colorScheme.error
                     : totalValido
-                    ? AppColors.cobalt
+                    ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),
           if (precioPorDebajoDeCostos)
-            const Text(
+            Text(
               'El precio cotizado está por debajo de los costos y el cobro de mano de obra.',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           const SizedBox(height: 8),
           Text(
             '${manoObra > 0 ? 'Ganancia prevista total (incluye tu mano de obra)' : 'Ganancia prevista total'}: ${totalValido ? dinero(cotizado - costoPrevisto) : 'Pendiente'}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'El precio final sigue siendo editable. Los gastos registrados se calcularán por separado.',
           ),
         ],
@@ -157,9 +156,9 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.softBlue,
+      color: Theme.of(context).colorScheme.primaryContainer,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.blue),
+      border: Border.all(color: Theme.of(context).colorScheme.secondary),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -167,7 +166,7 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
         Text(
           'PRECIO SUGERIDO TOTAL',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: AppColors.cobalt,
+            color: Theme.of(context).colorScheme.primary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -178,7 +177,7 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
           child: Text(
             dinero(precio),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: AppColors.cobalt,
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -200,19 +199,19 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
           ),
         _FilaDesglosePrecio(etiqueta: 'Margen estimado', monto: margen),
         if (aplicar == null)
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 8),
             child: Text(
               'El precio sugerido supera el límite admitido.',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           )
         else ...[
           const SizedBox(height: 8),
           FilledButton.icon(
             onPressed: aplicar,
-            icon: const Icon(Icons.check),
-            label: const Text('Usar este precio'),
+            icon: Icon(Icons.check),
+            label: Text('Usar este precio'),
           ),
         ],
       ],
@@ -234,10 +233,7 @@ class _FilaDesglosePrecio extends StatelessWidget {
       children: [
         Expanded(child: Text(etiqueta)),
         const SizedBox(width: 12),
-        Text(
-          dinero(monto),
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        Text(dinero(monto), style: TextStyle(fontWeight: FontWeight.w600)),
       ],
     ),
   );

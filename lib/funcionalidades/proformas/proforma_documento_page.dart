@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/preferencias_cubit.dart';
 import '../../dominio/modelos.dart';
+import '../perfil/mi_perfil_pagina.dart';
 import '../../widgets/estado_vacio.dart';
 import 'servicio_pdf.dart';
 import 'vista_proforma.dart';
@@ -20,6 +22,60 @@ class ProformaDocumentoPage extends StatefulWidget {
 class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
   bool _generando = false;
 
+  Future<bool> _solicitarNombre() async {
+    final decision = await showDialog<_DecisionNombre>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Completa tu proforma'),
+        content: const Text(
+          'Agrega tu nombre para incluirlo junto al del cliente. '
+          'También podrás hacerlo más adelante desde Mi perfil.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, _DecisionNombre.masTarde),
+            child: const Text('Preguntarme más tarde'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, _DecisionNombre.omitir),
+            child: const Text('Continuar sin nombre permanentemente'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, _DecisionNombre.agregar),
+            child: const Text('Agregar nombre'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return false;
+    if (decision == _DecisionNombre.agregar) {
+      final guardado = await Navigator.of(
+        context,
+      ).push<bool>(MaterialPageRoute(builder: (_) => const MiPerfilPagina()));
+      if (!mounted) return false;
+      final tieneNombre = context.read<PreferenciasCubit>().state.tieneNombre;
+      if (guardado == false && !tieneNombre) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ingresa tu nombre para crear el PDF.')),
+        );
+      }
+      return guardado == true && tieneNombre;
+    }
+    if (decision == _DecisionNombre.omitir) {
+      try {
+        await context.read<PreferenciasCubit>().omitirAvisoNombre();
+        return true;
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo guardar esta decisión.')),
+          );
+        }
+      }
+    }
+    return false;
+  }
+
   Future<void> _exportar(
     Proyecto proyecto,
     List<ItemProyecto> items,
@@ -27,12 +83,19 @@ class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
     bool imprimir = false,
   }) async {
     if (_generando) return;
+    final preferencias = context.read<PreferenciasCubit>().state;
+    if (!preferencias.tieneNombre && !preferencias.omitirAvisoNombre) {
+      if (!await _solicitarNombre()) return;
+    }
+    if (!mounted) return;
+    final nombreEmisor = context.read<PreferenciasCubit>().state.nombreCompleto;
     setState(() => _generando = true);
     try {
       final datos = await ServicioPdf().generar(
         proyecto,
         items,
         gastosPrevistos: gastosPrevistos,
+        nombreEmisor: nombreEmisor.isEmpty ? null : nombreEmisor,
       );
       if (imprimir) {
         await Printing.layoutPdf(
@@ -129,3 +192,5 @@ class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
     ),
   );
 }
+
+enum _DecisionNombre { agregar, omitir, masTarde }

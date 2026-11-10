@@ -1,4 +1,4 @@
-# ObraPro / Cotizo
+# Coti
 
 Aplicación Flutter para cotizar trabajos, mantener un catálogo propio de materiales y registrar gastos sin conexión. Los datos se guardan en SQLite en el dispositivo. No requiere cuenta ni claves; la búsqueda opcional de imágenes consulta Wikimedia Commons cuando hay internet.
 

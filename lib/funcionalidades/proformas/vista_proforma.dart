@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/formato.dart';
-import '../../core/theme/app_theme.dart';
 import '../../dominio/calcular_desglose_proforma.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
@@ -22,23 +21,23 @@ class VistaProforma extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'OBRAPRO',
+          Text(
+            'COTI',
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppColors.cobalt,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             'PROFORMA · COT-${proyecto.id.toString().padLeft(4, '0')}',
-            style: const TextStyle(fontFamily: 'monospace'),
+            style: TextStyle(fontFamily: 'monospace'),
           ),
           const Divider(height: 32),
           Text(
             proyecto.nombreCliente,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(proyecto.descripcion),
@@ -62,7 +61,7 @@ class VistaProforma extends StatelessWidget {
                 children: [
                   Text(
                     item.nombreMaterial,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
                   Wrap(
@@ -71,11 +70,13 @@ class VistaProforma extends StatelessWidget {
                     children: [
                       Text(
                         '${item.cantidad} ${item.unidadMedida} × ${dinero(item.costoUnitarioAplicadoCentavos)}',
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       Text(
                         dinero(item.subtotalCentavos),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'monospace',
                           fontWeight: FontWeight.w700,
                         ),
@@ -105,9 +106,12 @@ class VistaProforma extends StatelessWidget {
             destacado: true,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Cotización de referencia. No constituye una factura ni un comprobante de pago.',
-            style: TextStyle(fontSize: 12, color: AppColors.muted),
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -140,7 +144,7 @@ class _Importe extends StatelessWidget {
             fontFamily: 'monospace',
             fontWeight: FontWeight.w700,
             fontSize: destacado ? 22 : 15,
-            color: AppColors.cobalt,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ],

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'obrapro_header.dart';
+import 'coti_header.dart';
 
 class PaginaBase extends StatelessWidget {
   const PaginaBase({
@@ -17,7 +17,7 @@ class PaginaBase extends StatelessWidget {
     top: false,
     child: Column(
       children: [
-        ObraProHeader(title: titulo),
+        CotiHeader(title: titulo),
         Expanded(
           child: Align(
             alignment: Alignment.topCenter,

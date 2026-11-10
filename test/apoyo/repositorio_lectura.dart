@@ -1,15 +1,25 @@
 import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:cotizo_app/dominio/repositorio_local.dart';
+import 'package:cotizo_app/dominio/preferencias_app.dart';
 
 class RepositorioLectura implements RepositorioLocal {
   RepositorioLectura(this.datos);
   DatosLocales datos;
+  PreferenciasApp preferencias = const PreferenciasApp();
   bool fallarLectura = false;
   int escrituras = 0;
   @override
   Future<DatosLocales> obtenerDatos() async {
     if (fallarLectura) throw StateError('Lectura fallida');
     return datos;
+  }
+
+  @override
+  Future<PreferenciasApp> obtenerPreferencias() async => preferencias;
+
+  @override
+  Future<void> guardarPreferencias(PreferenciasApp preferencias) async {
+    this.preferencias = preferencias;
   }
 
   @override

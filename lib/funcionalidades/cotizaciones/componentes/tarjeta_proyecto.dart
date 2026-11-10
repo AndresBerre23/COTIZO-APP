@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import '../../../widgets/surface_card.dart';
 
@@ -58,7 +57,11 @@ class TarjetaProyecto extends StatelessWidget {
                           proyecto.descripcion,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.muted),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -82,10 +85,10 @@ class TarjetaProyecto extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'TOTAL COTIZADO',
                         style: TextStyle(
-                          color: AppColors.muted,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -94,8 +97,8 @@ class TarjetaProyecto extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         dinero(proyecto.totalCotizadoCentavos),
-                        style: const TextStyle(
-                          color: AppColors.cobalt,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontFamily: 'monospace',
                           fontSize: 21,
                           fontWeight: FontWeight.w700,
@@ -106,10 +109,10 @@ class TarjetaProyecto extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'FECHA',
                         style: TextStyle(
-                          color: AppColors.muted,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.5,
@@ -126,21 +129,23 @@ class TarjetaProyecto extends StatelessWidget {
                 children: [
                   Text(
                     'COT-${proyecto.id.toString().padLeft(3, '0')}',
-                    style: const TextStyle(color: AppColors.muted),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const Spacer(),
-                  const Text(
+                  Text(
                     'Ver detalle',
                     style: TextStyle(
-                      color: AppColors.blue,
+                      color: Theme.of(context).colorScheme.secondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward,
                     size: 16,
-                    color: AppColors.blue,
+                    color: Theme.of(context).colorScheme.secondary,
                   ),
                 ],
               ),

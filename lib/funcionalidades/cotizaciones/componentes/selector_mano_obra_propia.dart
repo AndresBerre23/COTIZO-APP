@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_theme.dart';
 
 class SelectorManoObraPropia extends StatelessWidget {
   const SelectorManoObraPropia({
@@ -15,9 +14,12 @@ class SelectorManoObraPropia extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     contentPadding: EdgeInsets.zero,
-    leading: const Icon(Icons.handyman_outlined, color: AppColors.cobalt),
-    title: const Text('¿Cobrarás por tu mano de obra?'),
-    subtitle: const Text(
+    leading: Icon(
+      Icons.handyman_outlined,
+      color: Theme.of(context).colorScheme.primary,
+    ),
+    title: Text('¿Cobrarás por tu mano de obra?'),
+    subtitle: Text(
       'Opcional. Se suma como ingreso, aparte de los costos y del margen.',
     ),
     trailing: Checkbox(

@@ -27,6 +27,25 @@ void main() {
   });
   tearDown(() => repositorio.cerrar());
 
+  test('persiste perfil y preferencias de apariencia', () async {
+    const preferencias = PreferenciasApp(
+      nombre: 'Ana',
+      apellido: 'Pérez',
+      fotoRuta: 'foto-perfil.jpg',
+      modoTema: ModoTema.oscuro,
+      omitirAvisoNombre: true,
+    );
+
+    await repositorio.guardarPreferencias(preferencias);
+    final guardadas = await repositorio.obtenerPreferencias();
+
+    expect(guardadas.nombre, 'Ana');
+    expect(guardadas.apellido, 'Pérez');
+    expect(guardadas.fotoRuta, 'foto-perfil.jpg');
+    expect(guardadas.modoTema, ModoTema.oscuro);
+    expect(guardadas.omitirAvisoNombre, isTrue);
+  });
+
   test(
     'guarda relaciones y conserva precios históricos al editar el catálogo',
     () async {

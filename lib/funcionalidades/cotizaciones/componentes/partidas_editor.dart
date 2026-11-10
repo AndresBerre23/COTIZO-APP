@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/formato.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../dominio/modelos.dart';
 import 'seccion_cotizacion.dart';
 
@@ -43,16 +42,18 @@ class PartidasEditor extends StatelessWidget {
                   children: [
                     Text(
                       partidas[indice].nombreMaterial,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                     Text(
                       '${partidas[indice].cantidad} ${partidas[indice].unidadMedida}'
                       ' × ${dinero(partidas[indice].costoUnitarioAplicadoCentavos)}',
-                      style: const TextStyle(color: AppColors.muted),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     Text(
                       dinero(partidas[indice].subtotalCentavos),
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -60,12 +61,12 @@ class PartidasEditor extends StatelessWidget {
               IconButton(
                 tooltip: 'Editar partida',
                 onPressed: () => alEditar(indice),
-                icon: const Icon(Icons.edit_outlined),
+                icon: Icon(Icons.edit_outlined),
               ),
               IconButton(
                 tooltip: 'Quitar partida',
                 onPressed: () => alEliminar(indice),
-                icon: const Icon(Icons.close),
+                icon: Icon(Icons.close),
               ),
             ],
           ),
@@ -73,8 +74,8 @@ class PartidasEditor extends StatelessWidget {
         ],
         OutlinedButton.icon(
           onPressed: alAgregar,
-          icon: const Icon(Icons.add),
-          label: const Text('Añadir material'),
+          icon: Icon(Icons.add),
+          label: Text('Añadir material'),
         ),
       ],
     ),
