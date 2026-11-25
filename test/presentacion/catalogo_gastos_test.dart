@@ -8,10 +8,10 @@ import 'package:cotizo_app/funcionalidades/materiales/formulario_material.dart';
 import 'package:cotizo_app/screens/expense_screen.dart';
 import 'package:cotizo_app/screens/materials_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../apoyo/con_cubits.dart';
 import '../apoyo/repositorio_lectura.dart';
 
 class _RepositorioCatalogo extends RepositorioLectura {
@@ -83,7 +83,10 @@ Widget _aplicacion(Widget pagina) => MaterialApp(
 );
 
 Future<void> _pulsar(WidgetTester tester, Finder elemento) async {
+  // Deja terminar el desplazamiento automático hacia el campo enfocado.
+  await tester.pumpAndSettle();
   await tester.ensureVisible(elemento);
+  await tester.pumpAndSettle();
   await tester.tap(elemento);
   await tester.pumpAndSettle();
 }
@@ -97,12 +100,9 @@ void main() {
       await cubit.cargar();
       addTearDown(cubit.close);
       await tester.pumpWidget(
-        BlocProvider.value(
-          value: cubit,
-          child: _aplicacion(const MaterialsPage()),
-        ),
+        ConCubits(cubit: cubit, child: _aplicacion(const MaterialsPage())),
       );
-      await _pulsar(tester, find.text('Nuevo material'));
+      await _pulsar(tester, find.text('Añadir material'));
       await _pulsar(tester, find.text('Guardar material'));
       expect(find.text('Completa este campo.'), findsOneWidget);
       expect(repositorio.datos.materiales, isEmpty);
@@ -153,14 +153,14 @@ void main() {
     await cubit.cargar();
     addTearDown(cubit.close);
     await tester.pumpWidget(
-      BlocProvider.value(value: cubit, child: _aplicacion(const ExpensePage())),
+      ConCubits(cubit: cubit, child: _aplicacion(const ExpensePage())),
     );
     final inicioRegistro = DateTime.now();
-    await _pulsar(tester, find.text('Registrar gasto'));
+    await _pulsar(tester, find.text('Registrar el primer gasto'));
     await tester.enterText(find.byType(TextFormField).first, '0');
     await _pulsar(tester, find.text('Guardar gasto'));
     expect(
-      find.text('Ingresa un monto mayor que cero con hasta 2 decimales.'),
+      find.text('Ingresa un monto mayor a cero, con hasta 2 decimales.'),
       findsOneWidget,
     );
     expect(repositorio.datos.gastos, isEmpty);

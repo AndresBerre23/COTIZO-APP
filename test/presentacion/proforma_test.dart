@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('separa materiales, gastos previstos y ajuste comercial', (
+  testWidgets('muestra al cliente precios finales sin costos internos', (
     tester,
   ) async {
     final proyecto = Proyecto(
@@ -15,6 +15,8 @@ void main() {
       fechaInicio: DateTime(2026, 11, 8),
       fechaFin: DateTime(2026, 11, 8),
       totalCotizadoCentavos: 10000,
+      ivaPuntos: 1500,
+      formaPago: 'Mitad al iniciar',
     );
     const item = ItemProyecto(
       proyectoId: 1,
@@ -46,9 +48,16 @@ void main() {
       ),
     );
 
-    expect(find.text('Transporte propio · Traslado a la obra'), findsOneWidget);
-    expect(find.text('Ajuste comercial'), findsOneWidget);
-    expect(find.text('\$ 10,00'), findsOneWidget);
+    expect(find.text('Transporte propio · Traslado a la obra'), findsNothing);
+    expect(find.text('Ajuste comercial'), findsNothing);
+    expect(find.text('Mano de obra y ejecución'), findsOneWidget);
+    expect(find.text('\$ 66,67'), findsOneWidget);
+    expect(find.text('\$ 33,33'), findsOneWidget);
+    // Subtotal, IVA del 15 % y total para el cliente.
+    expect(find.text('\$ 100,00'), findsOneWidget);
+    expect(find.text('\$ 15,00'), findsOneWidget);
+    expect(find.text('\$ 115,00'), findsOneWidget);
+    expect(find.text('Forma de pago: Mitad al iniciar'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

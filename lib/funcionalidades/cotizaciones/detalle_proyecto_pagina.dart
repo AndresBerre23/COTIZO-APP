@@ -10,6 +10,7 @@ import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
 import '../gastos/formulario_gasto.dart';
 import 'componentes/acciones_obra.dart';
+import 'componentes/cobros_proyecto_detalle.dart';
 import 'componentes/confirmacion_retraso.dart';
 import 'componentes/detalle_listas_proyecto.dart';
 import 'componentes/resumen_rentabilidad.dart';
@@ -84,8 +85,9 @@ class DetalleProyectoPagina extends StatelessWidget {
   Future<void> _eliminar(BuildContext context) async {
     final confirmado = await confirmarEliminacion(
       context,
-      'Se eliminarán esta cotización, sus materiales asociados y sus gastos. '
-      'El catálogo de materiales se conserva. Esta acción no se puede deshacer.',
+      'Se eliminarán esta cotización y sus materiales asociados. '
+      'Sus gastos registrados pasan a gastos generales y el catálogo de '
+      'materiales se conserva. Esta acción no se puede deshacer.',
     );
     if (!confirmado || !context.mounted) return;
     final eliminado = await context.read<CotizoCubit>().eliminarProyecto(
@@ -124,7 +126,7 @@ class DetalleProyectoPagina extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               children: [
                 Text(
-                  'COT-${proyecto.id.toString().padLeft(3, '0')}',
+                  codigoDocumento(proyecto.id),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -255,6 +257,12 @@ class DetalleProyectoPagina extends StatelessWidget {
                   gastos: gastos,
                 ),
                 const SizedBox(height: 20),
+                CobrosProyectoDetalle(
+                  proyecto: proyecto,
+                  ingresos: estado.datos.ingresosDeProyecto(proyectoId),
+                  guardando: estado.guardando,
+                ),
+                const SizedBox(height: 20),
                 MaterialesProyectoDetalle(partidas: partidas),
                 const SizedBox(height: 20),
                 GastosPrevistosProyectoDetalle(gastos: gastosPrevistos),
@@ -262,7 +270,9 @@ class DetalleProyectoPagina extends StatelessWidget {
                 GastosProyectoDetalle(
                   gastos: gastos,
                   guardando: estado.guardando,
-                  alRegistrar: () => _registrarGasto(context),
+                  alRegistrar: proyecto.admiteGastos
+                      ? () => _registrarGasto(context)
+                      : null,
                 ),
                 const SizedBox(height: 24),
                 Align(

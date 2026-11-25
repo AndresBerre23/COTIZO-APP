@@ -27,7 +27,7 @@ class MaterialesProyectoDetalle extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  '${partida.cantidad} ${partida.unidadMedida} × '
+                  '${cantidadCorta(partida.cantidad)} ${partida.unidadMedida} × '
                   '${dinero(partida.costoUnitarioAplicadoCentavos)}',
                 ),
                 Text(
@@ -55,7 +55,8 @@ class GastosProyectoDetalle extends StatelessWidget {
 
   final List<Gasto> gastos;
   final bool guardando;
-  final VoidCallback alRegistrar;
+  // Nulo cuando el proyecto aún no admite gastos.
+  final VoidCallback? alRegistrar;
 
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
@@ -68,6 +69,15 @@ class GastosProyectoDetalle extends StatelessWidget {
           icon: Icon(Icons.add),
           label: Text('Registrar gasto'),
         ),
+        if (alRegistrar == null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Aprueba la cotización para registrar gastos reales.',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         if (gastos.isEmpty)
           Text(

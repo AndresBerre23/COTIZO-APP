@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/preferencias_cubit.dart';
 import '../../core/formato.dart';
-import '../../dominio/calcular_presupuesto_proyecto.dart';
-import '../../dominio/calcular_precio_sugerido.dart';
 import '../../dominio/modelos.dart';
-import '../../widgets/surface_card.dart';
+import 'componentes/condiciones_proforma_editor.dart';
 import 'componentes/datos_cliente_editor.dart';
 import 'componentes/dialogo_confirmar_cotizacion.dart';
 import 'componentes/gastos_previstos_editor.dart';
 import 'componentes/partidas_editor.dart';
 import 'componentes/precio_proyecto_editor.dart';
 import 'componentes/progreso_cotizacion.dart';
+import 'componentes/resumen_costo_previsto.dart';
 import 'formulario_partida.dart';
+import 'formulario_servicio.dart';
+import 'utilidades/estado_editor_cotizacion.dart';
+import '../../widgets/confirmar.dart';
 
 class EditorProyectoPagina extends StatefulWidget {
   const EditorProyectoPagina({super.key, this.proyecto});
@@ -24,16 +27,8 @@ class EditorProyectoPagina extends StatefulWidget {
 
 class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
   final _formularios = List.generate(4, (_) => GlobalKey<FormState>());
-  late final TextEditingController _cliente;
-  late final TextEditingController _descripcion;
-  late final TextEditingController _total;
-  late final TextEditingController _cobroManoObra;
-  late final List<ItemProyecto> _partidas;
-  late List<GastoPrevisto> _gastosPrevistos;
-  late DateTime _inicio;
-  DateTime? _fin;
+  late final EstadoEditorCotizacion _e;
   String? _errorFecha;
-  bool _incluirManoObra = false;
   int _paso = 0;
   bool _guardando = false;
   bool _modificado = false;
@@ -42,65 +37,30 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
   @override
   void initState() {
     super.initState();
-    final proyecto = widget.proyecto;
-    _cliente = TextEditingController(text: proyecto?.nombreCliente ?? '');
-    _descripcion = TextEditingController(text: proyecto?.descripcion ?? '');
-    _total = TextEditingController(
-      text: proyecto == null
-          ? ''
-          : (proyecto.totalCotizadoCentavos / 100).toStringAsFixed(2),
+    _e = EstadoEditorCotizacion.desde(
+      widget.proyecto,
+      context.read<CotizoCubit>().state.datos,
+      context.read<PreferenciasCubit>().state,
     );
-    _cobroManoObra = TextEditingController(
-      text: proyecto == null || proyecto.cobroManoObraCentavos == 0
-          ? ''
-          : (proyecto.cobroManoObraCentavos / 100).toStringAsFixed(2),
-    );
-    _incluirManoObra = (proyecto?.cobroManoObraCentavos ?? 0) > 0;
-    final hoy = DateTime.now();
-    _inicio = proyecto?.fechaInicio ?? DateTime(hoy.year, hoy.month, hoy.day);
-    _fin =
-        proyecto?.fechaFin ??
-        (proyecto == null ? DateTime(hoy.year, hoy.month, hoy.day) : null);
-    _partidas = proyecto == null
-        ? []
-        : List.of(
-            context.read<CotizoCubit>().state.datos.itemsDeProyecto(
-              proyecto.id,
-            ),
-          );
-    _gastosPrevistos = proyecto == null
-        ? []
-        : List.of(
-            context.read<CotizoCubit>().state.datos.gastosPrevistosDeProyecto(
-              proyecto.id,
-            ),
-          );
   }
 
   @override
   void dispose() {
-    _cliente.dispose();
-    _descripcion.dispose();
-    _total.dispose();
-    _cobroManoObra.dispose();
+    _e.dispose();
     super.dispose();
   }
 
-  String? _validarFechas() {
-    if (_fin == null && widget.proyecto == null) {
-      return 'Selecciona la fecha final prevista.';
-    }
-    if (_fin?.isBefore(_inicio) ?? false) {
-      return 'La entrega no puede ser anterior al inicio.';
-    }
-    return null;
-  }
+  // Aplica un cambio y marca la cotización como modificada.
+  void _cambiar(VoidCallback cambio) => setState(() {
+    cambio();
+    _modificado = true;
+  });
 
   void _continuar() {
     if (_guardando) return;
     final valido = _formularios[_paso].currentState?.validate() ?? true;
     if (_paso == 0) {
-      final errorFecha = _validarFechas();
+      final errorFecha = _e.validarFechas();
       setState(() => _errorFecha = errorFecha);
       if (!valido || errorFecha != null) return;
     } else if (!valido) {
@@ -113,80 +73,48 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     if (_paso > 0 && !_guardando) setState(() => _paso--);
   }
 
-  void _cancelar() {
-    if (_modificado) {
-      _salir();
-      return;
-    }
+  Future<void> _cancelar() async {
+    if (_modificado) return _salir();
     setState(() => _permitirSalida = true);
     Navigator.of(context).pop();
   }
 
   Future<void> _salir() async {
     if (_guardando) return;
-    final salir = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Descartar cambios?'),
-        content: const Text(
-          'Los cambios de esta cotización todavía no se han guardado.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Seguir editando'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Descartar'),
-          ),
-        ],
-      ),
+    final salir = await confirmarAccion(
+      context,
+      titulo: '¿Descartar cambios?',
+      mensaje: 'Los cambios de esta cotización todavía no se han guardado.',
+      accion: 'Descartar',
+      cancelar: 'Seguir editando',
     );
-    if (salir != true || !mounted) return;
+    if (!salir || !mounted) return;
     setState(() => _permitirSalida = true);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) Navigator.pop(context);
     });
   }
 
-  Future<void> _editarPartida([int? indice]) async {
-    final partida = await mostrarFormularioPartida(
-      context,
-      partida: indice == null ? null : _partidas[indice],
-    );
+  Future<void> _editarPartida([int? indice, bool servicio = false]) async {
+    final actual = indice == null ? null : _e.partidas[indice];
+    final partida = servicio || (actual?.esServicio ?? false)
+        ? await mostrarFormularioServicio(context, partida: actual)
+        : await mostrarFormularioPartida(context, partida: actual);
     if (partida == null || !mounted) return;
-    setState(() {
-      _modificado = true;
+    _cambiar(() {
       if (indice == null) {
-        _partidas.add(partida);
+        _e.partidas.add(partida);
       } else {
-        _partidas[indice] = partida;
+        _e.partidas[indice] = partida;
       }
     });
   }
-
-  Proyecto _proyectoActual() => Proyecto(
-    id: widget.proyecto?.id ?? 0,
-    nombreCliente: _cliente.text.trim(),
-    descripcion: _descripcion.text.trim(),
-    fechaInicio: _inicio,
-    fechaFin: _fin,
-    fechaInicioReal: widget.proyecto?.fechaInicioReal,
-    fechaFinReal: widget.proyecto?.fechaFinReal,
-    estado: widget.proyecto?.estado ?? EstadoProyecto.borrador,
-    totalCotizadoCentavos: leerCentavos(_total.text) ?? 0,
-    cobroManoObraCentavos: _incluirManoObra
-        ? leerCentavos(_cobroManoObra.text) ?? 0
-        : 0,
-    margenDeseadoPuntos: margenSugeridoFijoPuntos,
-  );
 
   Future<void> _guardar() async {
     if (_guardando || !(_formularios[3].currentState?.validate() ?? false)) {
       return;
     }
-    final errorFecha = _validarFechas();
+    final errorFecha = _e.validarFechas();
     if (errorFecha != null) {
       setState(() {
         _paso = 0;
@@ -196,16 +124,18 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     }
     final confirmar = await mostrarConfirmacionCotizacion(
       context: context,
-      proyecto: _proyectoActual(),
-      partidas: _partidas,
-      gastosPrevistos: _gastosPrevistos,
+      proyecto: _e.proyectoActual(),
+      partidas: _e.partidas,
+      gastosPrevistos: _e.gastosPrevistos,
     );
     if (confirmar != true || !mounted) return;
     setState(() => _guardando = true);
-    final guardado = await context.read<CotizoCubit>().guardarProyecto(
-      _proyectoActual(),
-      _partidas,
-      gastosPrevistos: _gastosPrevistos,
+    final cubit = context.read<CotizoCubit>();
+    final guardado = await cubit.guardarProyecto(
+      _e.proyectoActual(),
+      _e.partidas,
+      gastosPrevistos: _e.gastosPrevistos,
+      cliente: _e.clienteActual(cubit.state.datos.clientes),
     );
     if (!mounted) return;
     setState(() {
@@ -225,73 +155,40 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
   }
 
   Widget _contenidoPaso() {
-    final datosCliente = DatosClienteEditor(
-      cliente: _cliente,
-      descripcion: _descripcion,
-      inicio: _inicio,
-      fin: _fin,
-      errorFecha: _errorFecha,
-      alCambiarInicio: (fecha) => setState(() {
-        _inicio = fecha;
-        _errorFecha = null;
-        _modificado = true;
-      }),
-      alCambiarFin: (fecha) => setState(() {
-        _fin = fecha;
-        _errorFecha = null;
-        _modificado = true;
-      }),
-    );
-    final materiales = PartidasEditor(
-      partidas: _partidas,
-      alAgregar: _editarPartida,
-      alEditar: _editarPartida,
-      alEliminar: (indice) => setState(() {
-        _partidas.removeAt(indice);
-        _modificado = true;
-      }),
-    );
-    final gastos = GastosPrevistosEditor(
-      gastos: _gastosPrevistos,
-      alCambiar: (nuevos) => setState(() {
-        _gastosPrevistos = nuevos;
-        _modificado = true;
-      }),
-    );
-    final presupuesto = calcularPresupuestoProyecto(
-      _partidas,
-      _gastosPrevistos,
-      cobroManoObraCentavos: _incluirManoObra
-          ? leerCentavos(_cobroManoObra.text) ?? 0
-          : 0,
-    );
+    final presupuesto = _e.presupuesto;
     final sugerido = presupuesto.precioSugeridoCentavos;
-    final precio = PrecioProyectoEditor(
-      total: _total,
-      cobroManoObra: _cobroManoObra,
-      incluirManoObra: _incluirManoObra,
-      alCambiarInclusionManoObra: (incluir) => setState(() {
-        _incluirManoObra = incluir;
-        _modificado = true;
-      }),
-      costoPrevisto: presupuesto.costoPrevistoCentavos,
-      precioSugerido: sugerido,
-      aplicarSugerido: sugerido != null && sugerido <= 99999999999
-          ? () => setState(() {
-              _total.text = (sugerido / 100).toStringAsFixed(2);
-              _modificado = true;
-            })
-          : null,
-      alCambiar: () => setState(() {}),
-    );
-
     return switch (_paso) {
-      0 => datosCliente,
+      0 => DatosClienteEditor(
+        datosProforma: _e.proforma,
+        clientes: context.read<CotizoCubit>().state.datos.clientes,
+        alElegirCliente: (cliente) =>
+            _cambiar(() => _e.proforma.elegirCliente(cliente)),
+        cliente: _e.cliente,
+        descripcion: _e.descripcion,
+        inicio: _e.inicio,
+        fin: _e.fin,
+        errorFecha: _errorFecha,
+        alCambiarInicio: (fecha) => _cambiar(() {
+          _e.inicio = fecha;
+          _errorFecha = null;
+        }),
+        alCambiarFin: (fecha) => _cambiar(() {
+          _e.fin = fecha;
+          _errorFecha = null;
+        }),
+      ),
       1 => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          materiales,
-          if (_partidas.isEmpty) ...[
+          PartidasEditor(
+            partidas: _e.partidas,
+            alAgregar: _editarPartida,
+            alAgregarServicio: () => _editarPartida(null, true),
+            alEditar: _editarPartida,
+            alEliminar: (indice) =>
+                _cambiar(() => _e.partidas.removeAt(indice)),
+          ),
+          if (_e.partidas.isEmpty) ...[
             const SizedBox(height: 8),
             const Text(
               'Puedes omitir este paso si cotizas solo mano de obra o servicios.',
@@ -302,29 +199,13 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
       2 => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          gastos,
-          const SizedBox(height: 12),
-          SurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Costo previsto de la cotización'),
-                const SizedBox(height: 8),
-                Text(
-                  'Materiales: ${dinero(presupuesto.costoMaterialesCentavos)}',
-                ),
-                Text(
-                  'Gastos previstos: ${dinero(presupuesto.costoPrevistoCentavos - presupuesto.costoMaterialesCentavos)}',
-                ),
-                const Divider(height: 20),
-                Text(
-                  'Total previsto: ${dinero(presupuesto.costoPrevistoCentavos)}',
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ],
-            ),
+          GastosPrevistosEditor(
+            gastos: _e.gastosPrevistos,
+            alCambiar: (nuevos) => _cambiar(() => _e.gastosPrevistos = nuevos),
           ),
-          if (_gastosPrevistos.isEmpty) ...[
+          const SizedBox(height: 12),
+          ResumenCostoPrevisto(presupuesto: presupuesto),
+          if (_e.gastosPrevistos.isEmpty) ...[
             const SizedBox(height: 8),
             const Text('Puedes continuar sin agregar gastos previstos.'),
           ],
@@ -332,7 +213,31 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
       ),
       _ => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [precio],
+        children: [
+          PrecioProyectoEditor(
+            total: _e.total,
+            cobroManoObra: _e.cobroManoObra,
+            incluirManoObra: _e.incluirManoObra,
+            alCambiarInclusionManoObra: (incluir) =>
+                _cambiar(() => _e.incluirManoObra = incluir),
+            costoPrevisto: presupuesto.costoPrevistoCentavos,
+            precioSugerido: sugerido,
+            aplicarSugerido: sugerido != null && sugerido <= 99999999999
+                ? () => _cambiar(
+                    () => _e.total.text = (sugerido / 100).toStringAsFixed(2),
+                  )
+                : null,
+            alCambiar: () => setState(() {}),
+            precioServicios: presupuesto.precioServiciosCentavos,
+            margenPuntos: _e.proforma.margenPuntos,
+          ),
+          const SizedBox(height: 16),
+          CondicionesProformaEditor(
+            datos: _e.proforma,
+            subtotalCentavos: leerCentavos(_e.total.text) ?? 0,
+            alCambiar: () => setState(() => _modificado = true),
+          ),
+        ],
       ),
     };
   }
@@ -366,12 +271,9 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
                     absorbing: _guardando,
                     child: Form(
                       key: _formularios[_paso],
-                      autovalidateMode: AutovalidateMode.disabled,
-                      onChanged: () {
-                        if (!_modificado) {
-                          setState(() => _modificado = true);
-                        }
-                      },
+                      onChanged: () => _modificado
+                          ? null
+                          : setState(() => _modificado = true),
                       child: _contenidoPaso(),
                     ),
                   ),
@@ -385,8 +287,8 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
         paso: _paso,
         guardando: _guardando,
         pasoOpcionalVacio:
-            (_paso == 1 && _partidas.isEmpty) ||
-            (_paso == 2 && _gastosPrevistos.isEmpty),
+            (_paso == 1 && _e.partidas.isEmpty) ||
+            (_paso == 2 && _e.gastosPrevistos.isEmpty),
         alCancelar: _cancelar,
         alRetroceder: _retroceder,
         alAvanzar: _continuar,

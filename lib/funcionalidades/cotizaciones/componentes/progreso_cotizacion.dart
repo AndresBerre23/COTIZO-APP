@@ -66,38 +66,54 @@ class AccionesPasoCotizacion extends StatelessWidget {
         heightFactor: 1,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 760),
+          // Los botones se encogen en pantallas angostas en lugar de desbordar.
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (paso == 0)
-                TextButton(
-                  onPressed: guardando ? null : alCancelar,
-                  child: const Text('Cancelar'),
-                )
-              else
-                OutlinedButton.icon(
-                  onPressed: guardando ? null : alRetroceder,
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Atrás'),
-                ),
-              const Spacer(),
-              if (paso == 3)
-                FilledButton.icon(
-                  onPressed: guardando ? null : alGuardar,
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(guardando ? 'Guardando…' : 'Guardar cotización'),
-                )
-              else
-                FilledButton.icon(
-                  onPressed: guardando ? null : alAvanzar,
-                  icon: const Icon(Icons.arrow_forward),
-                  label: Text(
-                    pasoOpcionalVacio ? 'Omitir por ahora' : 'Continuar',
-                  ),
-                ),
+              Flexible(
+                child: paso == 0
+                    ? TextButton(
+                        onPressed: guardando ? null : alCancelar,
+                        child: const _Etiqueta('Cancelar'),
+                      )
+                    : OutlinedButton.icon(
+                        onPressed: guardando ? null : alRetroceder,
+                        icon: const Icon(Icons.arrow_back),
+                        label: const _Etiqueta('Atrás'),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Flexible(
+                child: paso == 3
+                    ? FilledButton.icon(
+                        onPressed: guardando ? null : alGuardar,
+                        icon: const Icon(Icons.save_outlined),
+                        label: _Etiqueta(
+                          guardando ? 'Guardando…' : 'Guardar cotización',
+                        ),
+                      )
+                    : FilledButton.icon(
+                        onPressed: guardando ? null : alAvanzar,
+                        icon: const Icon(Icons.arrow_forward),
+                        label: _Etiqueta(
+                          pasoOpcionalVacio ? 'Omitir por ahora' : 'Continuar',
+                        ),
+                      ),
+              ),
             ],
           ),
         ),
       ),
     ),
   );
+}
+
+class _Etiqueta extends StatelessWidget {
+  const _Etiqueta(this.texto);
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(texto, maxLines: 1, overflow: TextOverflow.ellipsis);
 }

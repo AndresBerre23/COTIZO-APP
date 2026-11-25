@@ -10,6 +10,7 @@ import '../widgets/estado_vacio.dart';
 import '../widgets/pagina_base.dart';
 import '../widgets/surface_card.dart';
 import '../funcionalidades/inicio/resumen_financiero.dart';
+import '../funcionalidades/movimientos/componentes/tarjeta_balance_mes.dart';
 import '../funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
 import '../funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
 import '../funcionalidades/gastos/formulario_gasto.dart';
@@ -96,6 +97,8 @@ class _DashboardPageState extends State<DashboardPage>
             ),
           ),
           const SizedBox(height: 24),
+          const TarjetaBalanceMes(),
+          const SizedBox(height: 20),
           ResumenFinanciero(datos: datos),
           const SizedBox(height: 20),
           Wrap(

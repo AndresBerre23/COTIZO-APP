@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/formato.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../aplicacion/cotizo_cubit.dart';
@@ -9,6 +11,7 @@ import 'componentes/controles_cotizaciones.dart';
 import 'componentes/tarjeta_proyecto.dart';
 import 'detalle_proyecto_pagina.dart';
 import 'editor_proyecto_pagina.dart';
+import '../clientes/clientes_pagina.dart';
 
 class QuotePage extends StatefulWidget {
   const QuotePage({super.key});
@@ -48,10 +51,8 @@ class _QuotePageState extends State<QuotePage> {
         };
         if (!coincide) return false;
       }
-      final codigos =
-          'cot-${proyecto.id.toString().padLeft(3, '0')} cot-${proyecto.id.toString().padLeft(4, '0')}';
       final texto =
-          '${proyecto.nombreCliente} ${proyecto.descripcion} $codigos ${proyecto.id}'
+          '${proyecto.nombreCliente} ${proyecto.descripcion} ${codigosBusqueda(proyecto.id)}'
               .toLowerCase();
       if (consulta.isNotEmpty && !texto.contains(consulta)) return false;
       final rango = _rangoFechas;
@@ -70,7 +71,10 @@ class _QuotePageState extends State<QuotePage> {
     }).toList();
     switch (_orden) {
       case OrdenProyectos.recientes:
-        resultado.sort((a, b) => b.id.compareTo(a.id));
+        resultado.sort((a, b) {
+          final orden = b.creadoEl.compareTo(a.creadoEl);
+          return orden != 0 ? orden : b.id.compareTo(a.id);
+        });
       case OrdenProyectos.cliente:
         resultado.sort((a, b) => a.nombreCliente.compareTo(b.nombreCliente));
       case OrdenProyectos.fecha:
@@ -131,6 +135,15 @@ class _QuotePageState extends State<QuotePage> {
                   child: const Text(
                     'Tus proyectos, desde el presupuesto hasta la entrega.',
                   ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ClientesPagina(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.people_outline),
+                  label: const Text('Clientes'),
                 ),
                 if (ancho >= 840 && todos.isNotEmpty)
                   FilledButton.icon(

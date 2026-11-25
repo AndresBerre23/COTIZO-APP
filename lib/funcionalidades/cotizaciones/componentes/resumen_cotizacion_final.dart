@@ -20,7 +20,7 @@ class ResumenCotizacionFinal extends StatelessWidget {
   Widget build(BuildContext context) {
     final costoMateriales = partidas.fold<int>(
       0,
-      (total, partida) => total + partida.subtotalCentavos,
+      (total, partida) => total + partida.costoCentavos,
     );
     final gastos = gastosPrevistos.fold<int>(
       0,

@@ -17,9 +17,9 @@ void main() {
   );
 
   test(
-    'sugiere el precio con margen fijo del 15 % y redondeo hacia arriba',
+    'sugiere el precio con margen fijo del 20 % y redondeo hacia arriba',
     () {
-      expect(calcularPrecioSugerido(10000), 11765);
+      expect(calcularPrecioSugerido(10000), 12500);
       expect(calcularPrecioSugerido(1), 2);
       expect(calcularPrecioSugerido(0), isNull);
     },
@@ -62,7 +62,7 @@ void main() {
     expect(desglose.ajusteComercialCentavos, 0);
     expect(presupuesto.costoMaterialesCentavos, 10000);
     expect(presupuesto.costoPrevistoCentavos, 20000);
-    expect(presupuesto.precioSugeridoCentavos, 23530);
+    expect(presupuesto.precioSugeridoCentavos, 25000);
     expect(calcularRentabilidad(proyecto, [item], [registrado]), 2000);
 
     final descuento = Proyecto(

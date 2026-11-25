@@ -67,7 +67,7 @@ class ControlesCotizaciones extends StatelessWidget {
         onChanged: alBuscar,
         decoration: InputDecoration(
           labelText: 'Buscar cliente, proyecto o código',
-          hintText: 'Ej.: COT-012',
+          hintText: 'Ej.: COT-0012',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: busqueda.isEmpty
               ? null

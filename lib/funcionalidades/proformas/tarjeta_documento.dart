@@ -53,7 +53,7 @@ class TarjetaDocumento extends StatelessWidget {
                 spacing: 12,
                 runSpacing: 4,
                 children: [
-                  Text('COT-${proyecto.id.toString().padLeft(3, '0')}'),
+                  Text(codigoDocumento(proyecto.id)),
                   Text(
                     '${esReporte ? 'Finalizada' : 'Inicio previsto'}: ${fechaCorta(fecha)}',
                   ),

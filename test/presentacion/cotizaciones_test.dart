@@ -5,14 +5,15 @@ import 'package:cotizo_app/dominio/modelos.dart';
 import 'package:cotizo_app/funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
 import 'package:cotizo_app/funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../apoyo/con_cubits.dart';
 import '../apoyo/repositorio_lectura.dart';
 
 class _RepositorioCotizaciones extends RepositorioLectura {
   _RepositorioCotizaciones() : super(datosMuestra());
   Proyecto? proyectoGuardado;
+  Cliente? clienteGuardado;
   List<ItemProyecto> partidasGuardadas = [];
 
   @override
@@ -20,8 +21,10 @@ class _RepositorioCotizaciones extends RepositorioLectura {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto>? gastosPrevistos,
+    Cliente? cliente,
   }) async {
     proyectoGuardado = proyecto;
+    clienteGuardado = cliente;
     partidasGuardadas = List.of(items);
     escrituras++;
     return proyecto.id == 0 ? 2 : proyecto.id;
@@ -79,8 +82,8 @@ Future<CotizoCubit> _montarEditor(
   await cubit.cargar();
   addTearDown(cubit.close);
   await tester.pumpWidget(
-    BlocProvider.value(
-      value: cubit,
+    ConCubits(
+      cubit: cubit,
       child: MaterialApp(
         theme: appTheme,
         home: Scaffold(
@@ -111,6 +114,7 @@ Future<void> _escribir(
 ) async {
   final campo = find.widgetWithText(TextFormField, etiqueta);
   await tester.ensureVisible(campo);
+  await tester.pumpAndSettle();
   await tester.enterText(campo, texto);
   await tester.pumpAndSettle();
 }
@@ -118,7 +122,30 @@ Future<void> _escribir(
 Future<void> _pulsar(WidgetTester tester, String texto) async {
   final control = find.text(texto);
   await tester.ensureVisible(control);
+  await tester.pumpAndSettle();
   await tester.tap(control);
+  await tester.pumpAndSettle();
+}
+
+// Pulsa "Continuar" u "Omitir por ahora" en la barra inferior del asistente.
+Future<void> _avanzar(WidgetTester tester, [int pasos = 1]) async {
+  for (var i = 0; i < pasos; i++) {
+    await tester.tap(find.byIcon(Icons.arrow_forward));
+    await tester.pumpAndSettle();
+  }
+}
+
+// Guarda desde el último paso y acepta el resumen final.
+Future<void> _guardarYConfirmar(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.save_outlined).first);
+  await tester.pumpAndSettle();
+  final confirmar = find.descendant(
+    of: find.byType(Dialog),
+    matching: find.text('Guardar cotización'),
+  );
+  await tester.ensureVisible(confirmar);
+  await tester.pumpAndSettle();
+  await tester.tap(confirmar);
   await tester.pumpAndSettle();
 }
 
@@ -128,7 +155,7 @@ void main() {
   ) async {
     final repositorio = _RepositorioCotizaciones();
     await _montarEditor(tester, repositorio);
-    await _pulsar(tester, 'Guardar cotización');
+    await _avanzar(tester);
     expect(repositorio.proyectoGuardado, isNull);
     expect(find.text('Completa este campo.'), findsNWidgets(2));
     await _escribir(tester, 'Cliente / titular', 'Cliente de prueba');
@@ -137,6 +164,7 @@ void main() {
       'Descripción del proyecto',
       'Revestimiento de baño',
     );
+    await _avanzar(tester);
     await _pulsar(tester, 'Añadir material');
     await tester.tap(find.byType(DropdownButtonFormField<int>));
     await tester.pumpAndSettle();
@@ -148,8 +176,9 @@ void main() {
     await _escribir(tester, 'Cantidad', '2,5');
     await _escribir(tester, 'Costo unitario aplicado', '20,50');
     await _pulsar(tester, 'Añadir');
-    await _escribir(tester, 'Total cotizado', '1000,00');
-    await _pulsar(tester, 'Guardar cotización');
+    await _avanzar(tester, 2);
+    await _escribir(tester, 'Total que cobrarás al cliente', '1000,00');
+    await _guardarYConfirmar(tester);
     expect(repositorio.proyectoGuardado!.nombreCliente, 'Cliente de prueba');
     expect(repositorio.proyectoGuardado!.totalCotizadoCentavos, 100000);
     expect(repositorio.partidasGuardadas.single.cantidad, 2.5);
@@ -158,10 +187,48 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('cotiza un servicio con IVA, condiciones y datos del cliente', (
+    tester,
+  ) async {
+    final repositorio = _RepositorioCotizaciones();
+    await _montarEditor(tester, repositorio);
+    await _escribir(tester, 'Cliente / titular', 'Ana Ruiz');
+    await _escribir(tester, 'Descripción del proyecto', 'Diseño de cocina');
+    await _pulsar(tester, 'Datos de contacto (opcional)');
+    await _escribir(tester, 'Teléfono', '0999999999');
+    await _avanzar(tester);
+    await _pulsar(tester, 'Añadir servicio');
+    await _escribir(tester, 'Descripción del servicio', 'Diseño 3D');
+    await _escribir(tester, 'Precio unitario al cliente', '200');
+    await _pulsar(tester, 'Añadir');
+    expect(find.text('Servicio · precio al cliente'), findsOneWidget);
+    await _avanzar(tester, 2);
+    await _escribir(tester, 'Total que cobrarás al cliente', '200');
+    await _escribir(tester, 'Forma de pago', 'Contado');
+    expect(find.text('\$ 230,00'), findsOneWidget);
+    await _guardarYConfirmar(tester);
+
+    final guardado = repositorio.proyectoGuardado!;
+    expect(guardado.ivaPuntos, 1500);
+    expect(guardado.validezDias, 15);
+    expect(guardado.formaPago, 'Contado');
+    expect(guardado.margenDeseadoPuntos, 2000);
+    expect(repositorio.partidasGuardadas.single.esServicio, isTrue);
+    expect(repositorio.clienteGuardado!.nombre, 'Ana Ruiz');
+    expect(repositorio.clienteGuardado!.telefono, '0999999999');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('agrega un gasto previsto sin usar controladores liberados', (
     tester,
   ) async {
-    await _montarEditor(tester, _RepositorioCotizaciones());
+    final repositorio = _RepositorioCotizaciones();
+    await _montarEditor(
+      tester,
+      repositorio,
+      proyecto: repositorio.datos.proyectos.single,
+    );
+    await _avanzar(tester, 2);
 
     await _pulsar(tester, 'Añadir gasto previsto');
     await tester.tap(find.byType(DropdownButtonFormField<String>));
@@ -180,7 +247,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('usa el margen fijo del 15 % y conserva el total editable', (
+  testWidgets('usa el margen fijo del 20 % y conserva el total editable', (
     tester,
   ) async {
     final repositorio = _RepositorioCotizaciones();
@@ -189,21 +256,15 @@ void main() {
       repositorio,
       proyecto: repositorio.datos.proyectos.single,
     );
+    await _avanzar(tester, 3);
 
-    expect(
-      find.text('Margen deseado sobre el precio de venta (%)'),
-      findsNothing,
-    );
-    expect(
-      find.textContaining('Precio sugerido (margen fijo del 15 %):'),
-      findsOneWidget,
-    );
-    await _pulsar(tester, 'Usar precio sugerido');
-    await _escribir(tester, 'Total cotizado', '999');
-    await _pulsar(tester, 'Guardar cotización');
+    expect(find.textContaining('Aplica un margen del 20 %'), findsOneWidget);
+    await _pulsar(tester, 'Usar este precio');
+    await _escribir(tester, 'Total que cobrarás al cliente', '999');
+    await _guardarYConfirmar(tester);
 
     expect(repositorio.proyectoGuardado!.totalCotizadoCentavos, 99900);
-    expect(repositorio.proyectoGuardado!.margenDeseadoPuntos, 1500);
+    expect(repositorio.proyectoGuardado!.margenDeseadoPuntos, 2000);
     expect(tester.takeException(), isNull);
   });
 
@@ -230,7 +291,9 @@ void main() {
       repositorio,
       proyecto: originales.proyectos.single,
     );
+    await _avanzar(tester);
     await tester.ensureVisible(find.byTooltip('Editar partida'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Editar partida'));
     await tester.pumpAndSettle();
     final campoCosto = tester.widget<TextFormField>(
@@ -239,7 +302,8 @@ void main() {
     expect(campoCosto.controller!.text, '22.50');
     await _escribir(tester, 'Cantidad', '3');
     await _pulsar(tester, 'Aplicar');
-    await _pulsar(tester, 'Guardar cotización');
+    await _avanzar(tester, 2);
+    await _guardarYConfirmar(tester);
     expect(repositorio.proyectoGuardado!.id, 1);
     expect(repositorio.partidasGuardadas.single.subtotalCentavos, 6750);
     expect(
@@ -269,8 +333,8 @@ void main() {
     await cubit.cargar();
     addTearDown(cubit.close);
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: cubit,
+      ConCubits(
+        cubit: cubit,
         child: MaterialApp(
           theme: appTheme,
           home: const DetalleProyectoPagina(proyectoId: 1),
@@ -304,6 +368,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(cubit.state.datos.proyectos.single.estaFinalizada, isTrue);
+    await tester.fling(find.byType(ListView), const Offset(0, 1000), 1000);
+    await tester.pumpAndSettle();
     expect(find.text('Editar'), findsNothing);
     expect(find.text('Ver proforma'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -386,7 +452,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Remodelación de cocina'), findsOneWidget);
     expect(find.text('Obra visible'), findsNothing);
-    await tester.tap(find.text('Obras'));
+    await tester.tap(find.text('Obras (1)'));
     await tester.pumpAndSettle();
     expect(find.text('Remodelación de cocina'), findsNothing);
     expect(find.text('Obra visible'), findsOneWidget);
@@ -404,14 +470,15 @@ void main() {
         repositorio,
         proyecto: repositorio.datos.proyectos.single,
       );
-      await _escribir(tester, 'Total cotizado', '999999999,99');
+      await _avanzar(tester, 3);
+      await _escribir(tester, 'Total que cobrarás al cliente', '999999999,99');
       await tester.ensureVisible(find.text('Guardar cotización'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull, reason: 'Editor a $ancho px');
       await tester.pumpWidget(const SizedBox());
       await tester.pumpWidget(
-        BlocProvider.value(
-          value: cubit,
+        ConCubits(
+          cubit: cubit,
           child: MaterialApp(
             theme: appTheme,
             home: const DetalleProyectoPagina(proyectoId: 1),

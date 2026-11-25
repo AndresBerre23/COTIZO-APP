@@ -83,13 +83,19 @@ class CotizoCubit extends Cubit<EstadoCotizo> {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto>? gastosPrevistos,
+    Cliente? cliente,
   }) => _guardar(() async {
     await _repositorio.guardarProyecto(
       proyecto,
       items,
       gastosPrevistos: gastosPrevistos,
+      cliente: cliente,
     );
   });
+  Future<bool> guardarCliente(Cliente cliente) =>
+      _guardar(() => _repositorio.guardarCliente(cliente));
+  Future<bool> eliminarCliente(int id) =>
+      _guardar(() => _repositorio.eliminarCliente(id));
   Future<bool> iniciarObra(int proyectoId, DateTime fechaInicioReal) =>
       _guardar(() => _repositorio.iniciarObra(proyectoId, fechaInicioReal));
   Future<bool> finalizarObra(int proyectoId, DateTime fechaFinReal) =>
@@ -126,6 +132,10 @@ class CotizoCubit extends Cubit<EstadoCotizo> {
   Future<bool> guardarGasto(Gasto gasto) => _guardar(() async {
     await _repositorio.guardarGasto(gasto);
   });
+  Future<bool> guardarIngreso(Ingreso ingreso) =>
+      _guardar(() => _repositorio.guardarIngreso(ingreso));
+  Future<bool> eliminarIngreso(int id) =>
+      _guardar(() => _repositorio.eliminarIngreso(id));
   Future<bool> eliminarProyecto(int id) =>
       _guardar(() => _repositorio.eliminarProyecto(id));
   Future<bool> eliminarMaterial(int id) => _guardar(() async {

@@ -21,7 +21,7 @@ class ResumenRentabilidad extends StatelessWidget {
   Widget build(BuildContext context) {
     final materiales = partidas.fold(
       0,
-      (total, item) => total + item.subtotalCentavos,
+      (total, item) => total + item.costoCentavos,
     );
     final gastado = gastos.fold(
       0,

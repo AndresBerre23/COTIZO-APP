@@ -2,7 +2,8 @@ class ItemProyecto {
   const ItemProyecto({
     this.id = 0,
     this.proyectoId = 0,
-    required this.materialId,
+    this.materialId,
+    this.esServicio = false,
     required this.cantidad,
     required this.costoUnitarioAplicadoCentavos,
     required this.nombreMaterial,
@@ -11,7 +12,11 @@ class ItemProyecto {
 
   final int id;
   final int proyectoId;
-  final int materialId;
+  // Nulo en partidas de servicio.
+  final int? materialId;
+
+  // Servicio con precio propio: no es costo ni recibe margen (P-026).
+  final bool esServicio;
   final double cantidad;
   final int costoUnitarioAplicadoCentavos;
   final String nombreMaterial;
@@ -23,4 +28,7 @@ class ItemProyecto {
     final residuo = costoUnitarioAplicadoCentavos % 1000;
     return parteEntera * milesimas + (residuo * milesimas + 500) ~/ 1000;
   }
+
+  int get costoCentavos => esServicio ? 0 : subtotalCentavos;
+  int get precioServicioCentavos => esServicio ? subtotalCentavos : 0;
 }

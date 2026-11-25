@@ -128,7 +128,7 @@ class TarjetaProyecto extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    'COT-${proyecto.id.toString().padLeft(3, '0')}',
+                    codigoDocumento(proyecto.id),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

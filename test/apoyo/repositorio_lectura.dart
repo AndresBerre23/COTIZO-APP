@@ -33,6 +33,7 @@ class RepositorioLectura implements RepositorioLocal {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto>? gastosPrevistos,
+    Cliente? cliente,
   }) async => 1;
   @override
   Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal) async {}
@@ -47,7 +48,17 @@ class RepositorioLectura implements RepositorioLocal {
   @override
   Future<void> eliminarGasto(int id) async {}
   @override
+  Future<int> guardarIngreso(Ingreso ingreso) async => 1;
+  @override
+  Future<void> eliminarIngreso(int id) async {}
+  @override
+  Future<int> guardarCliente(Cliente cliente) async => 1;
+  @override
+  Future<void> eliminarCliente(int id) async {}
+  @override
   Future<void> cerrar() async {}
+  @override
+  Future<void> prepararRespaldo() async {}
 }
 
 DatosLocales datosMuestra() => DatosLocales(

@@ -47,7 +47,7 @@ void main() {
       await tester.pumpAndSettle();
       final etiquetas = [
         'Inicio',
-        'Gastos',
+        'Movimientos',
         'Materiales',
         'Cotizaciones',
         'Documentos',

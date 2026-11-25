@@ -1,11 +1,13 @@
-import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../core/formato.dart';
 import '../../dominio/calcular_desglose_proforma.dart';
 import '../../dominio/modelos.dart';
+import 'componentes/bloque_personas_pdf.dart';
 import 'componentes/diseno_documento_pdf.dart';
+import 'componentes/filas_detalle_pdf.dart';
+import 'componentes/secciones_proforma_pdf.dart';
 
 class ServicioPdf {
   Future<Uint8List> generar(
@@ -13,11 +15,17 @@ class ServicioPdf {
     List<ItemProyecto> items, {
     List<GastoPrevisto> gastosPrevistos = const [],
     String? nombreEmisor,
+    DatosNegocio? negocio,
+    Cliente? cliente,
+    Uint8List? logoEmisor,
   }) => _generar(
     proyecto,
     items,
     gastosPrevistos: gastosPrevistos,
     nombreEmisor: nombreEmisor,
+    negocio: negocio,
+    cliente: cliente,
+    logoEmisor: logoEmisor,
   );
 
   Future<Uint8List> generarReporteCierre(
@@ -40,6 +48,9 @@ class ServicioPdf {
     List<Gasto> gastosAdicionales = const [],
     bool reporteCierre = false,
     String? nombreEmisor,
+    DatosNegocio? negocio,
+    Cliente? cliente,
+    Uint8List? logoEmisor,
   }) async {
     final partidas = items
         .where((item) => item.proyectoId == proyecto.id)
@@ -57,13 +68,19 @@ class ServicioPdf {
       (total, gasto) => total + gasto.montoCentavos,
     );
     final resultadoCierre = calcularResultadoCierre(desglose, adicionales);
+    final filas = esCierre
+        ? filasCostoInterno(partidas)
+        : filasCliente(proyecto, partidas, gastos);
     final fuente = pw.Font.ttf(
       await rootBundle.load('assets/fuentes/Roboto-Regular.ttf'),
     );
     final negrita = pw.Font.ttf(
       await rootBundle.load('assets/fuentes/Roboto-Bold.ttf'),
     );
-    final logo = await DisenoDocumentoPdf.cargarLogo();
+    // La proforma usa el logo del negocio si existe (P-020).
+    final pw.ImageProvider logo = logoEmisor != null && !reporteCierre
+        ? pw.MemoryImage(logoEmisor)
+        : await DisenoDocumentoPdf.cargarLogo();
     final nombreAutor = nombreEmisor?.trim();
     final documento = pw.Document(
       title: '${esCierre ? 'Cierre' : 'Cotización'} ${proyecto.id}',
@@ -101,11 +118,13 @@ class ServicioPdf {
             morado,
           ),
           pw.SizedBox(height: 20),
-          DisenoDocumentoPdf.bloquePersonas(
+          bloquePersonasPdf(
             nombreAutor?.isNotEmpty == true ? nombreAutor! : 'Coti',
             proyecto.nombreCliente,
             azul,
             turquesa,
+            detallesEmisor: detallesNegocio(negocio),
+            detallesCliente: detallesCliente(cliente),
           ),
           pw.SizedBox(height: 12),
           pw.Text(
@@ -150,8 +169,10 @@ class ServicioPdf {
               pw.SizedBox(width: 8),
               pw.Expanded(
                 child: DisenoDocumentoPdf.datoCompacto(
-                  'ESTADO',
-                  proyecto.estado.etiqueta,
+                  esCierre ? 'ESTADO' : 'VÁLIDA HASTA',
+                  esCierre
+                      ? proyecto.estado.etiqueta
+                      : fechaCorta(proyecto.validaHasta),
                   superficie,
                   azul,
                 ),
@@ -164,26 +185,16 @@ class ServicioPdf {
             azul,
           ),
           pw.SizedBox(height: 8),
-          if (partidas.isNotEmpty)
+          if (filas.isNotEmpty)
             pw.TableHelper.fromTextArray(
               headers: [
-                'Material',
+                esCierre ? 'Material' : 'Descripción',
                 'Cantidad',
                 'Unidad',
                 'Unitario',
                 'Subtotal',
               ],
-              data: partidas
-                  .map(
-                    (item) => [
-                      item.nombreMaterial,
-                      '${item.cantidad}',
-                      item.unidadMedida,
-                      dinero(item.costoUnitarioAplicadoCentavos),
-                      dinero(item.subtotalCentavos),
-                    ],
-                  )
-                  .toList(),
+              data: filas,
               headerDecoration: pw.BoxDecoration(color: azul),
               headerStyle: pw.TextStyle(
                 color: PdfColors.white,
@@ -205,33 +216,30 @@ class ServicioPdf {
               },
             ),
           pw.SizedBox(height: 20),
-          DisenoDocumentoPdf.tituloSeccion(
-            esCierre ? 'Resumen de costos' : 'Resumen de inversión',
-            azul,
-          ),
-          pw.SizedBox(height: 4),
-          DisenoDocumentoPdf.fila(
-            'Materiales',
-            dinero(desglose.totalMaterialesCentavos),
-          ),
-          if (desglose.cobroManoObraCentavos > 0)
+          // El cliente no ve costos internos ni margen (D-008).
+          if (esCierre) ...[
+            DisenoDocumentoPdf.tituloSeccion('Resumen de costos', azul),
+            pw.SizedBox(height: 4),
             DisenoDocumentoPdf.fila(
-              'Mano de obra propia',
-              dinero(desglose.cobroManoObraCentavos),
+              'Materiales',
+              dinero(desglose.totalMaterialesCentavos),
             ),
-          for (final gasto in gastos)
-            DisenoDocumentoPdf.fila(
-              gasto.descripcion.isEmpty
-                  ? gasto.categoria
-                  : '${gasto.categoria} · ${gasto.descripcion}',
-              dinero(gasto.montoCentavos),
-            ),
-          if (desglose.ajusteComercialCentavos != 0 || esCierre)
+            if (desglose.cobroManoObraCentavos > 0)
+              DisenoDocumentoPdf.fila(
+                'Mano de obra propia',
+                dinero(desglose.cobroManoObraCentavos),
+              ),
+            for (final gasto in gastos)
+              DisenoDocumentoPdf.fila(
+                gasto.descripcion.isEmpty
+                    ? gasto.categoria
+                    : '${gasto.categoria} · ${gasto.descripcion}',
+                dinero(gasto.montoCentavos),
+              ),
             DisenoDocumentoPdf.fila(
               'Ajuste comercial',
               dinero(desglose.ajusteComercialCentavos),
             ),
-          if (esCierre) ...[
             pw.SizedBox(height: 16),
             pw.Text(
               'Gastos adicionales registrados',
@@ -259,43 +267,17 @@ class ServicioPdf {
               destacado: true,
             ),
           ],
-          DisenoDocumentoPdf.panelTotal(
-            esCierre ? 'TOTAL ORIGINAL COTIZADO' : 'TOTAL DE LA PROFORMA',
-            dinero(proyecto.totalCotizadoCentavos),
-            azul,
-          ),
-          pw.SizedBox(height: 20),
-          pw.Text(
-            esCierre
-                ? 'Reporte informativo de cierre. No constituye una factura ni un comprobante de pago.'
-                : 'Cotización de referencia. No constituye una factura ni un comprobante de pago.',
-            style: const pw.TextStyle(fontSize: 9),
-          ),
+          if (esCierre)
+            DisenoDocumentoPdf.panelTotal(
+              'TOTAL ORIGINAL COTIZADO',
+              dinero(proyecto.totalCotizadoCentavos),
+              azul,
+            )
+          else
+            ...cierreProformaPdf(proyecto, azul),
         ],
       ),
     );
     return documento.save();
-  }
-
-  Future<File> guardarEn(
-    Directory directorio,
-    Proyecto proyecto,
-    List<ItemProyecto> items, {
-    List<GastoPrevisto> gastosPrevistos = const [],
-    String? nombreEmisor,
-  }) async {
-    await directorio.create(recursive: true);
-    final archivo = File(
-      '${directorio.path}${Platform.pathSeparator}cotizacion-${proyecto.id}.pdf',
-    );
-    return archivo.writeAsBytes(
-      await generar(
-        proyecto,
-        items,
-        gastosPrevistos: gastosPrevistos,
-        nombreEmisor: nombreEmisor,
-      ),
-      flush: true,
-    );
   }
 }

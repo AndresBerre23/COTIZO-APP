@@ -17,6 +17,8 @@ class PrecioProyectoEditor extends StatelessWidget {
     required this.precioSugerido,
     required this.aplicarSugerido,
     required this.alCambiar,
+    this.precioServicios = 0,
+    this.margenPuntos = margenSugeridoFijoPuntos,
   });
 
   final TextEditingController total;
@@ -27,6 +29,8 @@ class PrecioProyectoEditor extends StatelessWidget {
   final int? precioSugerido;
   final VoidCallback? aplicarSugerido;
   final VoidCallback alCambiar;
+  final int precioServicios;
+  final int margenPuntos;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +44,7 @@ class PrecioProyectoEditor extends StatelessWidget {
         totalValido && cotizado < costoPrevisto + manoObra;
     final margenSugerido = precioSugerido == null
         ? null
-        : precioSugerido! - costoPrevisto - manoObra;
+        : precioSugerido! - costoPrevisto - manoObra - precioServicios;
     return SeccionCotizacion(
       titulo: 'Precio de tu trabajo',
       child: Column(
@@ -73,6 +77,8 @@ class PrecioProyectoEditor extends StatelessWidget {
               manoObra: manoObra,
               margen: margenSugerido!,
               aplicar: aplicarSugerido,
+              margenPuntos: margenPuntos,
+              servicios: precioServicios,
             )
           else
             Text(
@@ -103,7 +109,9 @@ class PrecioProyectoEditor extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: Text(
               totalValido
-                  ? dinero(cotizado - costoPrevisto - manoObra)
+                  ? dinero(
+                      cotizado - costoPrevisto - manoObra - precioServicios,
+                    )
                   : 'Completa el total para calcularlo',
               style: TextStyle(
                 fontSize: 28,
@@ -144,8 +152,12 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
     required this.manoObra,
     required this.margen,
     required this.aplicar,
+    required this.margenPuntos,
+    required this.servicios,
   });
 
+  final int margenPuntos;
+  final int servicios;
   final int precio;
   final int costos;
   final int manoObra;
@@ -184,7 +196,7 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Aplica un margen del ${margenSugeridoFijoPuntos ~/ 100} % al precio de materiales y otros costos. Tu mano de obra se suma aparte.',
+          'Aplica un margen del ${margenPuntos ~/ 100} % al precio de materiales y otros costos. Tu mano de obra se suma aparte.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const Divider(height: 20),
@@ -197,6 +209,8 @@ class _PrecioSugeridoDestacado extends StatelessWidget {
             etiqueta: 'Cobro por tu mano de obra',
             monto: manoObra,
           ),
+        if (servicios > 0)
+          _FilaDesglosePrecio(etiqueta: 'Servicios', monto: servicios),
         _FilaDesglosePrecio(etiqueta: 'Margen estimado', monto: margen),
         if (aplicar == null)
           Padding(

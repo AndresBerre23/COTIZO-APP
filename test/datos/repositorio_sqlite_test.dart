@@ -179,7 +179,7 @@ void main() {
   });
 
   test(
-    'impide borrar materiales usados y elimina dependencias de un proyecto',
+    'impide borrar materiales usados y conserva los gastos del proyecto',
     () async {
       final id = await repositorio.guardarProyecto(_proyecto(), [
         _item(materialId),
@@ -194,11 +194,115 @@ void main() {
       final datos = await repositorio.obtenerDatos();
       expect(datos.proyectos, isEmpty);
       expect(datos.items, isEmpty);
-      expect(datos.gastos.single.proyectoId, isNull);
+      // Los gastos del proyecto pasan a generales (D-010).
+      expect(datos.gastos, hasLength(2));
+      expect(datos.gastos.every((gasto) => gasto.proyectoId == null), isTrue);
       await repositorio.eliminarMaterial(materialId);
       expect((await repositorio.obtenerDatos()).materiales, isEmpty);
     },
   );
+
+  test('guarda ingresos y los conserva al eliminar su proyecto', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), [
+      _item(materialId),
+    ]);
+    final ingresoId = await repositorio.guardarIngreso(
+      Ingreso(
+        proyectoId: id,
+        montoCentavos: 5000,
+        categoria: 'Anticipo',
+        metodo: MetodoPago.transferencia,
+        fecha: DateTime(2026, 11, 20),
+        nota: 'Primer pago',
+      ),
+    );
+    var datos = await repositorio.obtenerDatos();
+    expect(datos.ingresos.single.id, ingresoId);
+    expect(datos.ingresos.single.metodo, MetodoPago.transferencia);
+    expect(datos.ingresosDeProyecto(id).single.montoCentavos, 5000);
+    await expectLater(
+      repositorio.guardarIngreso(
+        Ingreso(montoCentavos: 0, categoria: 'Venta', fecha: DateTime.now()),
+      ),
+      throwsFormatException,
+    );
+    await repositorio.eliminarProyecto(id);
+    datos = await repositorio.obtenerDatos();
+    expect(datos.ingresos.single.proyectoId, isNull);
+    await repositorio.eliminarIngreso(ingresoId);
+    expect((await repositorio.obtenerDatos()).ingresos, isEmpty);
+  });
+
+  test('guarda cliente, servicios, IVA y estados nuevos', () async {
+    final id = await repositorio.guardarProyecto(
+      Proyecto(
+        nombreCliente: 'Ana Ruiz',
+        descripcion: 'Instalación',
+        fechaInicio: DateTime(2026, 11, 25),
+        fechaFin: DateTime(2026, 11, 30),
+        fechaCreacion: DateTime(2026, 11, 25, 9),
+        totalCotizadoCentavos: 10000,
+        ivaPuntos: 1500,
+        validezDias: 30,
+        formaPago: 'Contado',
+        condiciones: 'Garantía de 6 meses',
+      ),
+      [
+        _item(materialId),
+        const ItemProyecto(
+          esServicio: true,
+          cantidad: 1,
+          costoUnitarioAplicadoCentavos: 3000,
+          nombreMaterial: 'Instalación',
+          unidadMedida: 'servicio',
+        ),
+      ],
+      cliente: const Cliente(nombre: 'Ana Ruiz', telefono: '0999999999'),
+    );
+    var datos = await repositorio.obtenerDatos();
+    final proyecto = datos.proyectos.single;
+    expect(datos.clientes.single.telefono, '0999999999');
+    expect(proyecto.clienteId, datos.clientes.single.id);
+    expect(proyecto.ivaPuntos, 1500);
+    expect(proyecto.validezDias, 30);
+    expect(proyecto.condiciones, 'Garantía de 6 meses');
+    expect(proyecto.fechaCreacion, DateTime(2026, 11, 25, 9));
+    final servicio = datos.items.firstWhere((item) => item.esServicio);
+    expect(servicio.materialId, isNull);
+    await repositorio.guardarProyecto(
+      proyecto.conEstado(EstadoProyecto.rechazado),
+      datos.itemsDeProyecto(id),
+    );
+    datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos.single.estado, EstadoProyecto.rechazado);
+    expect(datos.proyectos.single.clienteId, isNotNull);
+    await repositorio.eliminarCliente(datos.clientes.single.id);
+    datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos.single.clienteId, isNull);
+    expect(datos.proyectos.single.nombreCliente, 'Ana Ruiz');
+  });
+
+  test('persiste datos del negocio y ajustes de cotización', () async {
+    await repositorio.guardarPreferencias(
+      const PreferenciasApp(
+        negocio: DatosNegocio(
+          nombreComercial: 'Taller Ruiz',
+          identificacion: '1799',
+        ),
+        ivaPuntos: null,
+        margenPuntos: 3500,
+        validezDias: 8,
+        formaPago: 'Transferencia',
+      ),
+    );
+    final leidas = await repositorio.obtenerPreferencias();
+    expect(leidas.nombreEmisor, 'Taller Ruiz');
+    expect(leidas.negocio.identificacion, '1799');
+    expect(leidas.ivaPuntos, isNull);
+    expect(leidas.margenPuntos, 3500);
+    expect(leidas.validezDias, 8);
+    expect(leidas.formaPago, 'Transferencia');
+  });
 
   test('edita y elimina gastos sin duplicarlos', () async {
     final id = await repositorio.guardarGasto(_gasto(null, 1000));
@@ -388,6 +492,13 @@ void main() {
       expect(datos.gastos.single.proyectoId, 7);
       expect(datos.materiales.single.imagenRuta, isNull);
       expect(datos.materiales.single.atribucionImagen, isNull);
+
+      // Desde v8 eliminar una obra conserva sus gastos como generales.
+      await local.eliminarProyecto(7);
+      final restantes = await local.obtenerDatos();
+      expect(restantes.proyectos, isEmpty);
+      expect(restantes.gastos.single.montoCentavos, 50);
+      expect(restantes.gastos.single.proyectoId, isNull);
     } finally {
       await local?.cerrar();
       await databaseFactoryFfi.deleteDatabase(ruta);

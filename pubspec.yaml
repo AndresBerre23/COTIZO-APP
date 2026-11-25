@@ -21,6 +21,9 @@ dependencies:
   path_provider: ^2.1.5
   pdf: ^3.11.3
   printing: ^5.14.2
+  archive: ^4.0.9
+  file_picker: ^11.0.3
+  share_plus: ^12.0.2
 
 dev_dependencies:
   flutter_test:
@@ -44,9 +47,10 @@ flutter_launcher_icons:
   adaptive_icon_foreground: assets/images/CotiIcono.png
 
 flutter_native_splash:
+  # Solo color: el logo animado lo dibuja Flutter (funcionalidades/arranque).
   color: '#10144C'
-  image: assets/images/Coti-SplashScreen.png
   android_12:
     color: '#10144C'
-    image: assets/images/Coti-SplashScreen.png
+    # Android 12+ exige un ícono; uno transparente evita el logo recortado.
+    image: assets/images/arranque_transparente.png
     icon_background_color: '#10144C'

@@ -5,7 +5,13 @@ Future<Uint8List> optimizarImagen(Uint8List bytes) =>
     compute(_optimizarImagen, bytes);
 
 Uint8List _optimizarImagen(Uint8List bytes) {
-  final original = imagen.decodeImage(bytes);
+  imagen.Image? original;
+  try {
+    original = imagen.decodeImage(bytes);
+  } catch (_) {
+    // Algunos decodificadores fallan con datos cortos en vez de devolver nulo.
+    original = null;
+  }
   if (original == null) {
     throw const FormatException(
       'El archivo seleccionado no es una imagen válida.',

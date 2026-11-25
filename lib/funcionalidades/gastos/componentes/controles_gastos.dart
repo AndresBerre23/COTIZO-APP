@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../movimientos/utilidades/filtrar_movimientos.dart';
+
+export '../../movimientos/utilidades/filtrar_movimientos.dart'
+    show FiltroAsignacionGasto, OrdenGastos;
+
 class ControlesGastos extends StatelessWidget {
   const ControlesGastos({
     super.key,
@@ -90,16 +95,4 @@ class ControlesGastos extends StatelessWidget {
     selected: asignacion == valor,
     onSelected: (_) => alCambiarAsignacion(valor),
   );
-}
-
-enum FiltroAsignacionGasto { todos, proyectos, generales }
-
-enum OrdenGastos {
-  recientes('Más recientes'),
-  antiguos('Más antiguos'),
-  mayorImporte('Mayor importe'),
-  menorImporte('Menor importe');
-
-  const OrdenGastos(this.etiqueta);
-  final String etiqueta;
 }

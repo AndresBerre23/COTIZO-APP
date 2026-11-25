@@ -1,4 +1,6 @@
-class Gasto {
+import 'movimiento.dart';
+
+class Gasto implements Movimiento {
   const Gasto({
     this.id = 0,
     this.proyectoId,
@@ -8,10 +10,16 @@ class Gasto {
     this.nota = '',
   });
 
+  @override
   final int id;
+  @override
   final int? proyectoId;
+  @override
   final int montoCentavos;
+  @override
   final String categoria;
+  @override
   final DateTime fecha;
+  @override
   final String nota;
 }

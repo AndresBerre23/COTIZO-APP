@@ -7,34 +7,49 @@ import '../dominio/modelos.dart';
 import '../dominio/repositorio_local.dart';
 import 'esquema_sqlite.dart';
 import 'mapeadores_sqlite.dart';
+import 'operaciones_clientes_sqlite.dart';
+import 'operaciones_ingresos_sqlite.dart';
+import 'utilidades_sqlite.dart';
 import 'validaciones_datos.dart';
 
-class RepositorioSqlite implements RepositorioLocal {
+class RepositorioSqlite
+    with OperacionesIngresosSqlite, OperacionesClientesSqlite
+    implements RepositorioLocal {
   RepositorioSqlite(this.base);
 
+  @override
   final Database base;
+
+  static const versionEsquema = 10;
+
+  static DatabaseFactory _fabrica(DatabaseFactory? fabrica) {
+    if (fabrica == null && (Platform.isWindows || Platform.isLinux)) {
+      sqfliteFfiInit();
+      return databaseFactoryFfi;
+    }
+    return fabrica ?? databaseFactory;
+  }
+
+  // Ruta del archivo de datos que usa la app por defecto.
+  static Future<String> rutaPredeterminada({DatabaseFactory? fabrica}) async =>
+      rutas.join(await _fabrica(fabrica).getDatabasesPath(), 'cotizo.sqlite');
 
   static Future<RepositorioSqlite> abrir({
     String? ruta,
     DatabaseFactory? fabrica,
   }) async {
-    if (fabrica == null && (Platform.isWindows || Platform.isLinux)) {
-      sqfliteFfiInit();
-      fabrica = databaseFactoryFfi;
-    }
-    final fabricaLocal = fabrica ?? databaseFactory;
-    final rutaLocal =
-        ruta ??
-        rutas.join(await fabricaLocal.getDatabasesPath(), 'cotizo.sqlite');
+    final fabricaLocal = _fabrica(fabrica);
+    final rutaLocal = ruta ?? await rutaPredeterminada(fabrica: fabricaLocal);
     final base = await fabricaLocal.openDatabase(
       rutaLocal,
       options: OpenDatabaseOptions(
-        version: 7,
-        onConfigure: (base) => base.execute('PRAGMA foreign_keys = ON'),
+        version: versionEsquema,
         onCreate: crearEsquema,
         onUpgrade: migrarEsquema,
       ),
     );
+    // Se activan después de migrar: las migraciones recrean tablas referenciadas.
+    await base.execute('PRAGMA foreign_keys = ON');
     return RepositorioSqlite(base);
   }
 
@@ -104,6 +119,14 @@ class RepositorioSqlite implements RepositorioLocal {
       'gastos_previstos',
       orderBy: 'id',
     );
+    final clientes = await transaccion.query(
+      'clientes',
+      orderBy: 'nombre COLLATE NOCASE, id',
+    );
+    final ingresos = await transaccion.query(
+      'ingresos',
+      orderBy: 'fecha DESC, id DESC',
+    );
     return DatosLocales(
       proyectos: List.unmodifiable(proyectos.map(leerProyecto)),
       materiales: List.unmodifiable(materiales.map(leerMaterial)),
@@ -112,6 +135,8 @@ class RepositorioSqlite implements RepositorioLocal {
       gastosPrevistos: List.unmodifiable(
         gastosPrevistos.map(leerGastoPrevisto),
       ),
+      ingresos: List.unmodifiable(ingresos.map(leerIngreso)),
+      clientes: List.unmodifiable(clientes.map(leerCliente)),
     );
   });
 
@@ -123,29 +148,16 @@ class RepositorioSqlite implements RepositorioLocal {
       limit: 1,
     );
     if (filas.isEmpty) return const PreferenciasApp();
-    final fila = filas.single;
-    return PreferenciasApp(
-      nombre: fila['nombre'] as String,
-      apellido: fila['apellido'] as String,
-      fotoRuta: fila['foto_ruta'] as String?,
-      modoTema: ModoTema.values.firstWhere(
-        (modo) => modo.name == fila['modo_tema'],
-        orElse: () => ModoTema.sistema,
-      ),
-      omitirAvisoNombre: fila['omitir_aviso_nombre'] == 1,
-    );
+    return leerPreferencias(filas.single);
   }
 
   @override
   Future<void> guardarPreferencias(PreferenciasApp preferencias) async {
-    await base.insert('preferencias_app', {
-      'id': 1,
-      'nombre': preferencias.nombre.trim(),
-      'apellido': preferencias.apellido.trim(),
-      'foto_ruta': preferencias.fotoRuta,
-      'modo_tema': preferencias.modoTema.name,
-      'omitir_aviso_nombre': preferencias.omitirAvisoNombre ? 1 : 0,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await base.insert(
+      'preferencias_app',
+      escribirPreferencias(preferencias),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   @override
@@ -153,22 +165,33 @@ class RepositorioSqlite implements RepositorioLocal {
     Proyecto proyecto,
     List<ItemProyecto> items, {
     List<GastoPrevisto>? gastosPrevistos,
+    Cliente? cliente,
   }) async {
     validarProyecto(proyecto, items, gastosPrevistos ?? const []);
+    if (cliente != null) validarCliente(cliente);
     return base.transaction((transaccion) async {
-      final id = await _guardar(
-        transaccion,
-        'proyectos',
-        proyecto.id,
-        escribirProyecto(proyecto),
-      );
+      // Crea o actualiza el cliente y lo enlaza a la cotización (P-021).
+      final clienteId = cliente == null
+          ? proyecto.clienteId
+          : await guardarRegistro(
+              transaccion,
+              'clientes',
+              cliente.id,
+              escribirCliente(cliente),
+            );
+      final id = await guardarRegistro(transaccion, 'proyectos', proyecto.id, {
+        ...escribirProyecto(proyecto),
+        'cliente_id': clienteId,
+      });
       await transaccion.delete(
         'items_proyecto',
         where: 'proyecto_id = ?',
         whereArgs: [id],
       );
       for (final item in items) {
-        await _exigirRegistro(transaccion, 'materiales', item.materialId);
+        if (!item.esServicio) {
+          await exigirRegistro(transaccion, 'materiales', item.materialId!);
+        }
         await transaccion.insert('items_proyecto', escribirItem(item, id));
       }
       if (gastosPrevistos != null) {
@@ -192,7 +215,7 @@ class RepositorioSqlite implements RepositorioLocal {
   Future<int> guardarMaterial(MaterialObra material) async {
     validarMaterial(material);
     return base.transaction(
-      (transaccion) => _guardar(
+      (transaccion) => guardarRegistro(
         transaccion,
         'materiales',
         material.id,
@@ -206,9 +229,14 @@ class RepositorioSqlite implements RepositorioLocal {
     validarGasto(gasto);
     return base.transaction((transaccion) async {
       if (gasto.proyectoId != null) {
-        await _exigirRegistro(transaccion, 'proyectos', gasto.proyectoId!);
+        await exigirRegistro(transaccion, 'proyectos', gasto.proyectoId!);
       }
-      return _guardar(transaccion, 'gastos', gasto.id, escribirGasto(gasto));
+      return guardarRegistro(
+        transaccion,
+        'gastos',
+        gasto.id,
+        escribirGasto(gasto),
+      );
     });
   }
 
@@ -244,42 +272,10 @@ class RepositorioSqlite implements RepositorioLocal {
   @override
   Future<void> cerrar() => base.close();
 
-  Future<int> _guardar(
-    DatabaseExecutor transaccion,
-    String tabla,
-    int id,
-    Map<String, Object?> valores,
-  ) async {
-    if (id == 0) return transaccion.insert(tabla, valores);
-    final actualizados = await transaccion.update(
-      tabla,
-      valores,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    if (actualizados != 1) {
-      throw const FormatException(
-        'El registro ya no existe. Actualiza la pantalla.',
-      );
-    }
-    return id;
-  }
-
-  Future<void> _exigirRegistro(
-    DatabaseExecutor transaccion,
-    String tabla,
-    int id,
-  ) async {
-    final registros = await transaccion.query(
-      tabla,
-      columns: ['id'],
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    if (registros.isEmpty) {
-      throw const FormatException('El registro relacionado ya no existe.');
-    }
+  @override
+  Future<void> prepararRespaldo() async {
+    // Vuelca el registro WAL, si existe, al archivo principal.
+    await base.rawQuery('PRAGMA wal_checkpoint(TRUNCATE)');
   }
 
   Future<Proyecto> _obtenerProyecto(

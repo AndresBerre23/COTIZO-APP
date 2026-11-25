@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cotizo_app/core/enfoque.dart';
 
 import '../../../core/formato.dart';
+import '../../../dominio/modelos.dart';
+import '../utilidades/datos_proforma_editor.dart';
+import 'campo_cliente_editor.dart';
 import 'fechas_proyecto.dart';
 import 'seccion_cotizacion.dart';
 
@@ -14,6 +17,9 @@ class DatosClienteEditor extends StatelessWidget {
     required this.fin,
     required this.alCambiarInicio,
     required this.alCambiarFin,
+    required this.datosProforma,
+    required this.clientes,
+    required this.alElegirCliente,
     this.errorFecha,
   });
 
@@ -23,6 +29,9 @@ class DatosClienteEditor extends StatelessWidget {
   final ValueChanged<DateTime> alCambiarInicio;
   final ValueChanged<DateTime?> alCambiarFin;
   final String? errorFecha;
+  final DatosProformaEditor datosProforma;
+  final List<Cliente> clientes;
+  final ValueChanged<Cliente> alElegirCliente;
 
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
@@ -30,13 +39,11 @@ class DatosClienteEditor extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
-          onTapOutside: cerrarFocoAlTocarFuera,
-          controller: cliente,
-          validator: validarRequerido,
-          textCapitalization: TextCapitalization.words,
-          maxLength: 120,
-          decoration: const InputDecoration(labelText: 'Cliente / titular'),
+        CampoClienteEditor(
+          nombre: cliente,
+          datos: datosProforma,
+          clientes: clientes,
+          alElegir: alElegirCliente,
         ),
         const SizedBox(height: 12),
         TextFormField(

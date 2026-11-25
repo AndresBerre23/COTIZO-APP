@@ -290,6 +290,21 @@ Antes de finalizar cualquier tarea verificar:
 - [ ] Diseño atractivo y moderno.
 - [ ] Variables sensibles protegidas mediante `.env`.
 - [ ] Sin duplicación de código.
+- [ ] `docs/contexto/` actualizado (PENDIENTES, CAMBIOS y, si aplica, ESTADO y DECISIONES).
+
+## 20. CONTEXTO DEL PROYECTO
+
+La carpeta `docs/contexto/` es la memoria del proyecto. Las instrucciones de uso están en `docs/contexto/LEEME.md`.
+
+Antes de empezar:
+- Leer `docs/contexto/ESTADO.md` y `docs/contexto/PENDIENTES.md`.
+- Trabajar sobre una tarea con ID (`P-###`). Si no existe, crearla.
+- Si la tarea depende de una decisión abierta (`D-###`), consultarla con el usuario antes de implementar.
+
+Al terminar:
+- Mover la tarea a "Completadas" en `PENDIENTES.md`.
+- Agregar una entrada en `CAMBIOS.md`.
+- Actualizar `ESTADO.md` y `DECISIONES.md` cuando corresponda.
 
 ---
 

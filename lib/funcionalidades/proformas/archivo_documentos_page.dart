@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../core/formato.dart';
 import 'package:cotizo_app/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -38,10 +40,8 @@ class _ArchivoDocumentosPageState extends State<ArchivoDocumentosPage> {
           proyecto.etapa != _etapaFiltro) {
         return false;
       }
-      final codigo3 = 'cot-${proyecto.id.toString().padLeft(3, '0')}';
-      final codigo4 = 'cot-${proyecto.id.toString().padLeft(4, '0')}';
       final texto =
-          '${proyecto.nombreCliente} ${proyecto.descripcion} $codigo3 $codigo4 ${proyecto.id}'
+          '${proyecto.nombreCliente} ${proyecto.descripcion} ${codigosBusqueda(proyecto.id)}'
               .toLowerCase();
       if (consulta.isNotEmpty && !texto.contains(consulta)) return false;
       final rango = _rangoFechas;
@@ -140,7 +140,7 @@ class _ArchivoDocumentosPageState extends State<ArchivoDocumentosPage> {
             onChanged: (texto) => setState(() => _busqueda = texto),
             decoration: InputDecoration(
               labelText: 'Buscar cliente, proyecto o código',
-              hintText: 'Ej.: COT-012',
+              hintText: 'Ej.: COT-0012',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: _busqueda.isEmpty
                   ? null

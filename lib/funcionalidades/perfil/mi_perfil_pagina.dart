@@ -10,6 +10,10 @@ import '../../core/imagenes/optimizar_imagen.dart';
 import '../../datos/almacen_foto_perfil.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
+import '../respaldo/componentes/seccion_respaldo.dart';
+import 'componentes/seccion_ajustes_cotizacion.dart';
+import 'componentes/seccion_apariencia.dart';
+import 'componentes/seccion_datos_negocio.dart';
 
 class MiPerfilPagina extends StatefulWidget {
   const MiPerfilPagina({super.key});
@@ -166,19 +170,6 @@ class _MiPerfilPaginaState extends State<MiPerfilPagina> {
     ),
   );
 
-  Future<void> _cambiarTema(ModoTema? modo) async {
-    if (modo == null) return;
-    try {
-      await context.read<PreferenciasCubit>().cambiarTema(modo);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo guardar el tema.')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Mi perfil')),
@@ -256,42 +247,13 @@ class _MiPerfilPaginaState extends State<MiPerfilPagina> {
               ),
             ),
             const SizedBox(height: 20),
-            SurfaceCard(
-              child: BlocBuilder<PreferenciasCubit, PreferenciasApp>(
-                builder: (context, preferencias) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Apariencia',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<ModoTema>(
-                      value: preferencias.modoTema,
-                      isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Tema de la aplicación',
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: ModoTema.sistema,
-                          child: Text('Seguir el dispositivo'),
-                        ),
-                        DropdownMenuItem(
-                          value: ModoTema.claro,
-                          child: Text('Claro'),
-                        ),
-                        DropdownMenuItem(
-                          value: ModoTema.oscuro,
-                          child: Text('Oscuro'),
-                        ),
-                      ],
-                      onChanged: _guardando ? null : _cambiarTema,
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const SeccionApariencia(),
+            const SizedBox(height: 20),
+            const SeccionDatosNegocio(),
+            const SizedBox(height: 20),
+            const SeccionAjustesCotizacion(),
+            const SizedBox(height: 20),
+            const SeccionRespaldo(),
           ],
         ),
       ),

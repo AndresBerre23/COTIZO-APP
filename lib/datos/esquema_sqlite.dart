@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
+import 'migracion_v10.dart';
+
 Future<void> crearEsquema(Database base, int version) async {
   await _crearTablaPreferencias(base);
   await base.execute('''
@@ -49,7 +51,7 @@ Future<void> crearEsquema(Database base, int version) async {
   await base.execute('''
     CREATE TABLE gastos (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      proyecto_id INTEGER REFERENCES proyectos(id) ON DELETE CASCADE,
+      proyecto_id INTEGER REFERENCES proyectos(id) ON DELETE SET NULL,
       monto INTEGER NOT NULL CHECK (monto > 0),
       categoria TEXT NOT NULL,
       fecha INTEGER NOT NULL,
@@ -78,6 +80,9 @@ Future<void> crearEsquema(Database base, int version) async {
   await base.execute(
     'CREATE INDEX indice_gastos_previstos_proyecto ON gastos_previstos(proyecto_id)',
   );
+  await _crearTablaIngresos(base);
+  // Las instalaciones nuevas recorren el mismo paso que las migradas.
+  await migrarV10(base);
 }
 
 Future<void> migrarEsquema(
@@ -136,6 +141,54 @@ Future<void> migrarEsquema(
     );
   }
   if (versionAnterior < 7) await _crearTablaPreferencias(base);
+  if (versionAnterior < 8) await _conservarGastosAlEliminar(base);
+  if (versionAnterior < 9) await _crearTablaIngresos(base);
+  if (versionAnterior < 10) await migrarV10(base);
+}
+
+// Cobros y otros ingresos (P-010).
+Future<void> _crearTablaIngresos(DatabaseExecutor base) async {
+  await base.execute('''
+    CREATE TABLE ingresos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      proyecto_id INTEGER REFERENCES proyectos(id) ON DELETE SET NULL,
+      monto INTEGER NOT NULL CHECK (monto > 0),
+      categoria TEXT NOT NULL,
+      metodo TEXT NOT NULL CHECK (
+        metodo IN ('efectivo', 'transferencia', 'tarjeta', 'otro')
+      ),
+      fecha INTEGER NOT NULL,
+      nota TEXT NOT NULL
+    )
+  ''');
+  await base.execute(
+    'CREATE INDEX indice_ingresos_proyecto ON ingresos(proyecto_id)',
+  );
+  await base.execute('CREATE INDEX indice_ingresos_fecha ON ingresos(fecha)');
+}
+
+// SQLite no permite cambiar una clave foránea: se recrea la tabla (D-010).
+Future<void> _conservarGastosAlEliminar(DatabaseExecutor base) async {
+  await base.execute('''
+    CREATE TABLE gastos_v8 (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      proyecto_id INTEGER REFERENCES proyectos(id) ON DELETE SET NULL,
+      monto INTEGER NOT NULL CHECK (monto > 0),
+      categoria TEXT NOT NULL,
+      fecha INTEGER NOT NULL,
+      nota TEXT NOT NULL
+    )
+  ''');
+  await base.execute('''
+    INSERT INTO gastos_v8 (id, proyecto_id, monto, categoria, fecha, nota)
+    SELECT id, proyecto_id, monto, categoria, fecha, nota FROM gastos
+  ''');
+  await base.execute('DROP TABLE gastos');
+  await base.execute('ALTER TABLE gastos_v8 RENAME TO gastos');
+  await base.execute(
+    'CREATE INDEX indice_gastos_proyecto ON gastos(proyecto_id)',
+  );
+  await base.execute('CREATE INDEX indice_gastos_fecha ON gastos(fecha)');
 }
 
 Future<void> _crearTablaPreferencias(DatabaseExecutor base) => base.execute('''

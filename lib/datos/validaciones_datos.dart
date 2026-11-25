@@ -28,6 +28,18 @@ void validarProyecto(
   validarTexto(proyecto.descripcion, 'La descripción', maximo: 2000);
   validarImporte(proyecto.totalCotizadoCentavos);
   validarImporte(proyecto.cobroManoObraCentavos);
+  final iva = proyecto.ivaPuntos;
+  if (iva != null && (iva < 0 || iva > 10000)) {
+    throw const FormatException('La tasa de IVA no es válida.');
+  }
+  if (proyecto.validezDias < 1 || proyecto.validezDias > 365) {
+    throw const FormatException('La validez debe estar entre 1 y 365 días.');
+  }
+  if (proyecto.formaPago.length > 500 || proyecto.condiciones.length > 2000) {
+    throw const FormatException(
+      'La forma de pago o las condiciones son muy largas.',
+    );
+  }
   final margen = proyecto.margenDeseadoPuntos;
   if (margen != null && (margen < 0 || margen >= 10000)) {
     throw const FormatException('El margen debe estar entre 0 y 99,99 %.');
@@ -59,7 +71,10 @@ void validarProyecto(
     if ((milesimas - milesimas.round()).abs() > 0.000001) {
       throw const FormatException('La cantidad admite hasta tres decimales.');
     }
-    if (item.materialId <= 0 ||
+    final materialValido = item.esServicio
+        ? item.materialId == null
+        : (item.materialId ?? 0) > 0;
+    if (!materialValido ||
         (item.proyectoId != 0 && item.proyectoId != proyecto.id)) {
       throw const FormatException(
         'El material o proyecto del detalle no es válido.',
@@ -136,5 +151,32 @@ void validarGasto(Gasto gasto) {
   validarTexto(gasto.categoria, 'La categoría', maximo: 80);
   if (gasto.nota.length > 2000) {
     throw const FormatException('La nota admite hasta 2000 caracteres.');
+  }
+}
+
+void validarIngreso(Ingreso ingreso) {
+  validarId(ingreso.id);
+  if (ingreso.proyectoId != null && ingreso.proyectoId! <= 0) {
+    throw const FormatException('Selecciona un proyecto válido.');
+  }
+  validarImporte(ingreso.montoCentavos, admiteCero: false);
+  validarTexto(ingreso.categoria, 'La categoría', maximo: 80);
+  if (ingreso.nota.length > 2000) {
+    throw const FormatException('La nota admite hasta 2000 caracteres.');
+  }
+}
+
+void validarCliente(Cliente cliente) {
+  validarId(cliente.id);
+  validarTexto(cliente.nombre, 'El nombre del cliente');
+  for (final dato in [
+    cliente.identificacion,
+    cliente.telefono,
+    cliente.correo,
+    cliente.direccion,
+  ]) {
+    if (dato.length > 200) {
+      throw const FormatException('Los datos del cliente son muy largos.');
+    }
   }
 }

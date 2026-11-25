@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/formato.dart';
-import '../../dominio/calcular_rentabilidad.dart';
+import '../../dominio/calcular_balance_obras.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
 
@@ -10,22 +10,8 @@ class ResumenFinanciero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final obras = datos.proyectos.where((proyecto) => proyecto.esObra).toList();
-    final ingresos = obras.fold<int>(
-      0,
-      (total, proyecto) => total + proyecto.totalCotizadoCentavos,
-    );
-    final generales = datos.gastos
-        .where((gasto) => gasto.proyectoId == null)
-        .fold<int>(0, (total, gasto) => total + gasto.montoCentavos);
-    final resultado =
-        obras.fold<int>(
-          0,
-          (total, proyecto) =>
-              total + calcularRentabilidad(proyecto, datos.items, datos.gastos),
-        ) -
-        generales;
-    final costosObras = ingresos - generales - resultado;
+    final balance = calcularBalanceObras(datos);
+    final resultado = balance.resultadoCentavos;
     return SurfaceCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +43,7 @@ class ResumenFinanciero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Obras iniciadas y finalizadas, menos sus costos y todos los gastos generales.',
+            'Cotizaciones aprobadas y obras, menos sus costos y todos los gastos generales.',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
@@ -67,9 +53,9 @@ class ResumenFinanciero extends StatelessWidget {
             spacing: 32,
             runSpacing: 16,
             children: [
-              _Dato('Total cotizado', dinero(ingresos)),
-              _Dato('Costos de obras', dinero(costosObras)),
-              _Dato('Gastos generales', dinero(generales)),
+              _Dato('Total cotizado', dinero(balance.totalCotizadoCentavos)),
+              _Dato('Costos de obras', dinero(balance.costosCentavos)),
+              _Dato('Gastos generales', dinero(balance.generalesCentavos)),
             ],
           ),
           const Divider(height: 28),

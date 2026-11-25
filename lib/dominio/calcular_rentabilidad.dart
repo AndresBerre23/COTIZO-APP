@@ -7,7 +7,7 @@ int calcularRentabilidad(
 ) {
   final costoMateriales = items
       .where((item) => item.proyectoId == proyecto.id)
-      .fold<int>(0, (total, item) => total + item.subtotalCentavos);
+      .fold<int>(0, (total, item) => total + item.costoCentavos);
   final costoGastos = gastos
       .where((gasto) => gasto.proyectoId == proyecto.id)
       .fold<int>(0, (total, gasto) => total + gasto.montoCentavos);

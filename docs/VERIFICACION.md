@@ -1,5 +1,36 @@
 # Verificación de la primera versión funcional
 
+## Fase 2: proforma profesional (25 de noviembre de 2026)
+
+- `flutter analyze` sin errores ni advertencias; `flutter test` 92 de 92; `flutter build apk --debug` correcto.
+- La migración a v10 recrea `proyectos` e `items_proyecto` con las claves foráneas desactivadas (D-019); la prueba desde v1 conserva proyectos, partidas y gastos.
+- Proforma PDF de muestra revisada: emisor y cliente con sus datos, servicio, IVA del 15 %, validez y condiciones, en una sola página.
+- Elegir el logo con la galería queda pendiente de prueba en el teléfono (P-006).
+
+## Fase 1: ingresos y cobros (25 de noviembre de 2026)
+
+- `flutter analyze` sin errores ni advertencias; `flutter test` 81 de 81; `flutter build apk --debug` correcto.
+- Migración a la versión 9 (tabla `ingresos`) cubierta por la prueba de migración desde la versión 1.
+- Movimientos y reporte mensual sin desbordes a 360, 800 y 1440 px; capturas revisadas con fuente real.
+- Compartir el PDF del reporte queda pendiente de prueba en el teléfono (P-006).
+
+## Verificación del 25 de noviembre de 2026 (P-005)
+
+- `flutter analyze`: sin errores ni advertencias; quedan 79 sugerencias de estilo (`prefer_const_constructors` y similares).
+- `flutter test`: 74 pruebas aprobadas, ninguna fallida.
+- `flutter build apk --debug`: compilación correcta, con `archive`, `file_picker` y `share_plus`.
+- Pruebas puestas al día:
+  - Las pantallas se montan con `PreferenciasCubit` (`test/apoyo/con_cubits.dart`), como en la app.
+  - Los ayudantes esperan a que termine el desplazamiento antes de pulsar.
+  - Las pruebas del editor recorren el asistente de 4 pasos y confirman el resumen final.
+  - El margen sugerido esperado es 20 %, el valor vigente desde 649669a.
+- Errores reales corregidos durante la verificación:
+  - La barra inferior del asistente desbordaba 1,7 px a 360 px; los botones ahora se encogen.
+  - `optimizarImagen` lanzaba `RangeError` con datos que no son imagen; ahora devuelve el aviso esperado.
+  - El formulario de gastos repetía la validación del monto; ahora usa `validarImporte`.
+- Sin teléfono ni emulador: compartir, imprimir, elegir archivos, cámara y galería siguen pendientes de prueba en dispositivo (P-006).
+
+
 Última actualización: 9 de noviembre de 2026.
 
 - Flutter 3.32 y Dart 3.8 en Windows.

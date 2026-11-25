@@ -1,6 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart';
+import '../../../core/formato.dart';
 
 class DisenoDocumentoPdf {
   static Future<pw.MemoryImage> cargarLogo() async {
@@ -10,20 +11,29 @@ class DisenoDocumentoPdf {
     );
   }
 
-  static pw.Widget piePagina(bool esCierre, int numeroPagina, int paginas) =>
-      pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Text(
-            '${esCierre ? 'Cierre de obra' : 'Proforma'} / USD',
-            style: const pw.TextStyle(fontSize: 9),
-          ),
-          pw.Text(
-            '$numeroPagina / $paginas',
-            style: const pw.TextStyle(fontSize: 9),
-          ),
-        ],
-      );
+  // El aviso legal va en el pie para no ocupar una página extra.
+  static pw.Widget piePagina(
+    bool esCierre,
+    int numeroPagina,
+    int paginas,
+  ) => pw.Row(
+    crossAxisAlignment: pw.CrossAxisAlignment.end,
+    children: [
+      pw.Expanded(
+        child: pw.Text(
+          '${esCierre ? 'Cierre de obra' : 'Proforma'} / USD. '
+          '${esCierre ? 'Reporte informativo de cierre' : 'Cotización de referencia'}; '
+          'no constituye una factura ni un comprobante de pago.',
+          style: const pw.TextStyle(fontSize: 8),
+        ),
+      ),
+      pw.SizedBox(width: 12),
+      pw.Text(
+        '$numeroPagina / $paginas',
+        style: const pw.TextStyle(fontSize: 9),
+      ),
+    ],
+  );
 
   static pw.Widget encabezadoPagina(
     pw.ImageProvider logo,
@@ -56,7 +66,7 @@ class DisenoDocumentoPdf {
               ),
               pw.Spacer(),
               pw.Text(
-                'COT-${proyectoId.toString().padLeft(4, '0')}',
+                codigoDocumento(proyectoId),
                 style: pw.TextStyle(color: morado, fontSize: 9),
               ),
             ],
@@ -148,71 +158,12 @@ class DisenoDocumentoPdf {
             borderRadius: pw.BorderRadius.circular(8),
           ),
           child: pw.Text(
-            'COT-${proyectoId.toString().padLeft(4, '0')}',
+            codigoDocumento(proyectoId),
             style: pw.TextStyle(
               color: PdfColors.white,
               fontSize: 9,
               fontWeight: pw.FontWeight.bold,
             ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  static pw.Widget bloquePersonas(
-    String nombreEmisor,
-    String nombreCliente,
-    PdfColor azul,
-    PdfColor turquesa,
-  ) => pw.Container(
-    width: double.infinity,
-    padding: const pw.EdgeInsets.all(14),
-    decoration: pw.BoxDecoration(
-      color: PdfColor.fromHex('#F5F4FA'),
-      borderRadius: pw.BorderRadius.circular(10),
-      border: pw.Border.all(color: PdfColor.fromHex('#E6E3F2')),
-    ),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'ELABORADA POR',
-          style: pw.TextStyle(
-            color: turquesa,
-            fontSize: 8,
-            letterSpacing: 1,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 3),
-        pw.Text(
-          nombreEmisor,
-          style: pw.TextStyle(
-            color: azul,
-            fontSize: 18,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 10),
-        pw.Divider(color: PdfColor.fromHex('#DAD7E8')),
-        pw.SizedBox(height: 8),
-        pw.Text(
-          'CLIENTE',
-          style: pw.TextStyle(
-            color: PdfColor.fromHex('#68697A'),
-            fontSize: 8,
-            letterSpacing: 1,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 3),
-        pw.Text(
-          nombreCliente,
-          style: pw.TextStyle(
-            color: azul,
-            fontSize: 12,
-            fontWeight: pw.FontWeight.bold,
           ),
         ),
       ],

@@ -4,6 +4,10 @@ import 'package:cotizo_app/core/enfoque.dart';
 import '../../core/formato.dart';
 import '../../dominio/categorias_gasto.dart';
 import '../../dominio/modelos.dart';
+import '../../widgets/movimientos/campo_monto.dart';
+import '../../widgets/movimientos/selector_categoria.dart';
+import '../../widgets/movimientos/selector_fecha_hora.dart';
+import '../../widgets/movimientos/selector_proyecto_movimiento.dart';
 
 Future<Gasto?> mostrarFormularioGasto(
   BuildContext contexto, {
@@ -66,46 +70,6 @@ class _GastoFormularioState extends State<GastoFormulario> {
     super.dispose();
   }
 
-  Future<void> _elegirFecha() async {
-    final elegida = await showDatePicker(
-      context: context,
-      initialDate: _fecha,
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2200),
-    );
-    if (elegida != null && mounted) {
-      setState(
-        () => _fecha = DateTime(
-          elegida.year,
-          elegida.month,
-          elegida.day,
-          _fecha.hour,
-          _fecha.minute,
-          _fecha.second,
-          _fecha.millisecond,
-        ),
-      );
-    }
-  }
-
-  Future<void> _elegirHora() async {
-    final elegida = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_fecha),
-    );
-    if (elegida != null && mounted) {
-      setState(
-        () => _fecha = DateTime(
-          _fecha.year,
-          _fecha.month,
-          _fecha.day,
-          elegida.hour,
-          elegida.minute,
-        ),
-      );
-    }
-  }
-
   void _aceptar() {
     if (!_formulario.currentState!.validate()) return;
     Navigator.pop(
@@ -140,52 +104,14 @@ class _GastoFormularioState extends State<GastoFormulario> {
               const SizedBox(height: 8),
               const Text('Cada gasto cuenta para conocer lo que ganas.'),
               const SizedBox(height: 24),
-              TextFormField(
-                onTapOutside: cerrarFocoAlTocarFuera,
-                controller: _monto,
-                autofocus: true,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                textInputAction: TextInputAction.next,
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Monto',
-                  prefixText: '\$ ',
-                ),
-                validator: (valor) {
-                  final centavos = leerCentavos(valor ?? '');
-                  return centavos == null || centavos <= 0
-                      ? 'Ingresa un monto mayor que cero con hasta 2 decimales.'
-                      : null;
-                },
-              ),
+              CampoMonto(controlador: _monto),
               const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                value: _proyectoId,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Asignar a'),
-                items: [
-                  const DropdownMenuItem(
-                    value: 0,
-                    child: Text('Gasto general'),
-                  ),
-                  ...widget.proyectos.map(
-                    (proyecto) => DropdownMenuItem(
-                      value: proyecto.id,
-                      child: Text(
-                        '${proyecto.nombreCliente} · ${proyecto.descripcion}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ],
-                onChanged: (valor) => setState(() => _proyectoId = valor ?? 0),
+              SelectorProyectoMovimiento(
+                proyectos: widget.proyectos,
+                valor: _proyectoId,
+                etiquetaGeneral: 'Gasto general',
+                idConservado: widget.gasto?.proyectoId ?? widget.proyectoId,
+                alCambiar: (valor) => setState(() => _proyectoId = valor),
               ),
               const SizedBox(height: 8),
               Text(
@@ -194,40 +120,15 @@ class _GastoFormularioState extends State<GastoFormulario> {
                     : 'Este gasto se descontará de la rentabilidad del proyecto.',
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _categoria,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Categoría'),
-                items: _categorias
-                    .map(
-                      (categoria) => DropdownMenuItem(
-                        value: categoria,
-                        child: Text(
-                          categoria,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (valor) => setState(() => _categoria = valor!),
+              SelectorCategoria(
+                categorias: _categorias,
+                valor: _categoria,
+                alCambiar: (valor) => setState(() => _categoria = valor),
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: _elegirFecha,
-                    icon: const Icon(Icons.calendar_today_outlined),
-                    label: Text('Fecha: ${fechaCorta(_fecha)}'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _elegirHora,
-                    icon: const Icon(Icons.schedule_outlined),
-                    label: Text('Hora: ${horaCorta(_fecha)}'),
-                  ),
-                ],
+              SelectorFechaHora(
+                fecha: _fecha,
+                alCambiar: (valor) => setState(() => _fecha = valor),
               ),
               const SizedBox(height: 16),
               TextFormField(

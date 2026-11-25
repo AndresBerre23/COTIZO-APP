@@ -9,18 +9,20 @@ class PartidasEditor extends StatelessWidget {
     super.key,
     required this.partidas,
     required this.alAgregar,
+    required this.alAgregarServicio,
     required this.alEditar,
     required this.alEliminar,
   });
 
   final List<ItemProyecto> partidas;
   final VoidCallback alAgregar;
+  final VoidCallback alAgregarServicio;
   final ValueChanged<int> alEditar;
   final ValueChanged<int> alEliminar;
 
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
-    titulo: 'Materiales e insumos',
+    titulo: 'Materiales y servicios',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -44,8 +46,16 @@ class PartidasEditor extends StatelessWidget {
                       partidas[indice].nombreMaterial,
                       style: TextStyle(fontWeight: FontWeight.w600),
                     ),
+                    if (partidas[indice].esServicio)
+                      Text(
+                        'Servicio · precio al cliente',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
                     Text(
-                      '${partidas[indice].cantidad} ${partidas[indice].unidadMedida}'
+                      '${cantidadCorta(partidas[indice].cantidad)} ${partidas[indice].unidadMedida}'
                       ' × ${dinero(partidas[indice].costoUnitarioAplicadoCentavos)}',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -72,10 +82,21 @@ class PartidasEditor extends StatelessWidget {
           ),
           const Divider(height: 24),
         ],
-        OutlinedButton.icon(
-          onPressed: alAgregar,
-          icon: Icon(Icons.add),
-          label: Text('Añadir material'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: alAgregar,
+              icon: Icon(Icons.add),
+              label: Text('Añadir material'),
+            ),
+            OutlinedButton.icon(
+              onPressed: alAgregarServicio,
+              icon: Icon(Icons.handyman_outlined),
+              label: Text('Añadir servicio'),
+            ),
+          ],
         ),
       ],
     ),

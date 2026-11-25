@@ -14,10 +14,12 @@ Future<FiltrosGastos?> mostrarFiltrosGastos(
   BuildContext contexto, {
   required String? categoriaInicial,
   required DateTimeRange? rangoInicial,
+  List<String> categoriasDisponibles = categoriasGasto,
+  String titulo = 'Filtrar gastos',
 }) {
   var categoria = categoriaInicial;
   var rango = rangoInicial;
-  final categorias = [...categoriasGasto];
+  final categorias = [...categoriasDisponibles];
   if (categoria != null && !categorias.contains(categoria)) {
     categorias.add(categoria);
   }
@@ -36,10 +38,7 @@ Future<FiltrosGastos?> mostrarFiltrosGastos(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Filtrar gastos',
-                style: Theme.of(contextoHoja).textTheme.titleLarge,
-              ),
+              Text(titulo, style: Theme.of(contextoHoja).textTheme.titleLarge),
               const SizedBox(height: 16),
               DropdownButtonFormField<String?>(
                 value: categoria,

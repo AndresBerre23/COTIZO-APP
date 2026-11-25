@@ -9,13 +9,19 @@ import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
 import '../../widgets/pagina_base.dart';
 import '../../widgets/surface_card.dart';
+import '../movimientos/utilidades/filtrar_movimientos.dart';
 import 'componentes/controles_gastos.dart';
 import 'filtros_gastos.dart';
 import 'formulario_gasto.dart';
 import 'gasto_tarjeta.dart';
 
 class ExpensePage extends StatefulWidget {
-  const ExpensePage({super.key});
+  const ExpensePage({super.key, this.titulo = 'Gastos', this.encabezado});
+
+  final String titulo;
+
+  // Contenido opcional sobre la descripción, como el selector de Movimientos.
+  final Widget? encabezado;
 
   @override
   State<ExpensePage> createState() => _ExpensePageState();
@@ -73,58 +79,6 @@ class _ExpensePageState extends State<ExpensePage> {
     });
   }
 
-  List<Gasto> _filtrar(List<Gasto> gastos, Map<int, Proyecto> proyectos) {
-    final consulta = _busqueda.trim().toLowerCase();
-    final resultado = gastos.where((gasto) {
-      final esGeneral = gasto.proyectoId == null;
-      if (_asignacion == FiltroAsignacionGasto.generales && !esGeneral) {
-        return false;
-      }
-      if (_asignacion == FiltroAsignacionGasto.proyectos && esGeneral) {
-        return false;
-      }
-      if (_categoria != null && gasto.categoria != _categoria) return false;
-      final proyecto = proyectos[gasto.proyectoId];
-      final destino = proyecto == null
-          ? 'gasto general'
-          : '${proyecto.nombreCliente} ${proyecto.descripcion} '
-                'COT-${proyecto.id.toString().padLeft(3, '0')}';
-      final texto = '${gasto.categoria} ${gasto.nota} $destino'.toLowerCase();
-      if (consulta.isNotEmpty && !texto.contains(consulta)) return false;
-      final rango = _rangoFechas;
-      if (rango != null) {
-        final limite = DateTime(
-          rango.end.year,
-          rango.end.month,
-          rango.end.day + 1,
-        );
-        if (gasto.fecha.isBefore(rango.start) ||
-            !gasto.fecha.isBefore(limite)) {
-          return false;
-        }
-      }
-      return true;
-    }).toList();
-    switch (_orden) {
-      case OrdenGastos.recientes:
-        resultado.sort((a, b) => b.fecha.compareTo(a.fecha));
-      case OrdenGastos.antiguos:
-        resultado.sort((a, b) => a.fecha.compareTo(b.fecha));
-      case OrdenGastos.mayorImporte:
-        resultado.sort((a, b) => b.montoCentavos.compareTo(a.montoCentavos));
-      case OrdenGastos.menorImporte:
-        resultado.sort((a, b) => a.montoCentavos.compareTo(b.montoCentavos));
-    }
-    return resultado;
-  }
-
-  String _destino(Gasto gasto, Map<int, Proyecto> proyectos) {
-    final proyecto = proyectos[gasto.proyectoId];
-    return proyecto == null
-        ? 'Gasto general'
-        : '${proyecto.nombreCliente} · ${proyecto.descripcion}';
-  }
-
   @override
   Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
     builder: (context, estado) {
@@ -132,7 +86,18 @@ class _ExpensePageState extends State<ExpensePage> {
       final proyectos = {
         for (final proyecto in estado.datos.proyectos) proyecto.id: proyecto,
       };
-      final gastos = _filtrar(todos, proyectos);
+      final gastos = filtrarMovimientos(
+        todos,
+        CriteriosMovimientos(
+          busqueda: _busqueda,
+          categoria: _categoria,
+          rangoFechas: _rangoFechas,
+          asignacion: _asignacion,
+          orden: _orden,
+        ),
+        proyectos,
+        etiquetaGeneral: 'gasto general',
+      );
       final total = gastos.fold<int>(
         0,
         (suma, gasto) => suma + gasto.montoCentavos,
@@ -147,8 +112,9 @@ class _ExpensePageState extends State<ExpensePage> {
       final mostrarAccionMovil = ancho < 840 && todos.isNotEmpty;
       return Scaffold(
         body: PaginaBase(
-          titulo: 'Gastos',
+          titulo: widget.titulo,
           children: [
+            if (widget.encabezado != null) widget.encabezado!,
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -176,7 +142,7 @@ class _ExpensePageState extends State<ExpensePage> {
               decoration: InputDecoration(
                 prefixIcon: Icon(Icons.search),
                 labelText: 'Buscar categoría, nota, proyecto o código',
-                hintText: 'Ej.: COT-012',
+                hintText: 'Ej.: COT-0012',
                 suffixIcon: _busqueda.isEmpty
                     ? null
                     : IconButton(
@@ -239,7 +205,11 @@ class _ExpensePageState extends State<ExpensePage> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: GastoTarjeta(
                     gasto: gasto,
-                    destino: _destino(gasto, proyectos),
+                    destino: destinoMovimiento(
+                      gasto,
+                      proyectos,
+                      etiquetaGeneral: 'Gasto general',
+                    ),
                     editar: estado.guardando ? null : () => _editar(gasto),
                     eliminar: estado.guardando ? null : () => _eliminar(gasto),
                   ),
