@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../aplicacion/cotizo_cubit.dart';
+import '../../../aplicacion/coti_cubit.dart';
 import '../../../core/formato.dart';
 import '../../../dominio/calcular_resumen_mes.dart';
 import '../../../widgets/surface_card.dart';
@@ -13,7 +13,7 @@ class TarjetaBalanceMes extends StatelessWidget {
   const TarjetaBalanceMes({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     buildWhen: (anterior, actual) => anterior.datos != actual.datos,
     builder: (context, estado) {
       final resumen = calcularResumenMes(estado.datos, DateTime.now());

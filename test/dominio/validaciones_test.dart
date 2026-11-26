@@ -1,5 +1,5 @@
-import 'package:cotizo_app/datos/validaciones_datos.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/datos/validaciones_datos.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

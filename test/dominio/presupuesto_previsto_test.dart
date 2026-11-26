@@ -1,9 +1,9 @@
-import 'package:cotizo_app/dominio/calcular_desglose_proforma.dart';
-import 'package:cotizo_app/dominio/calcular_presupuesto_proyecto.dart';
-import 'package:cotizo_app/dominio/calcular_precio_sugerido.dart';
-import 'package:cotizo_app/dominio/calcular_rentabilidad.dart';
-import 'package:cotizo_app/dominio/categorias_gasto.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/dominio/calcular_desglose_proforma.dart';
+import 'package:coti/dominio/calcular_presupuesto_proyecto.dart';
+import 'package:coti/dominio/calcular_precio_sugerido.dart';
+import 'package:coti/dominio/calcular_rentabilidad.dart';
+import 'package:coti/dominio/categorias_gasto.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

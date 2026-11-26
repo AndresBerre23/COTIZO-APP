@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
 import '../../core/formato.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/estado_vacio.dart';
 import '../../widgets/pagina_base.dart';
+import '../fotos/galeria_fotos.dart';
 import 'filtros_documentos.dart';
 import 'proforma_documento_page.dart';
 import 'reporte_cierre_page.dart';
 import 'tarjeta_documento.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
 class ArchivoDocumentosPage extends StatefulWidget {
   const ArchivoDocumentosPage({super.key});
@@ -25,7 +27,10 @@ class _ArchivoDocumentosPageState extends State<ArchivoDocumentosPage> {
   String? _etapaFiltro;
   DateTimeRange? _rangoFechas;
   _OrdenDocumentos _orden = _OrdenDocumentos.recientes;
-  bool _verReportes = false;
+  // 0: proformas, 1: cierres, 2: fotos.
+  int _vista = 0;
+
+  bool get _verReportes => _vista == 1;
 
   DateTime _fechaDocumento(Proyecto proyecto) => _verReportes
       ? proyecto.fechaFinReal ?? proyecto.fechaInicio
@@ -100,114 +105,131 @@ class _ArchivoDocumentosPageState extends State<ArchivoDocumentosPage> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final todos = estado.datos.proyectos;
       final resultados = _filtrar(todos);
       final cierres = todos.where((proyecto) => proyecto.estaFinalizada).length;
       final totalTipo = _verReportes ? cierres : todos.length;
+      final angosta = MediaQuery.sizeOf(context).width < 480;
       final filtrosActivos =
           (_etapaFiltro == null ? 0 : 1) + (_rangoFechas == null ? 0 : 1);
       return PaginaBase(
         titulo: 'Documentos',
+        ayuda: TemaAyuda.documentos,
         children: [
           const Text(
             'Encuentra, consulta y comparte los documentos de tus obras.',
           ),
           const SizedBox(height: 16),
-          SegmentedButton<bool>(
+          SegmentedButton<int>(
+            // En pantallas angostas se quitan los íconos para que quepa el texto.
+            showSelectedIcon: false,
             segments: [
               ButtonSegment(
-                value: false,
-                icon: const Icon(Icons.description_outlined),
-                label: Text('Proformas (${todos.length})'),
+                value: 0,
+                icon: angosta ? null : const Icon(Icons.description_outlined),
+                label: _UnaLinea(Text('Proformas (${todos.length})')),
               ),
               ButtonSegment(
-                value: true,
-                icon: const Icon(Icons.assignment_turned_in_outlined),
-                label: Text('Cierres ($cierres)'),
+                value: 1,
+                icon: angosta
+                    ? null
+                    : const Icon(Icons.assignment_turned_in_outlined),
+                label: _UnaLinea(Text('Cierres ($cierres)')),
+              ),
+              ButtonSegment(
+                value: 2,
+                icon: angosta ? null : const Icon(Icons.photo_library_outlined),
+                label: _UnaLinea(Text('Fotos (${estado.datos.fotos.length})')),
               ),
             ],
-            selected: {_verReportes},
+            selected: {_vista},
             onSelectionChanged: (seleccion) => setState(() {
-              _verReportes = seleccion.single;
+              _vista = seleccion.single;
               _etapaFiltro = null;
             }),
           ),
           const SizedBox(height: 16),
-          TextField(
-            onTapOutside: cerrarFocoAlTocarFuera,
-            onChanged: (texto) => setState(() => _busqueda = texto),
-            decoration: InputDecoration(
-              labelText: 'Buscar cliente, proyecto o código',
-              hintText: 'Ej.: COT-0012',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _busqueda.isEmpty
-                  ? null
-                  : IconButton(
-                      tooltip: 'Limpiar búsqueda',
-                      onPressed: () => setState(() => _busqueda = ''),
-                      icon: const Icon(Icons.close),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _mostrarFiltros,
-                icon: const Icon(Icons.filter_list),
-                label: Text(
-                  filtrosActivos == 0 ? 'Filtrar' : 'Filtrar ($filtrosActivos)',
-                ),
-              ),
-              PopupMenuButton<_OrdenDocumentos>(
-                initialValue: _orden,
-                onSelected: (valor) => setState(() => _orden = valor),
-                itemBuilder: (contexto) => _OrdenDocumentos.values
-                    .map(
-                      (valor) => PopupMenuItem(
-                        value: valor,
-                        child: Text(valor.etiqueta),
+          if (_vista == 2)
+            const GaleriaFotos()
+          else ...[
+            TextField(
+              onTapOutside: cerrarFocoAlTocarFuera,
+              onChanged: (texto) => setState(() => _busqueda = texto),
+              decoration: InputDecoration(
+                labelText: 'Buscar cliente, proyecto o código',
+                hintText: 'Ej.: COT-0012',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _busqueda.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Limpiar búsqueda',
+                        onPressed: () => setState(() => _busqueda = ''),
+                        icon: const Icon(Icons.close),
                       ),
-                    )
-                    .toList(),
-                child: Chip(
-                  avatar: const Icon(Icons.sort, size: 18),
-                  label: Text(_orden.etiqueta),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _mostrarFiltros,
+                  icon: const Icon(Icons.filter_list),
+                  label: Text(
+                    filtrosActivos == 0
+                        ? 'Filtrar'
+                        : 'Filtrar ($filtrosActivos)',
+                  ),
                 ),
-              ),
-              Text('${resultados.length} de $totalTipo'),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (resultados.isEmpty)
-            EstadoVacio(
-              icono: _verReportes
-                  ? Icons.assignment_outlined
-                  : Icons.description_outlined,
-              titulo: totalTipo == 0
-                  ? _verReportes
-                        ? 'Aún no hay obras finalizadas'
-                        : 'Aún no hay cotizaciones'
-                  : 'No hay coincidencias',
-              mensaje: totalTipo == 0
-                  ? _verReportes
-                        ? 'Los reportes de cierre estarán disponibles cuando finalices una obra.'
-                        : 'Las proformas de tus cotizaciones aparecerán aquí.'
-                  : 'Prueba con otro texto o limpia los filtros.',
-            )
-          else
-            for (final proyecto in resultados)
-              TarjetaDocumento(
-                proyecto: proyecto,
-                esReporte: _verReportes,
-                fecha: _fechaDocumento(proyecto),
-                alAbrir: () => _abrirDocumento(proyecto),
-              ),
+                PopupMenuButton<_OrdenDocumentos>(
+                  initialValue: _orden,
+                  onSelected: (valor) => setState(() => _orden = valor),
+                  itemBuilder: (contexto) => _OrdenDocumentos.values
+                      .map(
+                        (valor) => PopupMenuItem(
+                          value: valor,
+                          child: Text(valor.etiqueta),
+                        ),
+                      )
+                      .toList(),
+                  child: Chip(
+                    avatar: const Icon(Icons.sort, size: 18),
+                    label: Text(_orden.etiqueta),
+                  ),
+                ),
+                Text('${resultados.length} de $totalTipo'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (resultados.isEmpty)
+              EstadoVacio(
+                icono: _verReportes
+                    ? Icons.assignment_outlined
+                    : Icons.description_outlined,
+                titulo: totalTipo == 0
+                    ? _verReportes
+                          ? 'Aún no hay obras finalizadas'
+                          : 'Aún no hay cotizaciones'
+                    : 'No hay coincidencias',
+                mensaje: totalTipo == 0
+                    ? _verReportes
+                          ? 'Los reportes de cierre estarán disponibles cuando finalices una obra.'
+                          : 'Las proformas de tus cotizaciones aparecerán aquí.'
+                    : 'Prueba con otro texto o limpia los filtros.',
+              )
+            else
+              for (final proyecto in resultados)
+                TarjetaDocumento(
+                  proyecto: proyecto,
+                  esReporte: _verReportes,
+                  fecha: _fechaDocumento(proyecto),
+                  alAbrir: () => _abrirDocumento(proyecto),
+                ),
+          ],
         ],
       );
     },
@@ -222,4 +244,15 @@ enum _OrdenDocumentos {
 
   const _OrdenDocumentos(this.etiqueta);
   final String etiqueta;
+}
+
+// Reduce el texto en vez de partirlo en dos líneas.
+class _UnaLinea extends StatelessWidget {
+  const _UnaLinea(this.child);
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) =>
+      FittedBox(fit: BoxFit.scaleDown, child: child);
 }

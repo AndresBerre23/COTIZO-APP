@@ -1,8 +1,8 @@
 import 'dart:io';
 
-import 'package:cotizo_app/datos/repositorio_sqlite.dart';
-import 'package:cotizo_app/dominio/calcular_rentabilidad.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/datos/repositorio_sqlite.dart';
+import 'package:coti/dominio/calcular_rentabilidad.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as rutas;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -178,31 +178,35 @@ void main() {
     expect(datos.items.single.materialId, materialId);
   });
 
-  test(
-    'impide borrar materiales usados y conserva los gastos del proyecto',
-    () async {
-      final id = await repositorio.guardarProyecto(_proyecto(), [
-        _item(materialId),
-      ]);
-      await repositorio.guardarGasto(_gasto(id, 250));
-      await repositorio.guardarGasto(_gasto(null, 1000));
-      await expectLater(
-        repositorio.eliminarMaterial(materialId),
-        throwsFormatException,
-      );
-      await repositorio.eliminarProyecto(id);
-      final datos = await repositorio.obtenerDatos();
-      expect(datos.proyectos, isEmpty);
-      expect(datos.items, isEmpty);
-      // Los gastos del proyecto pasan a generales (D-010).
-      expect(datos.gastos, hasLength(2));
-      expect(datos.gastos.every((gasto) => gasto.proyectoId == null), isTrue);
-      await repositorio.eliminarMaterial(materialId);
-      expect((await repositorio.obtenerDatos()).materiales, isEmpty);
-    },
-  );
+  test('impide borrar materiales usados y proyectos con dinero', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), [
+      _item(materialId),
+    ]);
+    await repositorio.guardarGasto(_gasto(id, 250));
+    await repositorio.guardarGasto(_gasto(null, 1000));
+    await expectLater(
+      repositorio.eliminarMaterial(materialId),
+      throwsFormatException,
+    );
+    // Con gastos no se elimina; se conserva todo (D-025).
+    await expectLater(repositorio.eliminarProyecto(id), throwsFormatException);
+    var datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos, hasLength(1));
+    final gastoDelProyecto = datos.gastos.firstWhere(
+      (gasto) => gasto.proyectoId == id,
+    );
+    expect(gastoDelProyecto.origen, startsWith('COT-'));
+    // Sin dinero registrado sí se elimina, con sus partidas.
+    await repositorio.eliminarGasto(gastoDelProyecto.id);
+    await repositorio.eliminarProyecto(id);
+    datos = await repositorio.obtenerDatos();
+    expect(datos.proyectos, isEmpty);
+    expect(datos.items, isEmpty);
+    await repositorio.eliminarMaterial(materialId);
+    expect((await repositorio.obtenerDatos()).materiales, isEmpty);
+  });
 
-  test('guarda ingresos y los conserva al eliminar su proyecto', () async {
+  test('guarda ingresos con su origen y protege su proyecto', () async {
     final id = await repositorio.guardarProyecto(_proyecto(), [
       _item(materialId),
     ]);
@@ -226,9 +230,10 @@ void main() {
       ),
       throwsFormatException,
     );
-    await repositorio.eliminarProyecto(id);
+    await expectLater(repositorio.eliminarProyecto(id), throwsFormatException);
     datos = await repositorio.obtenerDatos();
-    expect(datos.ingresos.single.proyectoId, isNull);
+    expect(datos.ingresos.single.proyectoId, id);
+    expect(datos.ingresos.single.origen, contains('Cliente Álvarez'));
     await repositorio.eliminarIngreso(ingresoId);
     expect((await repositorio.obtenerDatos()).ingresos, isEmpty);
   });
@@ -302,6 +307,88 @@ void main() {
     expect(leidas.margenPuntos, 3500);
     expect(leidas.validezDias, 8);
     expect(leidas.formaPago, 'Transferencia');
+  });
+
+  test('guarda consumos de material y adicionales de una obra', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), [
+      _item(materialId),
+    ]);
+    await repositorio.guardarGasto(
+      Gasto(
+        proyectoId: id,
+        montoCentavos: 375,
+        categoria: Gasto.categoriaConsumo,
+        fecha: DateTime(2026, 11, 20),
+        materialId: materialId,
+        cantidad: 3,
+        costoUnitarioCentavos: 125,
+        nombreMaterial: 'Cable',
+      ),
+    );
+    final adicionalId = await repositorio.guardarAdicional(
+      Adicional(
+        proyectoId: id,
+        descripcion: 'Punto extra',
+        montoCentavos: 2000,
+        fecha: DateTime(2026, 11, 21),
+      ),
+    );
+    var datos = await repositorio.obtenerDatos();
+    final consumo = datos.gastos.single;
+    expect(consumo.esConsumo, isTrue);
+    expect(consumo.cantidad, 3);
+    expect(consumo.materialId, materialId);
+    expect(datos.adicionalesDeProyecto(id).single.montoCentavos, 2000);
+    await repositorio.eliminarAdicional(adicionalId);
+    datos = await repositorio.obtenerDatos();
+    expect(datos.adicionales, isEmpty);
+  });
+
+  test('versiona la proforma enviada solo si cambia lo comercial', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), [
+      _item(materialId),
+    ]);
+    // En borrador, editar no crea versiones.
+    await repositorio.guardarProyecto(_proyecto(id: id, total: 6000), [
+      _item(materialId),
+    ]);
+    var datos = await repositorio.obtenerDatos();
+    expect(datos.versiones, isEmpty);
+    final enviado = datos.proyectos.single.conEstado(EstadoProyecto.enviado);
+    await repositorio.guardarProyecto(enviado, datos.itemsDeProyecto(id));
+    datos = await repositorio.obtenerDatos();
+    // Cambiar solo el estado tampoco crea versiones.
+    expect(datos.versiones, isEmpty);
+    await repositorio.guardarProyecto(
+      _proyecto(id: id, total: 9000).conEstado(EstadoProyecto.enviado),
+      [_item(materialId, cantidad: 4)],
+    );
+    datos = await repositorio.obtenerDatos();
+    final version = datos.versionesDeProyecto(id).single;
+    expect(version.numero, 1);
+    expect(version.proyecto.totalCotizadoCentavos, 6000);
+    expect(version.items.single.cantidad, 2.5);
+    expect(datos.proyectos.single.totalCotizadoCentavos, 9000);
+  });
+
+  test('guarda fotos de obra y las borra con su proyecto sin dinero', () async {
+    final id = await repositorio.guardarProyecto(_proyecto(), []);
+    final fotoId = await repositorio.guardarFoto(
+      FotoObra(
+        proyectoId: id,
+        ruta: 'a.jpg',
+        miniatura: 'a-m.jpg',
+        fecha: DateTime(2026, 11, 25, 10),
+      ),
+    );
+    var datos = await repositorio.obtenerDatos();
+    expect(datos.fotosDeProyecto(id).single.ruta, 'a.jpg');
+    await repositorio.guardarFoto(datos.fotos.single.conNota('Acabado final'));
+    datos = await repositorio.obtenerDatos();
+    expect(datos.fotos.single.id, fotoId);
+    expect(datos.fotos.single.nota, 'Acabado final');
+    await repositorio.eliminarProyecto(id);
+    expect((await repositorio.obtenerDatos()).fotos, isEmpty);
   });
 
   test('edita y elimina gastos sin duplicarlos', () async {
@@ -493,12 +580,12 @@ void main() {
       expect(datos.materiales.single.imagenRuta, isNull);
       expect(datos.materiales.single.atribucionImagen, isNull);
 
-      // Desde v8 eliminar una obra conserva sus gastos como generales.
-      await local.eliminarProyecto(7);
-      final restantes = await local.obtenerDatos();
-      expect(restantes.proyectos, isEmpty);
-      expect(restantes.gastos.single.montoCentavos, 50);
-      expect(restantes.gastos.single.proyectoId, isNull);
+      // La migración v13 guarda el origen de los gastos existentes.
+      expect(
+        datos.gastos.single.origen,
+        startsWith('COT-0007 · Cliente histórico'),
+      );
+      await expectLater(local.eliminarProyecto(7), throwsFormatException);
     } finally {
       await local?.cerrar();
       await databaseFactoryFfi.deleteDatabase(ruta);

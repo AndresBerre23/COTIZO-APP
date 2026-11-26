@@ -7,6 +7,8 @@ class PreferenciasApp {
     this.fotoRuta,
     this.modoTema = ModoTema.sistema,
     this.omitirAvisoNombre = false,
+    this.tutorialVisto = false,
+    this.bloqueoActivo = false,
     this.negocio = const DatosNegocio(),
     this.ivaPuntos = 1500,
     this.margenPuntos = 2000,
@@ -20,6 +22,12 @@ class PreferenciasApp {
   final String? fotoRuta;
   final ModoTema modoTema;
   final bool omitirAvisoNombre;
+
+  // El tutorial de bienvenida se muestra hasta completarlo o saltarlo.
+  final bool tutorialVisto;
+
+  // Pide huella o clave del teléfono al abrir la app.
+  final bool bloqueoActivo;
   final DatosNegocio negocio;
 
   // Valores con los que nace cada cotización; nulo si no aplica IVA.
@@ -48,6 +56,8 @@ class PreferenciasApp {
     bool quitarFoto = false,
     ModoTema? modoTema,
     bool? omitirAvisoNombre,
+    bool? tutorialVisto,
+    bool? bloqueoActivo,
     DatosNegocio? negocio,
     int? ivaPuntos,
     bool sinIva = false,
@@ -61,6 +71,8 @@ class PreferenciasApp {
     fotoRuta: quitarFoto ? null : fotoRuta ?? this.fotoRuta,
     modoTema: modoTema ?? this.modoTema,
     omitirAvisoNombre: omitirAvisoNombre ?? this.omitirAvisoNombre,
+    tutorialVisto: tutorialVisto ?? this.tutorialVisto,
+    bloqueoActivo: bloqueoActivo ?? this.bloqueoActivo,
     negocio: negocio ?? this.negocio,
     ivaPuntos: sinIva ? null : ivaPuntos ?? this.ivaPuntos,
     margenPuntos: margenPuntos ?? this.margenPuntos,

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/calcular_desglose_proforma.dart';
+import '../../dominio/calcular_rentabilidad.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/estado_vacio.dart';
 import '../../widgets/surface_card.dart';
@@ -37,6 +38,10 @@ class _ReporteCierrePageState extends State<ReporteCierrePage> {
         items,
         gastosPrevistos: gastosPrevistos,
         gastosAdicionales: gastosAdicionales,
+        adicionalesCobradosCentavos: totalAdicionales(
+          proyecto.id,
+          context.read<CotiCubit>().state.datos.adicionales,
+        ),
       );
       if (imprimir) {
         await Printing.layoutPdf(
@@ -67,7 +72,7 @@ class _ReporteCierrePageState extends State<ReporteCierrePage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Reporte de cierre')),
-    body: BlocBuilder<CotizoCubit, EstadoCotizo>(
+    body: BlocBuilder<CotiCubit, EstadoCoti>(
       builder: (context, estado) {
         final coincidencias = estado.datos.proyectos.where(
           (proyecto) => proyecto.id == widget.proyectoId,
@@ -87,7 +92,14 @@ class _ReporteCierrePageState extends State<ReporteCierrePage> {
         final previstos = estado.datos.gastosPrevistosDeProyecto(proyecto.id);
         final adicionales = estado.datos.gastosDeProyecto(proyecto.id);
         final desglose = calcularDesgloseProforma(proyecto, items, previstos);
-        final resultado = calcularResultadoCierre(desglose, adicionales);
+        final resultado = calcularResultadoCierre(
+          desglose,
+          adicionales,
+          adicionalesCobradosCentavos: totalAdicionales(
+            proyecto.id,
+            estado.datos.adicionales,
+          ),
+        );
         return Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),

@@ -1,12 +1,12 @@
-import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
-import 'package:cotizo_app/aplicacion/edicion_material.dart';
-import 'package:cotizo_app/core/formato.dart';
-import 'package:cotizo_app/core/theme/app_theme.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/gastos/formulario_gasto.dart';
-import 'package:cotizo_app/funcionalidades/materiales/formulario_material.dart';
-import 'package:cotizo_app/screens/expense_screen.dart';
-import 'package:cotizo_app/screens/materials_screen.dart';
+import 'package:coti/aplicacion/coti_cubit.dart';
+import 'package:coti/aplicacion/edicion_material.dart';
+import 'package:coti/core/formato.dart';
+import 'package:coti/core/theme/app_theme.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/gastos/formulario_gasto.dart';
+import 'package:coti/funcionalidades/materiales/formulario_material.dart';
+import 'package:coti/funcionalidades/gastos/gastos_pagina.dart';
+import 'package:coti/funcionalidades/materiales/materiales_pagina.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -96,11 +96,11 @@ void main() {
     'materiales: validación, creación, edición, búsqueda y eliminación',
     (tester) async {
       final repositorio = _RepositorioCatalogo();
-      final cubit = CotizoCubit(repositorio);
+      final cubit = CotiCubit(repositorio);
       await cubit.cargar();
       addTearDown(cubit.close);
       await tester.pumpWidget(
-        ConCubits(cubit: cubit, child: _aplicacion(const MaterialsPage())),
+        ConCubits(cubit: cubit, child: _aplicacion(const MaterialesPagina())),
       );
       await _pulsar(tester, find.text('Añadir material'));
       await _pulsar(tester, find.text('Guardar material'));
@@ -149,11 +149,11 @@ void main() {
     tester,
   ) async {
     final repositorio = _RepositorioCatalogo();
-    final cubit = CotizoCubit(repositorio);
+    final cubit = CotiCubit(repositorio);
     await cubit.cargar();
     addTearDown(cubit.close);
     await tester.pumpWidget(
-      ConCubits(cubit: cubit, child: _aplicacion(const ExpensePage())),
+      ConCubits(cubit: cubit, child: _aplicacion(const GastosPagina())),
     );
     final inicioRegistro = DateTime.now();
     await _pulsar(tester, find.text('Registrar el primer gasto'));

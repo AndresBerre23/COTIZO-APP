@@ -1,6 +1,8 @@
 import 'package:sqflite/sqflite.dart';
 
 import 'migracion_v10.dart';
+import 'migracion_v11.dart';
+import 'migracion_v13.dart';
 
 Future<void> crearEsquema(Database base, int version) async {
   await _crearTablaPreferencias(base);
@@ -83,6 +85,9 @@ Future<void> crearEsquema(Database base, int version) async {
   await _crearTablaIngresos(base);
   // Las instalaciones nuevas recorren el mismo paso que las migradas.
   await migrarV10(base);
+  await migrarV11(base);
+  await _migrarV12(base);
+  await migrarV13(base);
 }
 
 Future<void> migrarEsquema(
@@ -144,7 +149,16 @@ Future<void> migrarEsquema(
   if (versionAnterior < 8) await _conservarGastosAlEliminar(base);
   if (versionAnterior < 9) await _crearTablaIngresos(base);
   if (versionAnterior < 10) await migrarV10(base);
+  if (versionAnterior < 11) await migrarV11(base);
+  if (versionAnterior < 12) await _migrarV12(base);
+  if (versionAnterior < 13) await migrarV13(base);
 }
+
+// Marca del tutorial de bienvenida.
+Future<void> _migrarV12(DatabaseExecutor base) => base.execute(
+  'ALTER TABLE preferencias_app ADD COLUMN tutorial_visto INTEGER NOT NULL '
+  'DEFAULT 0 CHECK (tutorial_visto IN (0, 1))',
+);
 
 // Cobros y otros ingresos (P-010).
 Future<void> _crearTablaIngresos(DatabaseExecutor base) async {

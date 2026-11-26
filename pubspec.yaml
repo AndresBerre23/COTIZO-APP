@@ -1,4 +1,4 @@
-name: cotizo_app
+name: coti
 description: Cotizaciones, materiales y rentabilidad sin conexión.
 publish_to: none
 version: 1.0.0+1
@@ -24,6 +24,7 @@ dependencies:
   archive: ^4.0.9
   file_picker: ^11.0.3
   share_plus: ^12.0.2
+  local_auth: ^2.3.0
 
 dev_dependencies:
   flutter_test:

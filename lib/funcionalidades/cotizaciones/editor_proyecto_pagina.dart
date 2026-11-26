@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../aplicacion/preferencias_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/modelos.dart';
@@ -39,7 +39,7 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     super.initState();
     _e = EstadoEditorCotizacion.desde(
       widget.proyecto,
-      context.read<CotizoCubit>().state.datos,
+      context.read<CotiCubit>().state.datos,
       context.read<PreferenciasCubit>().state,
     );
   }
@@ -130,7 +130,7 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     );
     if (confirmar != true || !mounted) return;
     setState(() => _guardando = true);
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final guardado = await cubit.guardarProyecto(
       _e.proyectoActual(),
       _e.partidas,
@@ -160,7 +160,7 @@ class _EditorProyectoPaginaState extends State<EditorProyectoPagina> {
     return switch (_paso) {
       0 => DatosClienteEditor(
         datosProforma: _e.proforma,
-        clientes: context.read<CotizoCubit>().state.datos.clientes,
+        clientes: context.read<CotiCubit>().state.datos.clientes,
         alElegirCliente: (cliente) =>
             _cambiar(() => _e.proforma.elegirCliente(cliente)),
         cliente: _e.cliente,

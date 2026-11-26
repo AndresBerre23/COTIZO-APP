@@ -1,6 +1,8 @@
 export 'datos_locales.dart';
+export 'entidades/adicional.dart';
 export 'entidades/atribucion_imagen_material.dart';
 export 'entidades/cliente.dart';
+export 'entidades/foto_obra.dart';
 export 'entidades/gasto.dart';
 export 'entidades/gasto_previsto.dart';
 export 'entidades/ingreso.dart';
@@ -8,4 +10,5 @@ export 'entidades/movimiento.dart';
 export 'entidades/item_proyecto.dart';
 export 'entidades/material_obra.dart';
 export 'entidades/proyecto.dart';
+export 'entidades/version_proforma.dart';
 export 'preferencias_app.dart';

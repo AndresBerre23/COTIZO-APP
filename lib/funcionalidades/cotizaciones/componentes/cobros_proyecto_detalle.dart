@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../aplicacion/cotizo_cubit.dart';
+import '../../../aplicacion/coti_cubit.dart';
 import '../../../core/formato.dart';
 import '../../../dominio/calcular_cobros_proyecto.dart';
 import '../../../dominio/modelos.dart';
+import '../../ingresos/formulario_devolucion.dart';
 import '../../ingresos/formulario_ingreso.dart';
 import 'seccion_cotizacion.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 // Anticipos y abonos de un proyecto con su saldo pendiente (P-011).
 class CobrosProyectoDetalle extends StatelessWidget {
@@ -15,14 +17,18 @@ class CobrosProyectoDetalle extends StatelessWidget {
     required this.proyecto,
     required this.ingresos,
     required this.guardando,
+    this.adicionales = const [],
+    this.devoluciones = const [],
   });
 
   final Proyecto proyecto;
   final List<Ingreso> ingresos;
   final bool guardando;
+  final List<Adicional> adicionales;
+  final List<Gasto> devoluciones;
 
   Future<void> _registrar(BuildContext context) async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final ingreso = await mostrarFormularioIngreso(
       context,
       proyectos: cubit.state.datos.proyectos,
@@ -37,13 +43,29 @@ class CobrosProyectoDetalle extends StatelessWidget {
     }
   }
 
+  Future<void> _devolver(BuildContext context, int cobrado) async {
+    final cubit = context.read<CotiCubit>();
+    final devolucion = await mostrarFormularioDevolucion(
+      context,
+      proyecto: proyecto,
+      maximoCentavos: cobrado,
+    );
+    if (devolucion != null) await cubit.guardarGasto(devolucion);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final cobros = calcularCobrosProyecto(proyecto, ingresos);
+    final cobros = calcularCobrosProyecto(
+      proyecto,
+      ingresos,
+      adicionales: adicionales,
+      gastos: devoluciones,
+    );
     final colores = Theme.of(context).colorScheme;
     final saldo = cobros.saldoCentavos;
     return SeccionCotizacion(
       titulo: 'Cobros',
+      ayuda: TemaAyuda.cobros,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -74,12 +96,26 @@ class CobrosProyectoDetalle extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: guardando || !proyecto.admiteGastos
-                ? null
-                : () => _registrar(context),
-            icon: const Icon(Icons.payments_outlined),
-            label: const Text('Registrar cobro'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: guardando || !proyecto.admiteGastos
+                    ? null
+                    : () => _registrar(context),
+                icon: const Icon(Icons.payments_outlined),
+                label: const Text('Registrar cobro'),
+              ),
+              if (cobros.cobradoCentavos > 0)
+                TextButton.icon(
+                  onPressed: guardando
+                      ? null
+                      : () => _devolver(context, cobros.cobradoCentavos),
+                  icon: const Icon(Icons.undo),
+                  label: const Text('Registrar devolución'),
+                ),
+            ],
           ),
           if (!proyecto.admiteGastos) ...[
             const SizedBox(height: 8),
@@ -91,6 +127,23 @@ class CobrosProyectoDetalle extends StatelessWidget {
           const SizedBox(height: 12),
           if (ingresos.isEmpty)
             const Text('Aún no hay cobros registrados en este proyecto.'),
+          for (final devolucion in devoluciones)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.undo, color: colores.error),
+              title: const Text('Devolución al cliente'),
+              subtitle: Text(
+                '${fechaCorta(devolucion.fecha)} · ${devolucion.nota}',
+              ),
+              trailing: Text(
+                '- ${dinero(devolucion.montoCentavos)}',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontWeight: FontWeight.w700,
+                  color: colores.error,
+                ),
+              ),
+            ),
           for (final ingreso in ingresos)
             ListTile(
               contentPadding: EdgeInsets.zero,

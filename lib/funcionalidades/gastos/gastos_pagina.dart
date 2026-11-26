@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/confirmar.dart';
@@ -12,11 +12,13 @@ import '../../widgets/surface_card.dart';
 import '../movimientos/utilidades/filtrar_movimientos.dart';
 import 'componentes/controles_gastos.dart';
 import 'filtros_gastos.dart';
+import '../obra/formulario_consumo.dart';
 import 'formulario_gasto.dart';
 import 'gasto_tarjeta.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
-class ExpensePage extends StatefulWidget {
-  const ExpensePage({super.key, this.titulo = 'Gastos', this.encabezado});
+class GastosPagina extends StatefulWidget {
+  const GastosPagina({super.key, this.titulo = 'Gastos', this.encabezado});
 
   final String titulo;
 
@@ -24,10 +26,10 @@ class ExpensePage extends StatefulWidget {
   final Widget? encabezado;
 
   @override
-  State<ExpensePage> createState() => _ExpensePageState();
+  State<GastosPagina> createState() => _GastosPaginaState();
 }
 
-class _ExpensePageState extends State<ExpensePage> {
+class _GastosPaginaState extends State<GastosPagina> {
   String _busqueda = '';
   String? _categoria;
   DateTimeRange? _rangoFechas;
@@ -35,12 +37,19 @@ class _ExpensePageState extends State<ExpensePage> {
   OrdenGastos _orden = OrdenGastos.recientes;
 
   Future<void> _editar([Gasto? existente]) async {
-    final cubit = context.read<CotizoCubit>();
-    final gasto = await mostrarFormularioGasto(
-      context,
-      proyectos: cubit.state.datos.proyectos,
-      gasto: existente,
-    );
+    final cubit = context.read<CotiCubit>();
+    final gasto = existente?.esConsumo ?? false
+        ? await mostrarFormularioConsumo(
+            context,
+            proyectoId: existente!.proyectoId ?? 0,
+            materiales: cubit.state.datos.materiales,
+            consumo: existente,
+          )
+        : await mostrarFormularioGasto(
+            context,
+            proyectos: cubit.state.datos.proyectos,
+            gasto: existente,
+          );
     if (gasto == null || !mounted) return;
     final guardado = await cubit.guardarGasto(gasto);
     if (guardado && mounted) {
@@ -58,7 +67,7 @@ class _ExpensePageState extends State<ExpensePage> {
       '¿Eliminar el gasto de ${dinero(gasto.montoCentavos)}? Se recalculará el balance.',
     );
     if (!confirmado || !mounted) return;
-    final eliminado = await context.read<CotizoCubit>().eliminarGasto(gasto.id);
+    final eliminado = await context.read<CotiCubit>().eliminarGasto(gasto.id);
     if (eliminado && mounted) {
       ScaffoldMessenger.of(
         context,
@@ -80,7 +89,7 @@ class _ExpensePageState extends State<ExpensePage> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final todos = estado.datos.gastos;
       final proyectos = {
@@ -113,6 +122,7 @@ class _ExpensePageState extends State<ExpensePage> {
       return Scaffold(
         body: PaginaBase(
           titulo: widget.titulo,
+          ayuda: TemaAyuda.movimientos,
           children: [
             if (widget.encabezado != null) widget.encabezado!,
             Wrap(

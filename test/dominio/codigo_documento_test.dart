@@ -1,4 +1,4 @@
-import 'package:cotizo_app/core/formato.dart';
+import 'package:coti/core/formato.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

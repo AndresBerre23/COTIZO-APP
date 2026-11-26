@@ -1,14 +1,19 @@
 # Pendientes
 
-Última actualización: 2026-11-25.
+Última actualización: 2026-11-25 (plan de publicación y monetización).
 
 ## Dónde quedamos (2026-11-25)
 
-- Terminadas: el splash animado (P-008) y las fases 0, 1 y 2, salvo la prueba en teléfono (P-006). También se dividió el editor (P-052). El detalle está en `CAMBIOS.md`.
-- Verificación: `flutter analyze` sin errores ni advertencias; `flutter test` 92 de 92; `flutter build apk --debug` correcto.
-- Commit: ninguno; todo el trabajo de la sesión está sin commit.
-- Siguiente: la Fase 3. Solo se analizó el diseño, que está en sus notas; no hay código. Luego, la Fase 5 o la prueba en teléfono (P-006).
-- Bloqueado: la Fase 4 espera D-101. El plan de pago con nube espera D-108.
+- Terminadas: el splash animado (P-008), las fases 0 a 3 (salvo la prueba en teléfono, P-006) y la Fase 5 salvo P-055 a P-057. El detalle está en `CAMBIOS.md`.
+- Verificación: `flutter analyze` sin errores ni advertencias; `flutter test` 115 de 115; APK de release compilado.
+- Commit: el trabajo hasta la Fase 2 está en 489e56c. Lo posterior está sin commit: Fase 3, Fase 5, splash más pausado, ayuda (P-060, P-061), protección del dinero, fotos y bloqueo (P-062 a P-065).
+- Siguiente: la Fase 7 (publicar en Google Play), en el orden de su tabla. Lo primero es P-070 (aviso de versión nueva), porque debe ir en la primera versión publicada.
+- Del usuario:
+  - Crear la clave de publicación y `android/key.properties` (`docs/PUBLICACION.md`).
+  - Probar en un teléfono (P-006).
+  - Borrar las carpetas vacías `lib/features/` y `lib/data/`.
+- Bloqueado: la Fase 4 espera D-101. La monetización (Fase 8) queda para cuando la app crezca (D-028).
+- Opcional: P-056 (iOS) y P-057 (consultas por período).
 
 Las tareas están ordenadas por fase. Dentro de cada fase, conviene seguir el orden de los IDs. Las convenciones de prioridad y estado están en [LEEME.md](LEEME.md).
 
@@ -28,29 +33,7 @@ Completada el 2026-11-25.
 
 ## Fase 3: trabajo durante la obra
 
-| ID | Tarea | Prioridad | Estado | Listo cuando |
-| --- | --- | --- | --- | --- |
-| P-030 | Consumos reales de obra | Media | Pendiente | Durante la obra se registra material del catálogo, cantidad y costo, separado de lo cotizado. |
-| P-031 | Adicionales u órdenes de cambio | Media | Pendiente | Un adicional aumenta el total cobrable y genera su propio PDF. |
-| P-032 | Congelar o versionar la proforma enviada | Media | Pendiente | Editar después de enviar crea una versión nueva; la anterior se conserva. |
-
-Notas de diseño propuestas (sin implementar; confirmar antes de empezar):
-
-- Todo va en una migración v11. Las claves foráneas ya se activan después de migrar (D-019).
-- **P-030:** un consumo sería un `Gasto` con detalle de material.
-  - Columnas nuevas en `gastos`: `material_id`, `cantidad`, `costo_unitario` y `nombre_material`.
-  - Así cuenta solo en el balance, los reportes y Movimientos, y pasa a generales si se elimina la obra (D-010).
-  - Cuando una obra tiene consumos, su rentabilidad usaría lo consumido en lugar del material cotizado, para no contarlo dos veces.
-  - El detalle mostraría lo cotizado frente a lo consumido por material.
-  - Al editar un consumo desde Movimientos se abriría su propio formulario.
-- **P-031:** tabla `adicionales` (proyecto, descripción, monto sin IVA, fecha) que se borra con el proyecto.
-  - Suma al total cobrable, al saldo de cobros (con el IVA del proyecto), a la rentabilidad y al resultado de cierre.
-  - PDF propio "Orden de cambio", con el emisor y el cliente de la proforma.
-- **P-032:** tabla `versiones_proforma` (proyecto, número, fecha y una copia JSON de la cotización, sus partidas y sus gastos previstos).
-  - Al guardar una cotización que no es borrador, el repositorio copia antes la versión anterior.
-  - El detalle lista las versiones y permite ver el PDF de cada una.
-- **Pantallas:** `detalle_proyecto_pagina.dart` ya tiene 300 líneas. Cobros, consumos, adicionales y versiones deberían ir en un solo componente.
-- **Archivos sobre el límite:** `repositorio_sqlite.dart` tiene 305 líneas. Conviene mover las operaciones de proyectos a un mixin, como las de ingresos y clientes.
+Completada el 2026-11-25.
 
 ## Fase 4: modo sueldo mensual
 
@@ -62,14 +45,39 @@ Notas de diseño propuestas (sin implementar; confirmar antes de empezar):
 | P-043 | Registro de actividades del trabajo | Media | Pendiente | Se guardan fecha, horas, descripción y empresa o jefe. |
 | P-044 | Informe mensual de actividades | Baja | Pendiente | Se exporta un PDF con las actividades del mes. |
 
+## Fase 6: mejoras tras probar el APK
+
+Completada el 2026-11-25: ayuda al usuario (P-060, P-061), protección del dinero (P-062), fotos de obra (P-063, P-064) y bloqueo (P-065).
+
+## Fase 7: publicar en Google Play
+
+Orden acordado el 2026-11-25. Publicar gratis y sin límites para conseguir usuarios y opiniones (D-028).
+
+| ID | Tarea | Prioridad | Estado | Listo cuando |
+| --- | --- | --- | --- | --- |
+| P-070 | Aviso de versión nueva desde Google Play | Alta | Pendiente | Con `in_app_update`, la app ofrece actualizar sin interrumpir y puede exigirlo en cambios críticos. Va en la primera versión publicada, o esos usuarios nunca verán el aviso. Solo funciona instalada desde Play Store. |
+| P-071 | Clave de publicación y AAB firmado | Alta | Pendiente | El usuario crea su clave (`docs/PUBLICACION.md`) y `flutter build appbundle --release` genera el AAB firmado. |
+| P-072 | Política de privacidad publicada | Alta | Pendiente | Página web que explique que los datos quedan en el teléfono y para qué se usan cámara, galería, huella e internet (Wikimedia); enlazada en Play Console y en Mi perfil. |
+| P-073 | Ficha de Play Store | Media | Pendiente | Nombre, descripción corta y larga, ícono 512 px, gráfico destacado, capturas de teléfono y tablet, clasificación de contenido y formulario de seguridad de datos. |
+| P-074 | Prueba cerrada en Play Console | Alta | Pendiente | Al menos 12 personas durante 14 días (requisito para cuentas personales), con errores corregidos. Depende de P-006. |
+| P-075 | Publicación en producción | Alta | Pendiente | Versión 1.0.0 disponible en Play Store para todos. |
+
+## Fase 8: monetización (futuro)
+
+Se retoma cuando la app tenga usuarios (D-028). Sin publicidad por ahora: da poco dinero y molesta mientras la app se da a conocer.
+
+| ID | Tarea | Prioridad | Estado | Listo cuando |
+| --- | --- | --- | --- | --- |
+| P-080 | Elegir el modelo de pago | Baja | Bloqueada | Espera D-108: suscripción mensual o anual, pago único de por vida, o ambos. |
+| P-081 | Cobro con Google Play Billing y RevenueCat | Baja | Bloqueada | Compra, "Restaurar compra" y consulta "¿es Premium?" sin servidor propio. Depende de P-080. |
+| P-082 | Límites del plan gratis y pantalla Premium | Baja | Bloqueada | Por ejemplo: 5 proformas PDF al mes con pie "Hecha con Coti" y 20 fotos de obra en el plan gratis. Al llegar al límite, nadie queda bloqueado a mitad de un trabajo. Depende de P-080. |
+| P-083 | Respaldo automático en la nube (Premium) | Baja | Bloqueada | Sube el .zip de respaldo al Google Drive del propio usuario (carpeta oculta), con inicio de sesión de Google y restauración en otro teléfono. Revisar si Google exige verificar la app por el permiso de Drive. Depende de P-081. |
+| P-084 | Publicidad en el plan gratis | Baja | Descartada por ahora | Solo si los números lo justifican: banner discreto y anuncio con recompensa, nunca en formularios ni en el PDF. |
+
 ## Fase 5: publicación y orden del código
 
 | ID | Tarea | Prioridad | Estado | Listo cuando |
 | --- | --- | --- | --- | --- |
-| P-050 | `applicationId` definitivo y firma de release | Media | Pendiente | El APK o AAB de release se firma con una clave propia guardada fuera del repositorio. |
-| P-051 | Retirar la capa `lib/screens/` | Baja | Pendiente | El inicio vive en `funcionalidades/inicio/` y `lib/screens/` ya no existe. |
-| P-053 | Unificar el nombre del producto (Coti) | Baja | Pendiente | `DESIGN.md`, `pubspec.yaml` y el código usan el mismo nombre. |
-| P-054 | Agregar `.gitattributes` | Baja | Pendiente | Los saltos de línea quedan fijos y `pubspec.lock` deja de aparecer modificado sin motivo. |
 | P-055 | Vocabulario genérico o por rubro | Baja | Pendiente | Pospuesta por D-015: se mantiene el vocabulario de construcción. |
 | P-056 | Proyecto iOS | Baja | Pendiente | Solo si se decide publicar en iPhone. |
 | P-057 | Consultas por período cuando crezcan los datos | Baja | Pendiente | La carga deja de leer toda la base en memoria. |
@@ -99,4 +107,17 @@ Mover aquí cada tarea terminada, con su fecha y la referencia a `CAMBIOS.md`.
 | P-024 | Estado Rechazada o Cancelada y fecha de creación | 2026-11-25 (ver `CAMBIOS.md`) |
 | P-025 | Margen configurable | 2026-11-25 (ver `CAMBIOS.md`) |
 | P-026 | Partidas de servicio sin material | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-030 | Consumos reales de obra | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-031 | Adicionales u órdenes de cambio | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-032 | Congelar o versionar la proforma enviada | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-050 | `applicationId` definitivo y firma de release | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-051 | Retirar la capa `lib/screens/` | 2026-11-25 (ver `CAMBIOS.md`) |
 | P-052 | Dividir `editor_proyecto_pagina.dart` | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-053 | Unificar el nombre del producto (Coti) | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-054 | Agregar `.gitattributes` | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-060 | Tutorial de bienvenida la primera vez | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-061 | Botón de información en pestañas y secciones | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-062 | Proyectos con dinero se cancelan; devoluciones al cliente | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-063 | Fotos de obra con visor y compartir | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-064 | Galería de fotos en Documentos | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-065 | Bloqueo con huella o clave del teléfono | 2026-11-25 (ver `CAMBIOS.md`) |

@@ -106,8 +106,10 @@ class DisenoDocumentoPdf {
     bool esCierre,
     int proyectoId,
     PdfColor azul,
-    PdfColor morado,
-  ) => pw.Container(
+    PdfColor morado, {
+    String? titulo,
+    String? codigo,
+  }) => pw.Container(
     padding: const pw.EdgeInsets.all(16),
     decoration: pw.BoxDecoration(
       color: azul,
@@ -141,7 +143,7 @@ class DisenoDocumentoPdf {
               ),
               pw.SizedBox(height: 3),
               pw.Text(
-                esCierre ? 'Reporte de cierre' : 'Proforma',
+                titulo ?? (esCierre ? 'Reporte de cierre' : 'Proforma'),
                 style: pw.TextStyle(
                   color: PdfColors.white,
                   fontSize: 19,
@@ -158,7 +160,7 @@ class DisenoDocumentoPdf {
             borderRadius: pw.BorderRadius.circular(8),
           ),
           child: pw.Text(
-            codigoDocumento(proyectoId),
+            codigo ?? codigoDocumento(proyectoId),
             style: pw.TextStyle(
               color: PdfColors.white,
               fontSize: 9,

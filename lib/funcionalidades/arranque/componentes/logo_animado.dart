@@ -15,9 +15,9 @@ class LogoAnimado extends StatelessWidget {
 
   // Cada barra arranca un poco después que la anterior.
   static double _barra(double valor, int indice) {
-    const tramo = TiemposArranque.barras;
-    final inicio = tramo.begin + indice * 0.07;
-    final fin = (inicio + 0.32).clamp(0.0, tramo.end);
+    final tramo = TiemposArranque.barras;
+    final inicio = tramo.begin + TiemposArranque.escala(indice * 0.07);
+    final fin = (inicio + TiemposArranque.escala(0.32)).clamp(0.0, tramo.end);
     return Interval(inicio, fin, curve: Curves.easeOutBack).transform(valor);
   }
 

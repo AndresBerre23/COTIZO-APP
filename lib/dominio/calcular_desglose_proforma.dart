@@ -47,14 +47,19 @@ DesgloseProforma calcularDesgloseProforma(
   );
 }
 
+// Con consumos registrados, el material cotizado ya no se descuenta (D-020).
 int calcularResultadoCierre(
   DesgloseProforma proforma,
-  List<Gasto> gastosAdicionales,
-) =>
+  List<Gasto> gastosAdicionales, {
+  int adicionalesCobradosCentavos = 0,
+}) =>
     proforma.ajusteComercialCentavos +
     proforma.cobroManoObraCentavos +
-    proforma.totalServiciosCentavos -
-    gastosAdicionales.fold<int>(
-      0,
-      (total, gasto) => total + gasto.montoCentavos,
-    );
+    proforma.totalServiciosCentavos +
+    adicionalesCobradosCentavos +
+    (gastosAdicionales.any((gasto) => gasto.esConsumo)
+        ? proforma.totalMaterialesCentavos
+        : 0) -
+    gastosAdicionales
+        .where((gasto) => !gasto.esDevolucion)
+        .fold<int>(0, (total, gasto) => total + gasto.montoCentavos);

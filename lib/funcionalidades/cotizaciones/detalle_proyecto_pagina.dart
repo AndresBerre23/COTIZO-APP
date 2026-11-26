@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/modelos.dart';
 import '../proformas/reporte_cierre_page.dart';
 import '../proformas/proforma_documento_page.dart';
-import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
 import '../gastos/formulario_gasto.dart';
+import '../obra/componentes/secciones_obra_detalle.dart';
+import 'componentes/accion_cierre_proyecto.dart';
 import 'componentes/acciones_obra.dart';
-import 'componentes/cobros_proyecto_detalle.dart';
 import 'componentes/confirmacion_retraso.dart';
 import 'componentes/detalle_listas_proyecto.dart';
 import 'componentes/resumen_rentabilidad.dart';
@@ -26,15 +26,14 @@ class DetalleProyectoPagina extends StatelessWidget {
   final bool confirmarRetraso;
 
   Future<void> _registrarGasto(BuildContext context) async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final gasto = await mostrarFormularioGasto(
       context,
       proyectos: cubit.state.datos.proyectos,
       proyectoId: proyectoId,
     );
     if (gasto == null || !context.mounted) return;
-    final guardado = await cubit.guardarGasto(gasto);
-    if (guardado && context.mounted) {
+    if (await cubit.guardarGasto(gasto) && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gasto registrado en el proyecto')),
       );
@@ -48,7 +47,7 @@ class DetalleProyectoPagina extends StatelessWidget {
     List<ItemProyecto> partidas,
   ) async {
     if (estado == null || estado == proyecto.estado) return;
-    final guardado = await context.read<CotizoCubit>().guardarProyecto(
+    final guardado = await context.read<CotiCubit>().guardarProyecto(
       proyecto.conEstado(estado),
       partidas,
     );
@@ -59,7 +58,7 @@ class DetalleProyectoPagina extends StatelessWidget {
   }
 
   Future<void> _iniciar(BuildContext context, DateTime fecha) async {
-    final guardado = await context.read<CotizoCubit>().iniciarObra(
+    final guardado = await context.read<CotiCubit>().iniciarObra(
       proyectoId,
       fecha,
     );
@@ -71,7 +70,7 @@ class DetalleProyectoPagina extends StatelessWidget {
   }
 
   Future<void> _finalizar(BuildContext context, DateTime fecha) async {
-    final guardado = await context.read<CotizoCubit>().finalizarObra(
+    final guardado = await context.read<CotiCubit>().finalizarObra(
       proyectoId,
       fecha,
     );
@@ -82,24 +81,10 @@ class DetalleProyectoPagina extends StatelessWidget {
     }
   }
 
-  Future<void> _eliminar(BuildContext context) async {
-    final confirmado = await confirmarEliminacion(
-      context,
-      'Se eliminarán esta cotización y sus materiales asociados. '
-      'Sus gastos registrados pasan a gastos generales y el catálogo de '
-      'materiales se conserva. Esta acción no se puede deshacer.',
-    );
-    if (!confirmado || !context.mounted) return;
-    final eliminado = await context.read<CotizoCubit>().eliminarProyecto(
-      proyectoId,
-    );
-    if (eliminado && context.mounted) Navigator.of(context).pop();
-  }
-
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text('Detalle del proyecto')),
-    body: BlocBuilder<CotizoCubit, EstadoCotizo>(
+    body: BlocBuilder<CotiCubit, EstadoCoti>(
       builder: (context, estado) {
         final coincidencias = estado.datos.proyectos.where(
           (proyecto) => proyecto.id == proyectoId,
@@ -255,11 +240,12 @@ class DetalleProyectoPagina extends StatelessWidget {
                   proyecto: proyecto,
                   partidas: partidas,
                   gastos: gastos,
+                  adicionales: estado.datos.adicionalesDeProyecto(proyectoId),
                 ),
                 const SizedBox(height: 20),
-                CobrosProyectoDetalle(
+                SeccionesObraDetalle(
                   proyecto: proyecto,
-                  ingresos: estado.datos.ingresosDeProyecto(proyectoId),
+                  datos: estado.datos,
                   guardando: estado.guardando,
                 ),
                 const SizedBox(height: 20),
@@ -277,17 +263,10 @@ class DetalleProyectoPagina extends StatelessWidget {
                 const SizedBox(height: 24),
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: estado.guardando
-                        ? null
-                        : () => _eliminar(context),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                    icon: Icon(Icons.delete_outline),
-                    label: Text(
-                      proyecto.esObra ? 'Eliminar obra' : 'Eliminar cotización',
-                    ),
+                  child: AccionCierreProyecto(
+                    proyecto: proyecto,
+                    datos: estado.datos,
+                    guardando: estado.guardando,
                   ),
                 ),
               ],

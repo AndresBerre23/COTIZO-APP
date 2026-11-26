@@ -2,28 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../aplicacion/cotizo_cubit.dart';
-import '../core/formato.dart';
-import '../dominio/calcular_rentabilidad.dart';
-import '../dominio/modelos.dart';
-import '../widgets/estado_vacio.dart';
-import '../widgets/pagina_base.dart';
-import '../widgets/surface_card.dart';
-import '../funcionalidades/inicio/resumen_financiero.dart';
-import '../funcionalidades/movimientos/componentes/tarjeta_balance_mes.dart';
-import '../funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
-import '../funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
-import '../funcionalidades/gastos/formulario_gasto.dart';
+import '../../aplicacion/coti_cubit.dart';
+import '../../core/formato.dart';
+import '../../dominio/calcular_rentabilidad.dart';
+import '../../dominio/modelos.dart';
+import '../../widgets/estado_vacio.dart';
+import '../../widgets/pagina_base.dart';
+import '../../widgets/surface_card.dart';
+import 'resumen_financiero.dart';
+import '../movimientos/componentes/tarjeta_balance_mes.dart';
+import '../cotizaciones/editor_proyecto_pagina.dart';
+import '../cotizaciones/detalle_proyecto_pagina.dart';
+import '../gastos/formulario_gasto.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key, this.cambiarSeccion});
+class InicioPagina extends StatefulWidget {
+  const InicioPagina({super.key, this.cambiarSeccion});
   final ValueChanged<int>? cambiarSeccion;
 
   @override
-  State<DashboardPage> createState() => _DashboardPageState();
+  State<InicioPagina> createState() => _InicioPaginaState();
 }
 
-class _DashboardPageState extends State<DashboardPage>
+class _InicioPaginaState extends State<InicioPagina>
     with WidgetsBindingObserver {
   DateTime _ahora = DateTime.now();
   Timer? _cambioDia;
@@ -67,7 +68,7 @@ class _DashboardPageState extends State<DashboardPage>
       proyectos: datos.proyectos,
     );
     if (gasto == null || !context.mounted) return;
-    final guardado = await context.read<CotizoCubit>().guardarGasto(gasto);
+    final guardado = await context.read<CotiCubit>().guardarGasto(gasto);
     if (guardado && context.mounted) {
       ScaffoldMessenger.of(
         context,
@@ -76,7 +77,7 @@ class _DashboardPageState extends State<DashboardPage>
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final datos = estado.datos;
       final activos = datos.proyectos
@@ -84,6 +85,7 @@ class _DashboardPageState extends State<DashboardPage>
           .toList();
       return PaginaBase(
         titulo: 'Inicio',
+        ayuda: TemaAyuda.inicio,
         children: [
           Text(
             'Tus proyectos, con cuentas claras.',
@@ -148,6 +150,7 @@ class _DashboardPageState extends State<DashboardPage>
               proyecto,
               datos.items,
               datos.gastos,
+              adicionales: datos.adicionales,
             );
             final costo = proyecto.totalCotizadoCentavos - rentabilidad;
             final proporcion = proyecto.totalCotizadoCentavos > 0

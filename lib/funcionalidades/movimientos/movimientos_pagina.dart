@@ -47,7 +47,7 @@ class _MovimientosPaginaState extends State<MovimientosPagina> {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 250),
       child: _tipo == TipoMovimiento.gastos
-          ? ExpensePage(
+          ? GastosPagina(
               key: const ValueKey(TipoMovimiento.gastos),
               titulo: 'Movimientos',
               encabezado: encabezado,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 
 import '../componentes/detalle_atribucion_imagen.dart';
 import 'imagen_wikimedia.dart';

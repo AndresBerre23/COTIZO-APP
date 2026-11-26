@@ -1,16 +1,15 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../aplicacion/preferencias_cubit.dart';
-import '../../datos/almacen_imagen_local.dart';
 import '../../dominio/modelos.dart';
 import '../perfil/mi_perfil_pagina.dart';
 import '../../widgets/estado_vacio.dart';
 import 'componentes/desglose_interno_proforma.dart';
 import 'servicio_pdf.dart';
+import 'servicios/datos_emisor_pdf.dart';
 import 'vista_proforma.dart';
 
 class ProformaDocumentoPage extends StatefulWidget {
@@ -92,7 +91,9 @@ class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
     }
     if (!mounted) return;
     final ajustes = context.read<PreferenciasCubit>().state;
-    final cliente = context.read<CotizoCubit>().state.datos.clientePorId(
+    final emisor = await DatosEmisorPdf.desde(ajustes);
+    if (!mounted) return;
+    final cliente = context.read<CotiCubit>().state.datos.clientePorId(
       proyecto.clienteId,
     );
     setState(() => _generando = true);
@@ -101,12 +102,10 @@ class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
         proyecto,
         items,
         gastosPrevistos: gastosPrevistos,
-        nombreEmisor: ajustes.nombreEmisor.isEmpty
-            ? null
-            : ajustes.nombreEmisor,
-        negocio: ajustes.negocio,
+        nombreEmisor: emisor.nombre,
+        negocio: emisor.negocio,
         cliente: cliente,
-        logoEmisor: await _leerLogo(ajustes.negocio.logoRuta),
+        logoEmisor: emisor.logo,
       );
       if (imprimir) {
         await Printing.layoutPdf(
@@ -134,21 +133,10 @@ class _ProformaDocumentoPageState extends State<ProformaDocumentoPage> {
     }
   }
 
-  // Un logo ausente o dañado no impide crear el PDF.
-  Future<Uint8List?> _leerLogo(String? ruta) async {
-    if (ruta == null) return null;
-    try {
-      final archivo = await const AlmacenLogoNegocio().obtenerArchivo(ruta);
-      return await archivo.exists() ? await archivo.readAsBytes() : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Proforma')),
-    body: BlocBuilder<CotizoCubit, EstadoCotizo>(
+    body: BlocBuilder<CotiCubit, EstadoCoti>(
       builder: (context, estado) {
         final coincidencias = estado.datos.proyectos.where(
           (proyecto) => proyecto.id == widget.proyectoId,

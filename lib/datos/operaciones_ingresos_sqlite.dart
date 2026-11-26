@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../dominio/modelos.dart';
 import 'mapeadores_sqlite.dart';
+import 'operaciones_fotos_sqlite.dart';
 import 'utilidades_sqlite.dart';
 import 'validaciones_datos.dart';
 
@@ -15,12 +16,10 @@ mixin OperacionesIngresosSqlite {
       if (ingreso.proyectoId != null) {
         await exigirRegistro(transaccion, 'proyectos', ingreso.proyectoId!);
       }
-      return guardarRegistro(
-        transaccion,
-        'ingresos',
-        ingreso.id,
-        escribirIngreso(ingreso),
-      );
+      return guardarRegistro(transaccion, 'ingresos', ingreso.id, {
+        ...escribirIngreso(ingreso),
+        'origen': await origenDeProyecto(transaccion, ingreso.proyectoId),
+      });
     });
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'aplicacion/control_datos_app.dart';
-import 'aplicacion/cotizo_cubit.dart';
+import 'aplicacion/coti_cubit.dart';
 import 'aplicacion/preferencias_cubit.dart';
 import 'core/theme/app_theme.dart';
 import 'datos/repositorio_sqlite.dart';
@@ -10,24 +10,30 @@ import 'dominio/repositorio_local.dart';
 import 'dominio/modelos.dart';
 import 'funcionalidades/arranque/componentes/cortina_arranque.dart';
 import 'funcionalidades/arranque/pantalla_arranque.dart';
-import 'screens/dashboard_screen.dart';
-import 'funcionalidades/movimientos/movimientos_pagina.dart';
-import 'screens/materials_screen.dart';
-import 'screens/quote_screen.dart';
-import 'screens/proforma_screen.dart';
+import 'funcionalidades/bienvenida/puerta_bienvenida.dart';
+import 'funcionalidades/navegacion/navegacion_principal.dart';
+import 'funcionalidades/seguridad/puerta_bloqueo.dart';
+import 'funcionalidades/seguridad/servicio_autenticacion.dart';
 import 'widgets/estado_vacio.dart';
 
 // Repositorio abierto y preferencias leídas al iniciar.
 typedef _DatosIniciales = (RepositorioLocal, PreferenciasApp);
 
-class CotizoApp extends StatefulWidget {
-  const CotizoApp({super.key, this.repositorio});
+class CotiApp extends StatefulWidget {
+  const CotiApp({
+    super.key,
+    this.repositorio,
+    this.autenticacion = const ServicioAutenticacion(),
+  });
   final RepositorioLocal? repositorio;
+
+  // Inyectable para pruebas, donde no hay sensor de huella.
+  final ServicioAutenticacion autenticacion;
   @override
-  State<CotizoApp> createState() => _CotizoAppState();
+  State<CotiApp> createState() => _CotiAppState();
 }
 
-class _CotizoAppState extends State<CotizoApp> {
+class _CotiAppState extends State<CotiApp> {
   late Future<_DatosIniciales> _carga;
   late Future<RepositorioLocal> _apertura;
   bool _almacenamientoAbierto = false;
@@ -172,123 +178,31 @@ class _CotizoAppState extends State<CotizoApp> {
       reemplazarDatos: _reemplazarDatos,
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => CotizoCubit(repositorio)..cargar()),
+          BlocProvider(create: (_) => CotiCubit(repositorio)..cargar()),
           BlocProvider(
             create: (_) =>
                 PreferenciasCubit(repositorio, inicial: preferencias),
           ),
         ],
-        child: BlocListener<CotizoCubit, EstadoCotizo>(
+        child: BlocListener<CotiCubit, EstadoCoti>(
           listenWhen: (anterior, actual) =>
               actual.error != null && anterior.error != actual.error,
           listener: (_, estado) => _mensajero.currentState?.showSnackBar(
             SnackBar(content: Text(estado.error!)),
           ),
           child: _aplicacionConPreferencias(
-            const CortinaArranque(child: AppShell()),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class AppShell extends StatefulWidget {
-  const AppShell({super.key});
-  @override
-  State<AppShell> createState() => _AppShellState();
-}
-
-class _AppShellState extends State<AppShell> {
-  int _indice = 0;
-  static const _etiquetas = [
-    'Inicio',
-    'Movimientos',
-    'Materiales',
-    'Cotizaciones',
-    'Documentos',
-  ];
-  static const _iconos = [
-    Icons.dashboard_outlined,
-    Icons.account_balance_wallet_outlined,
-    Icons.inventory_2_outlined,
-    Icons.request_quote_outlined,
-    Icons.folder_open_outlined,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final amplio = MediaQuery.sizeOf(context).width >= 840;
-    final pantallas = [
-      DashboardPage(
-        cambiarSeccion: (indice) => setState(() => _indice = indice),
-      ),
-      const MovimientosPagina(),
-      const MaterialsPage(),
-      const QuotePage(),
-      const ProformaPage(),
-    ];
-    return Scaffold(
-      body: BlocBuilder<CotizoCubit, EstadoCotizo>(
-        builder: (context, estado) {
-          if (estado.cargando) {
-            return const Center(
-              child: SizedBox(width: 240, child: LinearProgressIndicator()),
-            );
-          }
-          if (estado.falloCarga) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: EstadoVacio(
-                  icono: Icons.storage_outlined,
-                  titulo: 'No se pudieron cargar tus datos',
-                  mensaje: estado.error!,
-                  accion: FilledButton(
-                    onPressed: context.read<CotizoCubit>().cargar,
-                    child: const Text('Reintentar'),
-                  ),
-                ),
-              ),
-            );
-          }
-          return Row(
-            children: [
-              if (amplio)
-                NavigationRail(
-                  selectedIndex: _indice,
-                  onDestinationSelected: (indice) =>
-                      setState(() => _indice = indice),
-                  labelType: NavigationRailLabelType.all,
-                  destinations: List.generate(
-                    5,
-                    (indice) => NavigationRailDestination(
-                      icon: Icon(_iconos[indice]),
-                      label: Text(_etiquetas[indice]),
-                    ),
-                  ),
-                ),
-              Expanded(
-                child: IndexedStack(index: _indice, children: pantallas),
-              ),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: amplio
-          ? null
-          : NavigationBar(
-              selectedIndex: _indice,
-              onDestinationSelected: (indice) =>
-                  setState(() => _indice = indice),
-              destinations: List.generate(
-                5,
-                (indice) => NavigationDestination(
-                  icon: Icon(_iconos[indice]),
-                  label: _etiquetas[indice],
+            CortinaArranque(
+              child: PuertaBloqueo(
+                servicio: widget.autenticacion,
+                child: PuertaBienvenida(
+                  servicio: widget.autenticacion,
+                  child: const NavegacionPrincipal(),
                 ),
               ),
             ),
+          ),
+        ),
+      ),
     );
   }
 }

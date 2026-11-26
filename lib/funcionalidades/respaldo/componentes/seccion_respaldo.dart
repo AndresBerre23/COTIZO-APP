@@ -11,6 +11,8 @@ import '../../../widgets/confirmar.dart';
 import '../../../widgets/surface_card.dart';
 import '../servicios/formato_respaldo.dart';
 import '../servicios/servicio_respaldo.dart';
+import '../../../widgets/ayuda/boton_ayuda.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 // Tarjeta de Mi perfil para crear y restaurar respaldos (P-007).
 class SeccionRespaldo extends StatefulWidget {
@@ -102,6 +104,7 @@ class _SeccionRespaldoState extends State<SeccionRespaldo> {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
+              const BotonAyuda(tema: TemaAyuda.respaldo),
             ],
           ),
           const SizedBox(height: 8),

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:cotizo_app/funcionalidades/proformas/servicio_pdf.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/funcionalidades/proformas/servicio_pdf.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../apoyo/repositorio_lectura.dart';
 

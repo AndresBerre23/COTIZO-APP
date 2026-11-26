@@ -22,13 +22,17 @@ class ItemProyecto {
   final String nombreMaterial;
   final String unidadMedida;
 
-  int get subtotalCentavos {
-    final milesimas = (cantidad * 1000).round();
-    final parteEntera = costoUnitarioAplicadoCentavos ~/ 1000;
-    final residuo = costoUnitarioAplicadoCentavos % 1000;
-    return parteEntera * milesimas + (residuo * milesimas + 500) ~/ 1000;
-  }
+  int get subtotalCentavos =>
+      calcularSubtotal(cantidad, costoUnitarioAplicadoCentavos);
 
   int get costoCentavos => esServicio ? 0 : subtotalCentavos;
   int get precioServicioCentavos => esServicio ? subtotalCentavos : 0;
+}
+
+// Cantidad por precio unitario, redondeada al centavo sin errores de coma flotante.
+int calcularSubtotal(double cantidad, int unitarioCentavos) {
+  final milesimas = (cantidad * 1000).round();
+  final parteEntera = unitarioCentavos ~/ 1000;
+  final residuo = unitarioCentavos % 1000;
+  return parteEntera * milesimas + (residuo * milesimas + 500) ~/ 1000;
 }

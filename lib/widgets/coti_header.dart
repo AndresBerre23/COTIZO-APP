@@ -7,11 +7,14 @@ import '../aplicacion/preferencias_cubit.dart';
 import '../datos/almacen_foto_perfil.dart';
 import '../dominio/modelos.dart';
 import '../funcionalidades/perfil/mi_perfil_pagina.dart';
+import 'ayuda/boton_ayuda.dart';
+import 'ayuda/temas_ayuda.dart';
 
 class CotiHeader extends StatelessWidget {
-  const CotiHeader({super.key, required this.title});
+  const CotiHeader({super.key, required this.title, this.ayuda});
 
   final String title;
+  final TemaAyuda? ayuda;
 
   @override
   Widget build(BuildContext context) => SafeArea(
@@ -52,6 +55,7 @@ class CotiHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (ayuda != null) BotonAyuda(tema: ayuda!),
           BlocBuilder<PreferenciasCubit, PreferenciasApp>(
             builder: (context, preferencias) => IconButton(
               tooltip: 'Mi perfil',

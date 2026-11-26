@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../core/enfoque.dart';
 import '../../core/formato.dart';
 import '../../dominio/categorias_ingreso.dart';
@@ -15,6 +15,7 @@ import '../gastos/componentes/controles_gastos.dart';
 import '../gastos/filtros_gastos.dart';
 import '../movimientos/utilidades/filtrar_movimientos.dart';
 import 'formulario_ingreso.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
 // Lista de cobros e ingresos con búsqueda, filtros y total (P-012).
 class IngresosPagina extends StatefulWidget {
@@ -35,7 +36,7 @@ class _IngresosPaginaState extends State<IngresosPagina> {
   OrdenGastos _orden = OrdenGastos.recientes;
 
   Future<void> _editar([Ingreso? existente]) async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final ingreso = await mostrarFormularioIngreso(
       context,
       proyectos: cubit.state.datos.proyectos,
@@ -57,7 +58,7 @@ class _IngresosPaginaState extends State<IngresosPagina> {
       'Se recalcularán el balance y el saldo del proyecto.',
     );
     if (!confirmado || !mounted) return;
-    final eliminado = await context.read<CotizoCubit>().eliminarIngreso(
+    final eliminado = await context.read<CotiCubit>().eliminarIngreso(
       ingreso.id,
     );
     if (eliminado && mounted) {
@@ -83,7 +84,7 @@ class _IngresosPaginaState extends State<IngresosPagina> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final todos = estado.datos.ingresos;
       final proyectos = {
@@ -108,6 +109,7 @@ class _IngresosPaginaState extends State<IngresosPagina> {
       return Scaffold(
         body: PaginaBase(
           titulo: widget.titulo,
+          ayuda: TemaAyuda.movimientos,
           children: [
             if (widget.encabezado != null) widget.encabezado!,
             Wrap(

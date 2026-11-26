@@ -1,9 +1,9 @@
-import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
-import 'package:cotizo_app/app.dart';
-import 'package:cotizo_app/core/theme/app_theme.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
-import 'package:cotizo_app/funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
+import 'package:coti/aplicacion/coti_cubit.dart';
+import 'package:coti/app.dart';
+import 'package:coti/core/theme/app_theme.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/cotizaciones/detalle_proyecto_pagina.dart';
+import 'package:coti/funcionalidades/cotizaciones/editor_proyecto_pagina.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -73,12 +73,12 @@ class _RepositorioCotizaciones extends RepositorioLectura {
   }
 }
 
-Future<CotizoCubit> _montarEditor(
+Future<CotiCubit> _montarEditor(
   WidgetTester tester,
   _RepositorioCotizaciones repositorio, {
   Proyecto? proyecto,
 }) async {
-  final cubit = CotizoCubit(repositorio);
+  final cubit = CotiCubit(repositorio);
   await cubit.cargar();
   addTearDown(cubit.close);
   await tester.pumpWidget(
@@ -329,7 +329,7 @@ void main() {
 
   testWidgets('inicia y finaliza una obra desde su detalle', (tester) async {
     final repositorio = _RepositorioCotizaciones();
-    final cubit = CotizoCubit(repositorio);
+    final cubit = CotiCubit(repositorio);
     await cubit.cargar();
     addTearDown(cubit.close);
     await tester.pumpWidget(
@@ -398,7 +398,7 @@ void main() {
         gastos: base.gastos,
       ),
     );
-    await tester.pumpWidget(CotizoApp(repositorio: repositorio));
+    await tester.pumpWidget(CotiApp(repositorio: repositorio));
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
@@ -431,7 +431,7 @@ void main() {
       totalCotizadoCentavos: 10000,
     );
     await tester.pumpWidget(
-      CotizoApp(
+      CotiApp(
         repositorio: RepositorioLectura(
           DatosLocales(
             proyectos: [pendiente, obra],

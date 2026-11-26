@@ -1,7 +1,7 @@
-import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
-import 'package:cotizo_app/aplicacion/edicion_material.dart';
-import 'package:cotizo_app/core/formato.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/aplicacion/coti_cubit.dart';
+import 'package:coti/aplicacion/edicion_material.dart';
+import 'package:coti/core/formato.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../apoyo/repositorio_lectura.dart';
 
@@ -9,7 +9,7 @@ void main() {
   test('distingue fallo de lectura y permite reintentar', () async {
     final repositorio = RepositorioLectura(const DatosLocales())
       ..fallarLectura = true;
-    final cubit = CotizoCubit(repositorio);
+    final cubit = CotiCubit(repositorio);
     await cubit.cargar();
     expect(cubit.state.falloCarga, isTrue);
     repositorio.fallarLectura = false;
@@ -22,7 +22,7 @@ void main() {
     'no invita a duplicar una escritura si falla el refresco posterior',
     () async {
       final repositorio = RepositorioLectura(const DatosLocales());
-      final cubit = CotizoCubit(repositorio);
+      final cubit = CotiCubit(repositorio);
       await cubit.cargar();
       repositorio.fallarLectura = true;
       const material = MaterialObra(

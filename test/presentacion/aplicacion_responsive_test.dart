@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:ui' as ui;
-import 'package:cotizo_app/app.dart';
+import 'package:coti/app.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -41,7 +41,7 @@ void main() {
       await tester.pumpWidget(
         RepaintBoundary(
           key: captura,
-          child: CotizoApp(repositorio: RepositorioLectura(datosMuestra())),
+          child: CotiApp(repositorio: RepositorioLectura(datosMuestra())),
         ),
       );
       await tester.pumpAndSettle();
@@ -104,7 +104,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpWidget(
-      CotizoApp(repositorio: RepositorioLectura(datosMuestra())),
+      CotiApp(repositorio: RepositorioLectura(datosMuestra())),
     );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);

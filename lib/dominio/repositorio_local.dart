@@ -21,6 +21,10 @@ abstract interface class RepositorioLocal {
   Future<void> eliminarIngreso(int id);
   Future<int> guardarCliente(Cliente cliente);
   Future<void> eliminarCliente(int id);
+  Future<int> guardarAdicional(Adicional adicional);
+  Future<void> eliminarAdicional(int id);
+  Future<int> guardarFoto(FotoObra foto);
+  Future<void> eliminarFoto(int id);
   // Deja todos los cambios en el archivo principal antes de copiarlo.
   Future<void> prepararRespaldo();
   Future<void> cerrar();

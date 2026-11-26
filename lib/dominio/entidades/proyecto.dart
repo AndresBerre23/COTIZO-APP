@@ -58,9 +58,11 @@ class Proyecto {
       DateTime(creadoEl.year, creadoEl.month, creadoEl.day + validezDias);
 
   // El total cotizado es la base imponible; el cliente paga el total con IVA.
-  int get ivaCentavos => ivaPuntos == null
-      ? 0
-      : (totalCotizadoCentavos * ivaPuntos! + 5000) ~/ 10000;
+  int get ivaCentavos => ivaDe(totalCotizadoCentavos);
+
+  int ivaDe(int baseCentavos) =>
+      ivaPuntos == null ? 0 : (baseCentavos * ivaPuntos! + 5000) ~/ 10000;
+  int conIva(int baseCentavos) => baseCentavos + ivaDe(baseCentavos);
   int get totalConIvaCentavos => totalCotizadoCentavos + ivaCentavos;
 
   bool get esObra =>

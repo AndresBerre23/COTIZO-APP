@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/formato.dart';
 import '../../../dominio/modelos.dart';
 import 'seccion_cotizacion.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 class PartidasEditor extends StatelessWidget {
   const PartidasEditor({
@@ -23,6 +24,7 @@ class PartidasEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SeccionCotizacion(
     titulo: 'Materiales y servicios',
+    ayuda: TemaAyuda.partidas,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

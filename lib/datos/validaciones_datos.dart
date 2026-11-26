@@ -149,6 +149,13 @@ void validarGasto(Gasto gasto) {
   }
   validarImporte(gasto.montoCentavos, admiteCero: false);
   validarTexto(gasto.categoria, 'La categoría', maximo: 80);
+  if (gasto.esConsumo) {
+    final costo = gasto.costoUnitarioCentavos;
+    if (gasto.cantidad! <= 0 || costo == null || costo < 0) {
+      throw const FormatException('El consumo de material no es válido.');
+    }
+    validarTexto(gasto.nombreMaterial ?? '', 'El material');
+  }
   if (gasto.nota.length > 2000) {
     throw const FormatException('La nota admite hasta 2000 caracteres.');
   }
@@ -179,4 +186,13 @@ void validarCliente(Cliente cliente) {
       throw const FormatException('Los datos del cliente son muy largos.');
     }
   }
+}
+
+void validarAdicional(Adicional adicional) {
+  validarId(adicional.id);
+  if (adicional.proyectoId <= 0) {
+    throw const FormatException('Selecciona un proyecto válido.');
+  }
+  validarTexto(adicional.descripcion, 'La descripción', maximo: 500);
+  validarImporte(adicional.montoCentavos, admiteCero: false);
 }

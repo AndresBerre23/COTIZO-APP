@@ -19,7 +19,7 @@ class ServicioWikimedia {
   static const _dominioApi = 'commons.wikimedia.org';
   static const _dominioArchivos = 'upload.wikimedia.org';
   static const _agenteUsuario =
-      'Cotizo/1.0 (https://github.com/AndresBerre23/COTIZO-APP)';
+      'Coti/1.0 (https://github.com/AndresBerre23/COTIZO-APP)';
   static const _maximoJson = 2 * 1024 * 1024;
   static const _maximoMiniatura = 1024 * 1024;
   static const _maximoImagen = 8 * 1024 * 1024;

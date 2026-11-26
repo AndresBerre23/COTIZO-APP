@@ -8,19 +8,26 @@ import '../dominio/repositorio_local.dart';
 import 'esquema_sqlite.dart';
 import 'mapeadores_sqlite.dart';
 import 'operaciones_clientes_sqlite.dart';
+import 'operaciones_fotos_sqlite.dart';
 import 'operaciones_ingresos_sqlite.dart';
+import 'operaciones_obra_sqlite.dart';
 import 'utilidades_sqlite.dart';
 import 'validaciones_datos.dart';
+import 'versiones_proforma_sqlite.dart';
 
 class RepositorioSqlite
-    with OperacionesIngresosSqlite, OperacionesClientesSqlite
+    with
+        OperacionesIngresosSqlite,
+        OperacionesClientesSqlite,
+        OperacionesObraSqlite,
+        OperacionesFotosSqlite
     implements RepositorioLocal {
   RepositorioSqlite(this.base);
 
   @override
   final Database base;
 
-  static const versionEsquema = 10;
+  static const versionEsquema = 13;
 
   static DatabaseFactory _fabrica(DatabaseFactory? fabrica) {
     if (fabrica == null && (Platform.isWindows || Platform.isLinux)) {
@@ -31,6 +38,7 @@ class RepositorioSqlite
   }
 
   // Ruta del archivo de datos que usa la app por defecto.
+  // El archivo conserva el nombre histórico para no perder datos instalados.
   static Future<String> rutaPredeterminada({DatabaseFactory? fabrica}) async =>
       rutas.join(await _fabrica(fabrica).getDatabasesPath(), 'cotizo.sqlite');
 
@@ -54,56 +62,6 @@ class RepositorioSqlite
   }
 
   @override
-  Future<void> iniciarObra(int proyectoId, DateTime fechaInicioReal) =>
-      base.transaction((transaccion) async {
-        final proyecto = await _obtenerProyecto(transaccion, proyectoId);
-        if (proyecto.estado == EstadoProyecto.finalizado || proyecto.esObra) {
-          throw const FormatException(
-            'Esta obra ya fue iniciada o finalizada.',
-          );
-        }
-        if (proyecto.fechaFin == null) {
-          throw const FormatException(
-            'Define la fecha final prevista antes de iniciar la obra.',
-          );
-        }
-        _validarFechaReal(fechaInicioReal);
-        await transaccion.update(
-          'proyectos',
-          {
-            'estado': EstadoProyecto.aprobado.name,
-            'fecha_inicio_real': fechaInicioReal.millisecondsSinceEpoch,
-          },
-          where: 'id = ?',
-          whereArgs: [proyectoId],
-        );
-      });
-
-  @override
-  Future<void> finalizarObra(int proyectoId, DateTime fechaFinReal) =>
-      base.transaction((transaccion) async {
-        final proyecto = await _obtenerProyecto(transaccion, proyectoId);
-        if (!proyecto.estaEnCurso) {
-          throw const FormatException('Esta obra no está en curso.');
-        }
-        _validarFechaReal(fechaFinReal);
-        if (fechaFinReal.isBefore(proyecto.fechaInicioReal!)) {
-          throw const FormatException(
-            'La finalización no puede ser anterior al inicio real.',
-          );
-        }
-        await transaccion.update(
-          'proyectos',
-          {
-            'estado': EstadoProyecto.finalizado.name,
-            'fecha_fin_real': fechaFinReal.millisecondsSinceEpoch,
-          },
-          where: 'id = ?',
-          whereArgs: [proyectoId],
-        );
-      });
-
-  @override
   Future<DatosLocales> obtenerDatos() => base.transaction((transaccion) async {
     final proyectos = await transaccion.query('proyectos', orderBy: 'id DESC');
     final materiales = await transaccion.query(
@@ -119,6 +77,12 @@ class RepositorioSqlite
       'gastos_previstos',
       orderBy: 'id',
     );
+    final adicionales = await transaccion.query(
+      'adicionales',
+      orderBy: 'fecha, id',
+    );
+    final versiones = await transaccion.query('versiones_proforma');
+    final fotos = await transaccion.query('fotos_obra');
     final clientes = await transaccion.query(
       'clientes',
       orderBy: 'nombre COLLATE NOCASE, id',
@@ -137,6 +101,9 @@ class RepositorioSqlite
       ),
       ingresos: List.unmodifiable(ingresos.map(leerIngreso)),
       clientes: List.unmodifiable(clientes.map(leerCliente)),
+      adicionales: List.unmodifiable(adicionales.map(leerAdicional)),
+      versiones: List.unmodifiable(versiones.map(leerVersion)),
+      fotos: List.unmodifiable(fotos.map(leerFoto)),
     );
   });
 
@@ -170,6 +137,7 @@ class RepositorioSqlite
     validarProyecto(proyecto, items, gastosPrevistos ?? const []);
     if (cliente != null) validarCliente(cliente);
     return base.transaction((transaccion) async {
+      await conservarVersionPrevia(transaccion, proyecto, items);
       // Crea o actualiza el cliente y lo enlaza a la cotización (P-021).
       final clienteId = cliente == null
           ? proyecto.clienteId
@@ -231,19 +199,27 @@ class RepositorioSqlite
       if (gasto.proyectoId != null) {
         await exigirRegistro(transaccion, 'proyectos', gasto.proyectoId!);
       }
-      return guardarRegistro(
-        transaccion,
-        'gastos',
-        gasto.id,
-        escribirGasto(gasto),
-      );
+      return guardarRegistro(transaccion, 'gastos', gasto.id, {
+        ...escribirGasto(gasto),
+        'origen': await origenDeProyecto(transaccion, gasto.proyectoId),
+      });
     });
   }
 
   @override
-  Future<void> eliminarProyecto(int id) async {
-    await base.delete('proyectos', where: 'id = ?', whereArgs: [id]);
-  }
+  Future<void> eliminarProyecto(int id) => base.transaction((t) async {
+    final conDinero = await t.rawQuery(
+      'SELECT 1 FROM gastos WHERE proyecto_id = ? '
+      'UNION SELECT 1 FROM ingresos WHERE proyecto_id = ? LIMIT 1',
+      [id, id],
+    );
+    if (conDinero.isNotEmpty) {
+      throw const FormatException(
+        'Tiene cobros o gastos registrados. Cancélala para conservar su historial.',
+      );
+    }
+    await t.delete('proyectos', where: 'id = ?', whereArgs: [id]);
+  });
 
   @override
   Future<void> eliminarMaterial(int id) => base.transaction((
@@ -276,30 +252,5 @@ class RepositorioSqlite
   Future<void> prepararRespaldo() async {
     // Vuelca el registro WAL, si existe, al archivo principal.
     await base.rawQuery('PRAGMA wal_checkpoint(TRUNCATE)');
-  }
-
-  Future<Proyecto> _obtenerProyecto(
-    DatabaseExecutor transaccion,
-    int id,
-  ) async {
-    final filas = await transaccion.query(
-      'proyectos',
-      where: 'id = ?',
-      whereArgs: [id],
-      limit: 1,
-    );
-    if (filas.isEmpty) {
-      throw const FormatException('La cotización ya no existe.');
-    }
-    return leerProyecto(filas.single);
-  }
-
-  void _validarFechaReal(DateTime fecha) {
-    final ahora = DateTime.now();
-    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
-    final valor = DateTime(fecha.year, fecha.month, fecha.day);
-    if (valor.isAfter(hoy)) {
-      throw const FormatException('La fecha real no puede estar en el futuro.');
-    }
   }
 }

@@ -1,6 +1,6 @@
-import 'package:cotizo_app/dominio/calcular_cobros_proyecto.dart';
-import 'package:cotizo_app/dominio/calcular_resumen_mes.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/dominio/calcular_cobros_proyecto.dart';
+import 'package:coti/dominio/calcular_resumen_mes.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Ingreso _ingreso(

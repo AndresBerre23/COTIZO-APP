@@ -18,6 +18,7 @@ class ServicioPdf {
     DatosNegocio? negocio,
     Cliente? cliente,
     Uint8List? logoEmisor,
+    String? codigo,
   }) => _generar(
     proyecto,
     items,
@@ -26,6 +27,7 @@ class ServicioPdf {
     negocio: negocio,
     cliente: cliente,
     logoEmisor: logoEmisor,
+    codigo: codigo,
   );
 
   Future<Uint8List> generarReporteCierre(
@@ -33,12 +35,14 @@ class ServicioPdf {
     List<ItemProyecto> items, {
     List<GastoPrevisto> gastosPrevistos = const [],
     List<Gasto> gastosAdicionales = const [],
+    int adicionalesCobradosCentavos = 0,
   }) => _generar(
     proyecto,
     items,
     gastosPrevistos: gastosPrevistos,
     gastosAdicionales: gastosAdicionales,
     reporteCierre: true,
+    adicionalesCobradosCentavos: adicionalesCobradosCentavos,
   );
 
   Future<Uint8List> _generar(
@@ -47,10 +51,12 @@ class ServicioPdf {
     List<GastoPrevisto> gastosPrevistos = const [],
     List<Gasto> gastosAdicionales = const [],
     bool reporteCierre = false,
+    int adicionalesCobradosCentavos = 0,
     String? nombreEmisor,
     DatosNegocio? negocio,
     Cliente? cliente,
     Uint8List? logoEmisor,
+    String? codigo,
   }) async {
     final partidas = items
         .where((item) => item.proyectoId == proyecto.id)
@@ -67,7 +73,11 @@ class ServicioPdf {
       0,
       (total, gasto) => total + gasto.montoCentavos,
     );
-    final resultadoCierre = calcularResultadoCierre(desglose, adicionales);
+    final resultadoCierre = calcularResultadoCierre(
+      desglose,
+      adicionales,
+      adicionalesCobradosCentavos: adicionalesCobradosCentavos,
+    );
     final filas = esCierre
         ? filasCostoInterno(partidas)
         : filasCliente(proyecto, partidas, gastos);
@@ -116,6 +126,7 @@ class ServicioPdf {
             proyecto.id,
             azul,
             morado,
+            codigo: codigo,
           ),
           pw.SizedBox(height: 20),
           bloquePersonasPdf(

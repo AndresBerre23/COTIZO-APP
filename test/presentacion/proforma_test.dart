@@ -1,6 +1,6 @@
-import 'package:cotizo_app/core/theme/app_theme.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/proformas/vista_proforma.dart';
+import 'package:coti/core/theme/app_theme.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/proformas/vista_proforma.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

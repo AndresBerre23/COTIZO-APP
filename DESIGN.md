@@ -1,4 +1,4 @@
-# Sistema visual de ObraPro / Cotizo
+# Sistema visual de Coti
 
 ## Intención
 

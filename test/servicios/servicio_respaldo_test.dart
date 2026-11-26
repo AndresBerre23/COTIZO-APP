@@ -3,10 +3,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:cotizo_app/datos/repositorio_sqlite.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/respaldo/servicios/formato_respaldo.dart';
-import 'package:cotizo_app/funcionalidades/respaldo/servicios/servicio_respaldo.dart';
+import 'package:coti/datos/repositorio_sqlite.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/respaldo/servicios/formato_respaldo.dart';
+import 'package:coti/funcionalidades/respaldo/servicios/servicio_respaldo.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as rutas;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';

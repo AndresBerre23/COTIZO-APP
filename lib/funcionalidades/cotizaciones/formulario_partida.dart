@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/modelos.dart';
 import '../materiales/componentes/imagen_material.dart';
@@ -14,7 +14,7 @@ Future<ItemProyecto?> mostrarFormularioPartida(
 }) => showDialog<ItemProyecto>(
   context: context,
   builder: (_) => BlocProvider.value(
-    value: context.read<CotizoCubit>(),
+    value: context.read<CotiCubit>(),
     child: _FormularioPartida(partida: partida),
   ),
 );
@@ -62,7 +62,7 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
   });
 
   Future<void> _crearMaterial() async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final edicion = await mostrarFormularioMaterial(context);
     if (edicion == null || !mounted) return;
     final idsPrevios = cubit.state.datos.materiales.map((m) => m.id).toSet();
@@ -101,7 +101,7 @@ class _FormularioPartidaState extends State<_FormularioPartida> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final materiales = estado.datos.materiales;
       return AlertDialog(

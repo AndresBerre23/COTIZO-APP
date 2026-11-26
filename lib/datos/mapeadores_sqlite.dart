@@ -107,6 +107,11 @@ Gasto leerGasto(Map<String, Object?> fila) => Gasto(
   categoria: fila['categoria'] as String,
   fecha: DateTime.fromMillisecondsSinceEpoch(fila['fecha'] as int),
   nota: fila['nota'] as String,
+  materialId: fila['material_id'] as int?,
+  cantidad: (fila['cantidad'] as num?)?.toDouble(),
+  costoUnitarioCentavos: fila['costo_unitario'] as int?,
+  nombreMaterial: fila['nombre_material'] as String?,
+  origen: fila['origen'] as String?,
 );
 
 Ingreso leerIngreso(Map<String, Object?> fila) => Ingreso(
@@ -117,6 +122,7 @@ Ingreso leerIngreso(Map<String, Object?> fila) => Ingreso(
   metodo: MetodoPago.values.byName(fila['metodo'] as String),
   fecha: DateTime.fromMillisecondsSinceEpoch(fila['fecha'] as int),
   nota: fila['nota'] as String,
+  origen: fila['origen'] as String?,
 );
 
 Map<String, Object?> escribirIngreso(Ingreso ingreso) => {
@@ -152,6 +158,25 @@ Map<String, Object?> escribirGasto(Gasto gasto) => {
   'categoria': gasto.categoria.trim(),
   'fecha': gasto.fecha.millisecondsSinceEpoch,
   'nota': gasto.nota.trim(),
+  'material_id': gasto.materialId,
+  'cantidad': gasto.cantidad,
+  'costo_unitario': gasto.costoUnitarioCentavos,
+  'nombre_material': gasto.nombreMaterial?.trim(),
+};
+
+Adicional leerAdicional(Map<String, Object?> fila) => Adicional(
+  id: fila['id'] as int,
+  proyectoId: fila['proyecto_id'] as int,
+  descripcion: fila['descripcion'] as String,
+  montoCentavos: fila['monto'] as int,
+  fecha: DateTime.fromMillisecondsSinceEpoch(fila['fecha'] as int),
+);
+
+Map<String, Object?> escribirAdicional(Adicional adicional) => {
+  'proyecto_id': adicional.proyectoId,
+  'descripcion': adicional.descripcion.trim(),
+  'monto': adicional.montoCentavos,
+  'fecha': adicional.fecha.millisecondsSinceEpoch,
 };
 
 Cliente leerCliente(Map<String, Object?> fila) => Cliente(
@@ -180,6 +205,8 @@ PreferenciasApp leerPreferencias(Map<String, Object?> fila) => PreferenciasApp(
     orElse: () => ModoTema.sistema,
   ),
   omitirAvisoNombre: fila['omitir_aviso_nombre'] == 1,
+  tutorialVisto: fila['tutorial_visto'] == 1,
+  bloqueoActivo: fila['bloqueo_activo'] == 1,
   negocio: DatosNegocio(
     nombreComercial: fila['nombre_comercial'] as String? ?? '',
     identificacion: fila['identificacion'] as String? ?? '',
@@ -203,6 +230,8 @@ Map<String, Object?> escribirPreferencias(PreferenciasApp preferencias) => {
   'foto_ruta': preferencias.fotoRuta,
   'modo_tema': preferencias.modoTema.name,
   'omitir_aviso_nombre': preferencias.omitirAvisoNombre ? 1 : 0,
+  'tutorial_visto': preferencias.tutorialVisto ? 1 : 0,
+  'bloqueo_activo': preferencias.bloqueoActivo ? 1 : 0,
   'nombre_comercial': preferencias.negocio.nombreComercial.trim(),
   'identificacion': preferencias.negocio.identificacion.trim(),
   'telefono': preferencias.negocio.telefono.trim(),

@@ -1,4 +1,4 @@
-import 'package:cotizo_app/funcionalidades/materiales/busqueda_wikimedia/licencias_wikimedia.dart';
+import 'package:coti/funcionalidades/materiales/busqueda_wikimedia/licencias_wikimedia.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

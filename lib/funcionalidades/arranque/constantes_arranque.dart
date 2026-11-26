@@ -1,15 +1,31 @@
 import 'package:flutter/animation.dart';
 
-// Tiempos de la animación de arranque, como fracción de la duración total.
+// Tiempos de la animación de arranque. Los intervalos se escriben como
+// fracción de la animación y se escalan para dejar una pausa final.
 abstract final class TiemposArranque {
-  static const duracion = Duration(milliseconds: 1900);
+  static const _animacion = 2600;
+
+  // Logo y lema quietos al final para que se alcancen a leer.
+  static const _pausaFinal = 1400;
+
+  static const duracion = Duration(milliseconds: _animacion + _pausaFinal);
   static const salida = Duration(milliseconds: 450);
 
-  static const arco = Interval(0, 0.42, curve: Curves.easeOutCubic);
-  static const barras = Interval(0.22, 0.68);
-  static const flecha = Interval(0.5, 0.82, curve: Curves.easeInOutCubic);
-  static const texto = Interval(0.6, 0.92, curve: Curves.easeOutCubic);
-  static const brillo = Interval(0.7, 1, curve: Curves.easeOut);
+  // Convierte una fracción de la animación en fracción de la duración total.
+  static double escala(double fraccion) =>
+      fraccion * _animacion / (_animacion + _pausaFinal);
+
+  static Interval _tramo(
+    double inicio,
+    double fin, [
+    Curve curva = Curves.linear,
+  ]) => Interval(escala(inicio), escala(fin), curve: curva);
+
+  static final arco = _tramo(0, 0.42, Curves.easeOutCubic);
+  static final barras = _tramo(0.22, 0.68);
+  static final flecha = _tramo(0.5, 0.82, Curves.easeInOutCubic);
+  static final texto = _tramo(0.6, 0.92, Curves.easeOutCubic);
+  static final brillo = _tramo(0.7, 1, Curves.easeOut);
 }
 
 // Colores propios del logo de Coti.

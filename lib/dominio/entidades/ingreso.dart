@@ -20,6 +20,7 @@ class Ingreso implements Movimiento {
     required this.fecha,
     this.metodo = MetodoPago.efectivo,
     this.nota = '',
+    this.origen,
   });
 
   @override
@@ -35,4 +36,6 @@ class Ingreso implements Movimiento {
   final MetodoPago metodo;
   @override
   final String nota;
+  @override
+  final String? origen;
 }

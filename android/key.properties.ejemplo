@@ -1,0 +1,6 @@
+# Copiar como android/key.properties (ignorado por git) y completar con tus datos.
+# Nunca subir el archivo real ni la clave .jks al repositorio.
+storeFile=C:/ruta/fuera/del/repositorio/coti-publicacion.jks
+storePassword=CAMBIAR
+keyAlias=coti
+keyPassword=CAMBIAR

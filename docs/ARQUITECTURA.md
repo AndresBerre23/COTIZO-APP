@@ -1,4 +1,14 @@
-# Arquitectura inicial implementada
+# Arquitectura
+
+> Actualizado el 2026-11-25. El árbol refleja la estructura actual. Las secciones 2 en adelante describen la base inicial; los cambios posteriores (esquema hasta v11: ingresos, clientes, IVA, servicios, consumos, adicionales y versiones) están en `docs/contexto/CAMBIOS.md` y `docs/contexto/DECISIONES.md`.
+
+Resumen de la estructura actual:
+
+- Cada pantalla vive en `funcionalidades/<modulo>/`, con sus `componentes/`, `servicios/` y `utilidades/`. Ya no existe `lib/screens/`.
+- `datos/` usa un mixin por área (`operaciones_*_sqlite.dart`) para mantener cada archivo por debajo de 300 líneas. Las migraciones grandes están en `migracion_v10.dart` y `migracion_v11.dart`.
+- Las claves foráneas se activan después de migrar (D-019).
+- El estado global usa `CotiCubit` (datos) y `PreferenciasCubit` (perfil y ajustes).
+- El paquete Dart se llama `coti`; el archivo de base de datos conserva el nombre `cotizo.sqlite` para no perder datos instalados.
 
 ## 1. Estructura de directorios
 
@@ -8,57 +18,54 @@ Organización por funcionalidad en presentación, con dominio y persistencia com
 lib/
   main.dart
   app.dart
-  dominio/
-    preferencias_app.dart
-    entidades/
-      proyecto.dart
-      material_obra.dart
-      item_proyecto.dart
-      gasto.dart
-    modelos.dart
-    datos_locales.dart
-    repositorio_local.dart
-    calcular_rentabilidad.dart
-    unidades_medida.dart
-  datos/
-    almacen_imagenes_materiales.dart
-    almacen_foto_perfil.dart
-    esquema_sqlite.dart
-    mapeadores_sqlite.dart
-    validaciones_datos.dart
-    repositorio_sqlite.dart
   aplicacion/
-    cotizo_cubit.dart
-    edicion_material.dart
-    preferencias_cubit.dart
+  core/
+    imagenes/
+    theme/
+  datos/
+  dominio/
+    entidades/
   funcionalidades/
-    perfil/
+    arranque/
+      componentes/
+    clientes/
     cotizaciones/
       componentes/
-      cotizaciones_pagina.dart
-      editor_proyecto_pagina.dart
-      detalle_proyecto_pagina.dart
-      formulario_partida.dart
+      utilidades/
+    gastos/
+      componentes/
+    ingresos/
+    inicio/
     materiales/
+      busqueda_wikimedia/
       componentes/
       servicios/
-    gastos/
-    inicio/
+    movimientos/
+      componentes/
+      utilidades/
+    obra/
+      componentes/
+      servicios/
+    perfil/
+      componentes/
     proformas/
-      servicio_pdf.dart
-      vista_proforma.dart
-  core/
-    formato.dart
-    imagenes/optimizar_imagen.dart
-    theme/app_theme.dart
+      componentes/
+      servicios/
+    reportes/
+      componentes/
+      servicios/
+    respaldo/
+      componentes/
+      servicios/
   widgets/
-  screens/
+    movimientos/
 test/
-  dominio/
-  datos/
   aplicacion/
-  servicios/
+  apoyo/
+  datos/
+  dominio/
   presentacion/
+  servicios/
 ```
 
 Flujo de dependencias: pantalla → Cubit → interfaz RepositorioLocal → implementación SQLite. El cálculo de rentabilidad depende únicamente de entidades. PDF es un servicio de infraestructura utilizado desde presentación. Los widgets reciben modelos y delegan la persistencia.
@@ -95,9 +102,9 @@ El SQL ejecutable está en `lib/datos/esquema_sqlite.dart`:
 - `preferencias_app`: perfil local, tema elegido y decisión de omitir el aviso de nombre.
 - Índices en las relaciones y fecha de gastos.
 
-`PRAGMA foreign_keys = ON` se activa en cada apertura. Guardar proyecto, partidas y gastos previstos es una transacción. Omitir la lista de gastos previstos al actualizar conserva el presupuesto existente; pasar una lista la sustituye. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
+`PRAGMA foreign_keys = ON` se activa en cada apertura, después de migrar. Guardar proyecto, partidas y gastos previstos es una transacción. Omitir la lista de gastos previstos al actualizar conserva el presupuesto existente; pasar una lista la sustituye. Eliminar un proyecto borra sus partidas y gastos asociados después de la confirmación en la interfaz. Los materiales del catálogo permanecen. Un material utilizado no se puede eliminar; sí se puede editar. No se usa `INSERT OR REPLACE`, para evitar borrados en cascada al editar.
 
-`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras, además de las preferencias de perfil. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 7 y migraciones desde las versiones anteriores.
+`lib/dominio/repositorio_local.dart` expone lectura, guardado, eliminación e inicio/finalización de obras, además de las preferencias de perfil. Estas dos transiciones actualizan solamente la cabecera y preservan partidas y gastos. `RepositorioSqlite.abrir()` selecciona SQLite nativo en Android; admite ruta y fábrica inyectables para pruebas. El archivo local se llama `cotizo.sqlite`, con versión de esquema 11 y migraciones desde las versiones anteriores.
 
 Las fotos del catálogo se seleccionan desde galería, cámara o Wikimedia Commons; se decodifican y optimizan en un isolate con orientación normalizada, sin metadatos, hasta 1280 píxeles por lado y 300 KB. Se guardan como JPEG en `Application Support/imagenes_materiales`; SQLite conserva el nombre relativo y, cuando corresponde, la atribución. Al reemplazar una imagen, la anterior se mantiene hasta confirmar el guardado del material. Cancelar el formulario no crea archivos persistentes.
 

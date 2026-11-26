@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
@@ -13,7 +13,7 @@ class ClientesPagina extends StatelessWidget {
   const ClientesPagina({super.key});
 
   Future<void> _editar(BuildContext context, [Cliente? cliente]) async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final editado = await mostrarFormularioCliente(context, cliente: cliente);
     if (editado == null || !context.mounted) return;
     final guardado = await cubit.guardarCliente(editado);
@@ -25,7 +25,7 @@ class ClientesPagina extends StatelessWidget {
   }
 
   Future<void> _eliminar(BuildContext context, Cliente cliente) async {
-    final cubit = context.read<CotizoCubit>();
+    final cubit = context.read<CotiCubit>();
     final confirmado = await confirmarEliminacion(
       context,
       '¿Eliminar a ${cliente.nombre}? Sus cotizaciones conservan el nombre, '
@@ -42,7 +42,7 @@ class ClientesPagina extends StatelessWidget {
       icon: const Icon(Icons.person_add_alt),
       label: const Text('Nuevo cliente'),
     ),
-    body: BlocBuilder<CotizoCubit, EstadoCotizo>(
+    body: BlocBuilder<CotiCubit, EstadoCoti>(
       builder: (context, estado) {
         final clientes = estado.datos.clientes;
         final cotizaciones = <int, int>{};

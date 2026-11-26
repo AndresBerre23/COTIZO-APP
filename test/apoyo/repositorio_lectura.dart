@@ -1,11 +1,10 @@
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/dominio/repositorio_local.dart';
-import 'package:cotizo_app/dominio/preferencias_app.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/dominio/repositorio_local.dart';
 
 class RepositorioLectura implements RepositorioLocal {
   RepositorioLectura(this.datos);
   DatosLocales datos;
-  PreferenciasApp preferencias = const PreferenciasApp();
+  PreferenciasApp preferencias = const PreferenciasApp(tutorialVisto: true);
   bool fallarLectura = false;
   int escrituras = 0;
   @override
@@ -55,6 +54,14 @@ class RepositorioLectura implements RepositorioLocal {
   Future<int> guardarCliente(Cliente cliente) async => 1;
   @override
   Future<void> eliminarCliente(int id) async {}
+  @override
+  Future<int> guardarAdicional(Adicional adicional) async => 1;
+  @override
+  Future<void> eliminarAdicional(int id) async {}
+  @override
+  Future<int> guardarFoto(FotoObra foto) async => 1;
+  @override
+  Future<void> eliminarFoto(int id) async {}
   @override
   Future<void> cerrar() async {}
   @override

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/confirmar.dart';
 import '../../widgets/estado_vacio.dart';
@@ -11,15 +11,16 @@ import 'componentes/controles_materiales.dart';
 import 'componentes/filtros_materiales.dart';
 import 'formulario_material.dart';
 import 'material_tarjeta.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
-class MaterialsPage extends StatefulWidget {
-  const MaterialsPage({super.key});
+class MaterialesPagina extends StatefulWidget {
+  const MaterialesPagina({super.key});
 
   @override
-  State<MaterialsPage> createState() => _MaterialsPageState();
+  State<MaterialesPagina> createState() => _MaterialesPaginaState();
 }
 
-class _MaterialsPageState extends State<MaterialsPage> {
+class _MaterialesPaginaState extends State<MaterialesPagina> {
   String _busqueda = '';
   String? _unidad;
   FiltroImagenMaterial _filtroImagen = FiltroImagenMaterial.todos;
@@ -31,7 +32,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
       material: existente,
     );
     if (edicion == null || !mounted) return;
-    final guardado = await context.read<CotizoCubit>().guardarMaterial(edicion);
+    final guardado = await context.read<CotiCubit>().guardarMaterial(edicion);
     if (guardado && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Material guardado en este dispositivo.')),
@@ -45,7 +46,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
       '¿Eliminar "${material.nombre}"? Los materiales usados en cotizaciones deben conservarse.',
     );
     if (!confirmado || !mounted) return;
-    final eliminado = await context.read<CotizoCubit>().eliminarMaterial(
+    final eliminado = await context.read<CotiCubit>().eliminarMaterial(
       material.id,
     );
     if (eliminado && mounted) {
@@ -110,7 +111,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final todos = estado.datos.materiales;
       final materiales = _filtrar(todos);
@@ -123,6 +124,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
       return Scaffold(
         body: PaginaBase(
           titulo: 'Materiales',
+          ayuda: TemaAyuda.materiales,
           children: [
             Wrap(
               alignment: WrapAlignment.spaceBetween,

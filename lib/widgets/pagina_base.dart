@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'coti_header.dart';
+import 'ayuda/temas_ayuda.dart';
 
 class PaginaBase extends StatelessWidget {
   const PaginaBase({
@@ -7,17 +8,19 @@ class PaginaBase extends StatelessWidget {
     required this.titulo,
     required this.children,
     this.accion,
+    this.ayuda,
   });
   final String titulo;
   final List<Widget> children;
   final Widget? accion;
+  final TemaAyuda? ayuda;
 
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
     child: Column(
       children: [
-        CotiHeader(title: titulo),
+        CotiHeader(title: titulo, ayuda: ayuda),
         Expanded(
           child: Align(
             alignment: Alignment.topCenter,

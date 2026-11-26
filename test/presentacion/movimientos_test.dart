@@ -1,8 +1,8 @@
-import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
-import 'package:cotizo_app/core/theme/app_theme.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/movimientos/movimientos_pagina.dart';
-import 'package:cotizo_app/funcionalidades/reportes/reporte_mensual_pagina.dart';
+import 'package:coti/aplicacion/coti_cubit.dart';
+import 'package:coti/core/theme/app_theme.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/movimientos/movimientos_pagina.dart';
+import 'package:coti/funcionalidades/reportes/reporte_mensual_pagina.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,7 +39,7 @@ class _RepositorioIngresos extends RepositorioLectura {
 
 Future<_RepositorioIngresos> _montar(WidgetTester tester, Widget pagina) async {
   final repositorio = _RepositorioIngresos(datosMuestra());
-  final cubit = CotizoCubit(repositorio);
+  final cubit = CotiCubit(repositorio);
   await cubit.cargar();
   addTearDown(cubit.close);
   await tester.pumpWidget(

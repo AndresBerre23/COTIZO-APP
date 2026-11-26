@@ -5,6 +5,8 @@ import '../../../aplicacion/preferencias_cubit.dart';
 import '../../../core/enfoque.dart';
 import '../../../widgets/selector_iva.dart';
 import '../../../widgets/surface_card.dart';
+import '../../../widgets/ayuda/boton_ayuda.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 // Valores con los que nace cada cotización (P-022, P-023, P-025).
 class SeccionAjustesCotizacion extends StatefulWidget {
@@ -88,9 +90,16 @@ class _SeccionAjustesCotizacionState extends State<SeccionAjustesCotizacion> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Ajustes de cotización',
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Ajustes de cotización',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              const BotonAyuda(tema: TemaAyuda.ajustesCotizacion),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

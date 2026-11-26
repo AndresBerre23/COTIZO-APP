@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/formato.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/estado_vacio.dart';
 import '../../widgets/pagina_base.dart';
@@ -12,15 +12,16 @@ import 'componentes/tarjeta_proyecto.dart';
 import 'detalle_proyecto_pagina.dart';
 import 'editor_proyecto_pagina.dart';
 import '../clientes/clientes_pagina.dart';
+import '../../widgets/ayuda/temas_ayuda.dart';
 
-class QuotePage extends StatefulWidget {
-  const QuotePage({super.key});
+class CotizacionesPagina extends StatefulWidget {
+  const CotizacionesPagina({super.key});
 
   @override
-  State<QuotePage> createState() => _QuotePageState();
+  State<CotizacionesPagina> createState() => _CotizacionesPaginaState();
 }
 
-class _QuotePageState extends State<QuotePage> {
+class _CotizacionesPaginaState extends State<CotizacionesPagina> {
   String _busqueda = '';
   EstadoProyecto? _estado;
   DateTimeRange? _rangoFechas;
@@ -112,7 +113,7 @@ class _QuotePageState extends State<QuotePage> {
   );
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<CotizoCubit, EstadoCotizo>(
+  Widget build(BuildContext context) => BlocBuilder<CotiCubit, EstadoCoti>(
     builder: (context, estado) {
       final todos = estado.datos.proyectos;
       final cotizaciones = todos.where((proyecto) => !proyecto.esObra).length;
@@ -123,6 +124,7 @@ class _QuotePageState extends State<QuotePage> {
       return Scaffold(
         body: PaginaBase(
           titulo: 'Cotizaciones',
+          ayuda: TemaAyuda.cotizaciones,
           children: [
             Wrap(
               alignment: WrapAlignment.spaceBetween,

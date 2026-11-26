@@ -11,23 +11,30 @@ class ResumenRentabilidad extends StatelessWidget {
     required this.proyecto,
     required this.partidas,
     required this.gastos,
+    this.adicionales = const [],
   });
 
   final Proyecto proyecto;
   final List<ItemProyecto> partidas;
   final List<Gasto> gastos;
+  final List<Adicional> adicionales;
 
   @override
   Widget build(BuildContext context) {
-    final materiales = partidas.fold(
-      0,
-      (total, item) => total + item.costoCentavos,
+    final conConsumos = tieneConsumos(proyecto.id, gastos);
+    final materiales = conConsumos
+        ? 0
+        : partidas.fold(0, (total, item) => total + item.costoCentavos);
+    final extra = totalAdicionales(proyecto.id, adicionales);
+    final gastado = gastos
+        .where((gasto) => !gasto.esDevolucion)
+        .fold(0, (total, gasto) => total + gasto.montoCentavos);
+    final resultado = calcularRentabilidad(
+      proyecto,
+      partidas,
+      gastos,
+      adicionales: adicionales,
     );
-    final gastado = gastos.fold(
-      0,
-      (total, gasto) => total + gasto.montoCentavos,
-    );
-    final resultado = calcularRentabilidad(proyecto, partidas, gastos);
     final margen = proyecto.totalCotizadoCentavos == 0
         ? 0.0
         : resultado / proyecto.totalCotizadoCentavos * 100;
@@ -62,7 +69,11 @@ class ResumenRentabilidad extends StatelessWidget {
           Text('Margen: ${margen.toStringAsFixed(1)}%'),
           const Divider(height: 32),
           _fila('Total cotizado', proyecto.totalCotizadoCentavos),
-          _fila('Materiales', -materiales),
+          if (extra > 0) _fila('Adicionales', extra),
+          _fila(
+            conConsumos ? 'Materiales (ver consumos)' : 'Materiales cotizados',
+            -materiales,
+          ),
           _fila('Gastos del proyecto', -gastado),
           if (proyecto.cobroManoObraCentavos > 0) ...[
             _fila(
@@ -76,8 +87,11 @@ class ResumenRentabilidad extends StatelessWidget {
           ],
           const SizedBox(height: 8),
           Text(
-            'Calculada con los costos y gastos registrados. '
-            'Los gastos generales no se descuentan aquí.',
+            conConsumos
+                ? 'Usa los consumos reales de material en lugar de lo cotizado. '
+                      'Los gastos generales no se descuentan aquí.'
+                : 'Calculada con los costos y gastos registrados. '
+                      'Los gastos generales no se descuentan aquí.',
             style: TextStyle(
               fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,

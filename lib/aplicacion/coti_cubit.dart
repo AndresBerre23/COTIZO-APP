@@ -2,13 +2,14 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../datos/almacen_fotos_obra.dart';
 import '../datos/almacen_imagenes_materiales.dart';
 import '../dominio/modelos.dart';
 import '../dominio/repositorio_local.dart';
 import 'edicion_material.dart';
 
-class EstadoCotizo {
-  const EstadoCotizo({
+class EstadoCoti {
+  const EstadoCoti({
     this.datos = const DatosLocales(),
     this.cargando = false,
     this.guardando = false,
@@ -20,22 +21,27 @@ class EstadoCotizo {
   final String? error;
 }
 
-class CotizoCubit extends Cubit<EstadoCotizo> {
-  CotizoCubit(this._repositorio, {AlmacenImagenesMateriales? almacenImagenes})
-    : _almacenImagenes = almacenImagenes ?? AlmacenImagenesMateriales(),
-      super(const EstadoCotizo(cargando: true));
+class CotiCubit extends Cubit<EstadoCoti> {
+  CotiCubit(
+    this._repositorio, {
+    AlmacenImagenesMateriales? almacenImagenes,
+    AlmacenFotosObra almacenFotos = const AlmacenFotosObra(),
+  }) : _almacenImagenes = almacenImagenes ?? AlmacenImagenesMateriales(),
+       _almacenFotos = almacenFotos,
+       super(const EstadoCoti(cargando: true));
   final RepositorioLocal _repositorio;
   final AlmacenImagenesMateriales _almacenImagenes;
+  final AlmacenFotosObra _almacenFotos;
 
   Future<void> cargar() async {
-    emit(EstadoCotizo(datos: state.datos, cargando: true));
+    emit(EstadoCoti(datos: state.datos, cargando: true));
     try {
       final datos = await _repositorio.obtenerDatos();
-      if (!isClosed) emit(EstadoCotizo(datos: datos));
+      if (!isClosed) emit(EstadoCoti(datos: datos));
     } catch (_) {
       if (!isClosed) {
         emit(
-          EstadoCotizo(
+          EstadoCoti(
             datos: state.datos,
             falloCarga: true,
             error: 'No se pudieron leer los datos locales. Intenta nuevamente.',
@@ -47,7 +53,7 @@ class CotizoCubit extends Cubit<EstadoCotizo> {
 
   Future<bool> _guardar(Future<void> Function() operacion) async {
     if (state.guardando || state.cargando || state.falloCarga) return false;
-    emit(EstadoCotizo(datos: state.datos, guardando: true));
+    emit(EstadoCoti(datos: state.datos, guardando: true));
     try {
       await operacion();
     } catch (error) {
@@ -58,16 +64,16 @@ class CotizoCubit extends Cubit<EstadoCotizo> {
           : error is StateError
           ? error.message
           : 'No se pudo guardar el cambio. Tus datos anteriores se conservan.';
-      if (!isClosed) emit(EstadoCotizo(datos: state.datos, error: mensaje));
+      if (!isClosed) emit(EstadoCoti(datos: state.datos, error: mensaje));
       return false;
     }
     try {
       final datos = await _repositorio.obtenerDatos();
-      if (!isClosed) emit(EstadoCotizo(datos: datos));
+      if (!isClosed) emit(EstadoCoti(datos: datos));
     } catch (_) {
       if (!isClosed) {
         emit(
-          EstadoCotizo(
+          EstadoCoti(
             datos: state.datos,
             falloCarga: true,
             error:
@@ -136,8 +142,38 @@ class CotizoCubit extends Cubit<EstadoCotizo> {
       _guardar(() => _repositorio.guardarIngreso(ingreso));
   Future<bool> eliminarIngreso(int id) =>
       _guardar(() => _repositorio.eliminarIngreso(id));
-  Future<bool> eliminarProyecto(int id) =>
-      _guardar(() => _repositorio.eliminarProyecto(id));
+  Future<bool> guardarAdicional(Adicional adicional) =>
+      _guardar(() => _repositorio.guardarAdicional(adicional));
+  Future<bool> eliminarAdicional(int id) =>
+      _guardar(() => _repositorio.eliminarAdicional(id));
+  // Sus fotos se borran con el proyecto; también sus archivos.
+  Future<bool> eliminarProyecto(int id) => _guardar(() async {
+    final fotos = state.datos.fotosDeProyecto(id);
+    await _repositorio.eliminarProyecto(id);
+    for (final foto in fotos) {
+      await _almacenFotos.eliminarArchivos(foto);
+    }
+  });
+
+  // Optimiza y guarda varias fotos; si una falla, se conservan las anteriores.
+  Future<bool> agregarFotos(int proyectoId, List<Uint8List> originales) =>
+      _guardar(() async {
+        for (final original in originales) {
+          final foto = await _almacenFotos.guardarFoto(proyectoId, original);
+          try {
+            await _repositorio.guardarFoto(foto);
+          } catch (_) {
+            await _almacenFotos.eliminarArchivos(foto);
+            rethrow;
+          }
+        }
+      });
+  Future<bool> guardarNotaFoto(FotoObra foto, String nota) =>
+      _guardar(() => _repositorio.guardarFoto(foto.conNota(nota)));
+  Future<bool> eliminarFoto(FotoObra foto) => _guardar(() async {
+    await _repositorio.eliminarFoto(foto.id);
+    await _almacenFotos.eliminarArchivos(foto);
+  });
   Future<bool> eliminarMaterial(int id) => _guardar(() async {
     final rutaImagen = _materialPorId(id)?.imagenRuta;
     await _repositorio.eliminarMaterial(id);

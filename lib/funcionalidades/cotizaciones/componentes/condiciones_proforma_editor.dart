@@ -5,6 +5,7 @@ import '../../../core/formato.dart';
 import '../../../widgets/selector_iva.dart';
 import '../utilidades/datos_proforma_editor.dart';
 import 'seccion_cotizacion.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 // IVA, validez, forma de pago y condiciones de la proforma (P-022, P-023).
 class CondicionesProformaEditor extends StatelessWidget {
@@ -26,6 +27,7 @@ class CondicionesProformaEditor extends StatelessWidget {
         : (subtotalCentavos * datos.ivaPuntos! + 5000) ~/ 10000;
     return SeccionCotizacion(
       titulo: 'Condiciones de la proforma',
+      ayuda: TemaAyuda.condiciones,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

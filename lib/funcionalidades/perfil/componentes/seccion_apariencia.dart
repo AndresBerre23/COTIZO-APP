@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../aplicacion/preferencias_cubit.dart';
 import '../../../dominio/modelos.dart';
 import '../../../widgets/surface_card.dart';
+import '../../bienvenida/pantalla_bienvenida.dart';
 
 // Preferencia de tema claro, oscuro o del sistema.
 class SeccionApariencia extends StatelessWidget {
@@ -45,6 +46,18 @@ class SeccionApariencia extends StatelessWidget {
               DropdownMenuItem(value: ModoTema.oscuro, child: Text('Oscuro')),
             ],
             onChanged: (modo) => _cambiarTema(context, modo),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (contexto) => PantallaBienvenida(
+                  alTerminar: (_) => Navigator.of(contexto).pop(),
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.slideshow_outlined),
+            label: const Text('Ver tutorial de bienvenida'),
           ),
         ],
       ),

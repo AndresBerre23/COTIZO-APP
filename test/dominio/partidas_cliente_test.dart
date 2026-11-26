@@ -1,5 +1,5 @@
-import 'package:cotizo_app/dominio/calcular_partidas_cliente.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
+import 'package:coti/dominio/calcular_partidas_cliente.dart';
+import 'package:coti/dominio/modelos.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Proyecto _proyecto(int total, {int manoObra = 0}) => Proyecto(

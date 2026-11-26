@@ -19,6 +19,12 @@ class PreferenciasCubit extends Cubit<PreferenciasApp> {
   Future<void> cambiarTema(ModoTema modoTema) =>
       guardar(state.copyWith(modoTema: modoTema));
 
+  Future<void> cambiarBloqueo(bool activo) =>
+      guardar(state.copyWith(bloqueoActivo: activo));
+
+  Future<void> marcarTutorialVisto() =>
+      guardar(state.copyWith(tutorialVisto: true));
+
   Future<void> omitirAvisoNombre() =>
       guardar(state.copyWith(omitirAvisoNombre: true));
 }

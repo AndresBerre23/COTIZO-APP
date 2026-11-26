@@ -63,7 +63,7 @@ List<T> filtrarMovimientos<T extends Movimiento>(
     if (consulta.isEmpty) return true;
     final proyecto = proyectos[movimiento.proyectoId];
     final destino = proyecto == null
-        ? etiquetaGeneral
+        ? '$etiquetaGeneral ${movimiento.origen ?? ''}'
         : '${proyecto.nombreCliente} ${proyecto.descripcion} '
               '${codigosBusqueda(proyecto.id)}';
     return '${movimiento.categoria} ${movimiento.nota} $destino'
@@ -89,7 +89,9 @@ String destinoMovimiento(
   required String etiquetaGeneral,
 }) {
   final proyecto = proyectos[movimiento.proyectoId];
-  return proyecto == null
-      ? etiquetaGeneral
-      : '${proyecto.nombreCliente} · ${proyecto.descripcion}';
+  if (proyecto != null) {
+    return '${proyecto.nombreCliente} · ${proyecto.descripcion}';
+  }
+  final origen = movimiento.origen;
+  return origen == null ? etiquetaGeneral : '$etiquetaGeneral (antes: $origen)';
 }

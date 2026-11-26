@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 
 import '../../core/formato.dart';
 import '../../dominio/categorias_gasto.dart';

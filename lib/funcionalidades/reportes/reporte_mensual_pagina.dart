@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:printing/printing.dart';
 
-import '../../aplicacion/cotizo_cubit.dart';
+import '../../aplicacion/coti_cubit.dart';
 import '../../aplicacion/preferencias_cubit.dart';
 import '../../core/formato.dart';
 import '../../dominio/calcular_resumen_mes.dart';
@@ -68,7 +68,7 @@ class _ReporteMensualPaginaState extends State<ReporteMensualPagina> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Reporte mensual')),
-    body: BlocBuilder<CotizoCubit, EstadoCotizo>(
+    body: BlocBuilder<CotiCubit, EstadoCoti>(
       builder: (context, estado) {
         final resumen = calcularResumenMes(estado.datos, _mes);
         final colores = Theme.of(context).colorScheme;

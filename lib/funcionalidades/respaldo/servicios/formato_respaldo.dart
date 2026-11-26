@@ -12,6 +12,7 @@ abstract final class FormatoRespaldo {
     'imagenes_materiales',
     'foto_perfil',
     'logo_negocio',
+    'fotos_obra',
   ];
   static final _cabeceraSqlite = ascii.encode('SQLite format 3');
 }

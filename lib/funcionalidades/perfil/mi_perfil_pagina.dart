@@ -11,6 +11,7 @@ import '../../datos/almacen_foto_perfil.dart';
 import '../../dominio/modelos.dart';
 import '../../widgets/surface_card.dart';
 import '../respaldo/componentes/seccion_respaldo.dart';
+import '../seguridad/seccion_seguridad.dart';
 import 'componentes/seccion_ajustes_cotizacion.dart';
 import 'componentes/seccion_apariencia.dart';
 import 'componentes/seccion_datos_negocio.dart';
@@ -252,6 +253,8 @@ class _MiPerfilPaginaState extends State<MiPerfilPagina> {
             const SeccionDatosNegocio(),
             const SizedBox(height: 20),
             const SeccionAjustesCotizacion(),
+            const SizedBox(height: 20),
+            const SeccionSeguridad(),
             const SizedBox(height: 20),
             const SeccionRespaldo(),
           ],

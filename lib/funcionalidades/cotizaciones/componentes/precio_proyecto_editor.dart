@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cotizo_app/core/enfoque.dart';
+import 'package:coti/core/enfoque.dart';
 
 import '../../../core/formato.dart';
 import '../../../dominio/calcular_precio_sugerido.dart';
 import 'selector_mano_obra_propia.dart';
 import 'seccion_cotizacion.dart';
+import '../../../widgets/ayuda/temas_ayuda.dart';
 
 class PrecioProyectoEditor extends StatelessWidget {
   const PrecioProyectoEditor({
@@ -47,6 +48,7 @@ class PrecioProyectoEditor extends StatelessWidget {
         : precioSugerido! - costoPrevisto - manoObra - precioServicios;
     return SeccionCotizacion(
       titulo: 'Precio de tu trabajo',
+      ayuda: TemaAyuda.precio,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

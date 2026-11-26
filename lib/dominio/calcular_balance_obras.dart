@@ -21,14 +21,24 @@ class BalanceObras {
 BalanceObras calcularBalanceObras(DatosLocales datos) {
   final proyectos = datos.proyectos.where((p) => p.admiteGastos).toList();
   final ids = {for (final proyecto in proyectos) proyecto.id};
+  // Lo cotizado incluye los adicionales acordados (P-031).
   final cotizado = proyectos.fold<int>(
     0,
-    (total, proyecto) => total + proyecto.totalCotizadoCentavos,
+    (total, proyecto) =>
+        total +
+        proyecto.totalCotizadoCentavos +
+        totalAdicionales(proyecto.id, datos.adicionales),
   );
   final margen = proyectos.fold<int>(
     0,
     (total, proyecto) =>
-        total + calcularRentabilidad(proyecto, datos.items, datos.gastos),
+        total +
+        calcularRentabilidad(
+          proyecto,
+          datos.items,
+          datos.gastos,
+          adicionales: datos.adicionales,
+        ),
   );
   final generales = datos.gastos
       .where((gasto) => !ids.contains(gasto.proyectoId))

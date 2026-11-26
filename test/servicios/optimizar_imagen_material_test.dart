@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:cotizo_app/funcionalidades/materiales/servicios/optimizar_imagen_material.dart';
+import 'package:coti/funcionalidades/materiales/servicios/optimizar_imagen_material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as imagen;
 

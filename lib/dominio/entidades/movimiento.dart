@@ -6,4 +6,7 @@ abstract interface class Movimiento {
   String get categoria;
   DateTime get fecha;
   String get nota;
+
+  // Proyecto de origen guardado como texto; sirve si el proyecto ya no existe.
+  String? get origen;
 }

@@ -1,5 +1,18 @@
 # Verificación de la primera versión funcional
 
+## Fase 5: publicación y orden del código (25 de noviembre de 2026)
+
+- `flutter analyze` sin errores ni advertencias; `flutter test` 101 de 101.
+- `flutter build apk --release` (29,7 MB) y `--debug` correctos; el manifiesto combinado usa el paquete `ec.coti.app`.
+- Sin `android/key.properties`, el release se firma con la clave de depuración: sirve para pruebas, no para Google Play.
+
+## Fase 3: trabajo durante la obra (25 de noviembre de 2026)
+
+- `flutter analyze` sin errores ni advertencias; `flutter test` 101 de 101; `flutter build apk --debug` correcto.
+- Migración a v11 cubierta por la prueba desde la versión 1.
+- Versiones: no se crean en borradores ni al cambiar solo el estado; se crea una al editar el total o las partidas de una proforma enviada.
+- PDF de la orden de cambio y secciones de obra revisados en móvil.
+
 ## Fase 2: proforma profesional (25 de noviembre de 2026)
 
 - `flutter analyze` sin errores ni advertencias; `flutter test` 92 de 92; `flutter build apk --debug` correcto.

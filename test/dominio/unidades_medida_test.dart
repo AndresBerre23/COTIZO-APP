@@ -1,4 +1,4 @@
-import 'package:cotizo_app/dominio/unidades_medida.dart';
+import 'package:coti/dominio/unidades_medida.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

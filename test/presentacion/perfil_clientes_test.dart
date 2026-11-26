@@ -1,9 +1,9 @@
-import 'package:cotizo_app/aplicacion/cotizo_cubit.dart';
-import 'package:cotizo_app/aplicacion/preferencias_cubit.dart';
-import 'package:cotizo_app/core/theme/app_theme.dart';
-import 'package:cotizo_app/dominio/modelos.dart';
-import 'package:cotizo_app/funcionalidades/clientes/clientes_pagina.dart';
-import 'package:cotizo_app/funcionalidades/perfil/mi_perfil_pagina.dart';
+import 'package:coti/aplicacion/coti_cubit.dart';
+import 'package:coti/aplicacion/preferencias_cubit.dart';
+import 'package:coti/core/theme/app_theme.dart';
+import 'package:coti/dominio/modelos.dart';
+import 'package:coti/funcionalidades/clientes/clientes_pagina.dart';
+import 'package:coti/funcionalidades/perfil/mi_perfil_pagina.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,7 +13,7 @@ import '../apoyo/repositorio_lectura.dart';
 
 Future<void> _montar(WidgetTester tester, Widget pagina) async {
   final base = datosMuestra();
-  final cubit = CotizoCubit(
+  final cubit = CotiCubit(
     RepositorioLectura(
       DatosLocales(
         proyectos: base.proyectos,
