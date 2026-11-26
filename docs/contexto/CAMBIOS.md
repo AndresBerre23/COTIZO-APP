@@ -16,6 +16,18 @@ Las entradas más recientes van primero. Hay una entrada por tarea o por sesión
 
 ---
 
+## 2026-11-25: presentación del repositorio
+
+- Tarea: P-066.
+- Qué:
+  - README nuevo con logo, insignias, botón de descarga, 9 capturas, funciones, tabla de descarga, tecnología, desarrollo y documentación.
+  - Capturas en `docs/capturas/` generadas con datos de ejemplo, fuentes e íconos reales y sombras reales.
+  - Textos de la release v1.0.0 y del "About" del repositorio en `docs/lanzamientos/v1.0.0.md`.
+  - APK con nombres claros en `build/lanzamiento/`, fuera de git.
+- Pendiente del usuario: crear la release en GitHub y completar About y temas, porque `gh` no está instalado.
+- Detalle visto en las capturas: el botón "Guardar cotización" se corta en teléfonos angostos (P-076).
+- Commit: pendiente.
+
 ## 2026-11-25: plan de publicación y monetización
 
 - Qué:

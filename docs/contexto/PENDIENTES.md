@@ -9,6 +9,7 @@
 - Commit: el trabajo hasta la Fase 2 está en 489e56c. Lo posterior está sin commit: Fase 3, Fase 5, splash más pausado, ayuda (P-060, P-061), protección del dinero, fotos y bloqueo (P-062 a P-065).
 - Siguiente: la Fase 7 (publicar en Google Play), en el orden de su tabla. Lo primero es P-070 (aviso de versión nueva), porque debe ir en la primera versión publicada.
 - Del usuario:
+  - Publicar la release v1.0.0 en GitHub con los textos de `docs/lanzamientos/v1.0.0.md` y los APK de `build/lanzamiento/`.
   - Crear la clave de publicación y `android/key.properties` (`docs/PUBLICACION.md`).
   - Probar en un teléfono (P-006).
   - Borrar las carpetas vacías `lib/features/` y `lib/data/`.
@@ -60,6 +61,7 @@ Orden acordado el 2026-11-25. Publicar gratis y sin límites para conseguir usua
 | P-072 | Política de privacidad publicada | Alta | Pendiente | Página web que explique que los datos quedan en el teléfono y para qué se usan cámara, galería, huella e internet (Wikimedia); enlazada en Play Console y en Mi perfil. |
 | P-073 | Ficha de Play Store | Media | Pendiente | Nombre, descripción corta y larga, ícono 512 px, gráfico destacado, capturas de teléfono y tablet, clasificación de contenido y formulario de seguridad de datos. |
 | P-074 | Prueba cerrada en Play Console | Alta | Pendiente | Al menos 12 personas durante 14 días (requisito para cuentas personales), con errores corregidos. Depende de P-006. |
+| P-076 | Botón "Guardar cotización" cortado en pantallas angostas | Baja | Pendiente | En teléfonos de unos 390 px se ve "Guardar cotiza…"; mostrar "Guardar" en pantallas angostas y ajustar la prueba del editor a 360 px. |
 | P-075 | Publicación en producción | Alta | Pendiente | Versión 1.0.0 disponible en Play Store para todos. |
 
 ## Fase 8: monetización (futuro)
@@ -121,3 +123,4 @@ Mover aquí cada tarea terminada, con su fecha y la referencia a `CAMBIOS.md`.
 | P-063 | Fotos de obra con visor y compartir | 2026-11-25 (ver `CAMBIOS.md`) |
 | P-064 | Galería de fotos en Documentos | 2026-11-25 (ver `CAMBIOS.md`) |
 | P-065 | Bloqueo con huella o clave del teléfono | 2026-11-25 (ver `CAMBIOS.md`) |
+| P-066 | Presentación del repositorio: README, capturas y textos de release | 2026-11-25 (ver `CAMBIOS.md`) |
